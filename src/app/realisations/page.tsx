@@ -47,7 +47,7 @@ export default function Realisations() {
   const [formData, setFormData] = useState({
     title: "",
     youtube_url: "",
-    category: "",
+    category: "Divers",
     description: "",
     client_name: "",
     client_website: "",
@@ -100,7 +100,7 @@ export default function Realisations() {
 
   // --- LOGIQUE CATÉGORIES ---
   const startEditingCategory = (cat: Category) => {
-    if (cat.name === "Drone") { alert("🔒 La catégorie 'Drone' est protégée."); return; }
+    if (cat.name === "Drone"|| cat.name === "Divers") { alert("🔒 La catégorie 'Drone' est protégée."); return; }
     setEditingCatId(cat.id);
     setEditingCatName(cat.name);
   };
