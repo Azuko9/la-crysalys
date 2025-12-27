@@ -6,7 +6,7 @@ import { getYouTubeID } from "@/lib/utils";
 import Link from "next/link";
 import { 
   ArrowLeft, Pencil, Trash2, ShieldAlert, PlusCircle, 
-  XCircle, Save, Settings, Check, Globe, Briefcase 
+  XCircle, Save, Settings, Check, Globe, Briefcase, Calendar, ArrowUpDown
 } from "lucide-react";
 
 // --- TYPES ---
@@ -33,14 +33,17 @@ export default function Realisations() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
 
-  // FILTRES & ÉTATS
+  // FILTRES & TRI
   const [filtreActuel, setFiltreActuel] = useState("Tout");
+  const [ordreTri, setOrdreTri] = useState<"desc" | "asc">("desc");
+  
+  // GESTION CATÉGORIES
   const [isManagingCats, setIsManagingCats] = useState(false);
   const [newCatName, setNewCatName] = useState("");
   const [editingCatId, setEditingCatId] = useState<string | null>(null);
   const [editingCatName, setEditingCatName] = useState("");
 
-  // FORMULAIRE
+  // FORMULAIRE PROJETS
   const [formData, setFormData] = useState({
     title: "",
     youtube_url: "",
@@ -48,26 +51,45 @@ export default function Realisations() {
     description: "",
     client_name: "",
     client_website: "",
-    project_date: ""
+    project_date: new Date().toISOString().split('T')[0]
   });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formMessage, setFormMessage] = useState<string | null>(null);
   const [loadingForm, setLoadingForm] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
 
-  // CHARGEMENT
+  // --- FONCTION FORMATAGE DATE FR ---
+  const formaterDateFr = (dateString: string | null) => {
+    if (!dateString) return "Date inconnue";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("fr-FR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  };
+
+  // CHARGEMENT INITIAL
   useEffect(() => {
     const fetchData = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
-      await Promise.all([fetchProjects(), fetchCategories()]);
+      await fetchCategories();
       setLoading(false);
     };
     fetchData();
   }, []);
 
+  // RECHARGER PROJETS QUAND LE TRI CHANGE
+  useEffect(() => {
+    fetchProjects();
+  }, [ordreTri]);
+
   const fetchProjects = async () => {
-    const { data } = await supabase.from('portfolio_items').select('*').order('created_at', { ascending: false });
+    const { data } = await supabase
+      .from('portfolio_items')
+      .select('*')
+      .order('project_date', { ascending: ordreTri === "asc" });
     setProjets((data as Project[]) || []);
   };
 
@@ -76,7 +98,7 @@ export default function Realisations() {
     setCategories((data as Category[]) || []);
   };
 
-  // LOGIQUE CATÉGORIES
+  // --- LOGIQUE CATÉGORIES ---
   const startEditingCategory = (cat: Category) => {
     if (cat.name === "Drone") { alert("🔒 La catégorie 'Drone' est protégée."); return; }
     setEditingCatId(cat.id);
@@ -109,7 +131,7 @@ export default function Realisations() {
     if (!error) { setNewCatName(""); fetchCategories(); }
   };
 
-  // LOGIQUE PROJETS
+  // --- LOGIQUE PROJETS ---
   const handleSubmitProject = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoadingForm(true);
@@ -154,7 +176,7 @@ export default function Realisations() {
         description: projet.description || "",
         client_name: projet.client_name || "",
         client_website: projet.client_website || "",
-        project_date: projet.project_date || ""
+        project_date: projet.project_date || new Date().toISOString().split('T')[0]
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -168,7 +190,15 @@ export default function Realisations() {
   const handleCancelEdit = () => {
     setIsFormOpen(false);
     setEditingId(null);
-    setFormData({ title: "", youtube_url: "", category: "", description: "", client_name: "", client_website: "", project_date: "" });
+    setFormData({ 
+      title: "", 
+      youtube_url: "", 
+      category: "", 
+      description: "", 
+      client_name: "", 
+      client_website: "", 
+      project_date: new Date().toISOString().split('T')[0] 
+    });
     setFormMessage(null);
   };
 
@@ -177,8 +207,12 @@ export default function Realisations() {
   return (
     <main className="min-h-screen bg-black text-white px-8 pb-8 pt-28">
       
-      {/* HEADER */}
+      {/* HEADER PAGE */}
       <div className="max-w-6xl mx-auto mb-8">
+        <Link href="/" className="inline-flex items-center text-gray-400 hover:text-white transition mb-6">
+          <ArrowLeft className="mr-2" size={20} />
+          Retour à l&apos;accueil
+        </Link>
         <div className="flex flex-wrap justify-between items-end gap-4">
             <h1 className="text-4xl font-bold text-green-500">Nos Réalisations</h1>
             {user && (
@@ -189,48 +223,48 @@ export default function Realisations() {
         </div>
       </div>
 
-      {/* FILTRES */}
+      {/* FILTRES & TRI */}
       <div className="max-w-6xl mx-auto mb-12">
-        {user && (
-            <div className="mb-4 flex items-center gap-4">
-                 <button onClick={() => setIsManagingCats(!isManagingCats)} className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition ${isManagingCats ? 'bg-green-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-white'}`}>
-                    <Settings size={16} /> {isManagingCats ? "Terminer la gestion" : "Gérer les catégories"}
-                </button>
-            </div>
-        )}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex flex-wrap items-center gap-3">
+              {user && (
+                  <button onClick={() => setIsManagingCats(!isManagingCats)} className={`p-2 rounded-full transition ${isManagingCats ? 'bg-green-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-white'}`}>
+                      <Settings size={20} />
+                  </button>
+              )}
+              <button onClick={() => setFiltreActuel("Tout")} className={`px-4 py-2 rounded-full text-sm font-bold border transition-all ${filtreActuel === "Tout" ? "bg-white text-black border-white" : "bg-gray-900 border-gray-800 text-gray-400"}`}>Tout</button>
+              {categories.map((cat) => (
+                  <div key={cat.id} className="relative group">
+                      {isManagingCats && editingCatId === cat.id ? (
+                          <div className="flex items-center bg-gray-800 rounded-full px-2 border border-green-500">
+                              <input autoFocus type="text" value={editingCatName} onChange={(e) => setEditingCatName(e.target.value)} className="bg-transparent text-white text-sm px-2 py-2 outline-none w-24" onKeyDown={(e) => { if (e.key === 'Enter') saveCategoryName(cat.id, cat.name); }} />
+                              <button onClick={() => saveCategoryName(cat.id, cat.name)} className="text-green-500 hover:text-green-400 p-1"><Check size={14}/></button>
+                          </div>
+                      ) : (
+                          <button onClick={() => isManagingCats ? startEditingCategory(cat) : setFiltreActuel(cat.name)} className={`px-4 py-2 rounded-full text-sm font-bold transition-all border relative flex items-center gap-2 ${filtreActuel === cat.name ? "bg-green-600 border-green-600 text-white" : "bg-gray-900 border-gray-800 text-gray-400 hover:border-gray-600"}`}>
+                              {cat.name}
+                              {isManagingCats && cat.name !== "Drone" && <Pencil size={10} className="text-green-500 opacity-50" />}
+                          </button>
+                      )}
+                      {isManagingCats && editingCatId !== cat.id && cat.name !== "Drone" && (
+                          <button onClick={(e) => { e.stopPropagation(); handleDeleteCategory(cat.id, cat.name); }} className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 shadow-lg hover:scale-110 transition z-10"><XCircle size={12} /></button>
+                      )}
+                  </div>
+              ))}
+          </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-            <button onClick={() => setFiltreActuel("Tout")} className={`px-4 py-2 rounded-full text-sm font-bold border transition-all ${filtreActuel === "Tout" ? "bg-white text-black border-white" : "bg-gray-900 border-gray-800 text-gray-400"}`}>Tout</button>
-            {categories.map((cat) => {
-                const isDrone = cat.name === "Drone";
-                return (
-                <div key={cat.id} className="relative group">
-                    {isManagingCats && editingCatId === cat.id ? (
-                        <div className="flex items-center bg-gray-800 rounded-full px-2 border border-green-500">
-                            <input autoFocus type="text" value={editingCatName} onChange={(e) => setEditingCatName(e.target.value)} className="bg-transparent text-white text-sm px-2 py-2 outline-none w-24" onKeyDown={(e) => { if (e.key === 'Enter') saveCategoryName(cat.id, cat.name); }} />
-                            <button onClick={() => saveCategoryName(cat.id, cat.name)} className="text-green-500 hover:text-green-400 p-1"><Check size={14}/></button>
-                        </div>
-                    ) : (
-                        <button onClick={() => isManagingCats ? startEditingCategory(cat) : setFiltreActuel(cat.name)} className={`px-4 py-2 rounded-full text-sm font-bold transition-all border relative flex items-center gap-2 ${filtreActuel === cat.name ? (isDrone ? "bg-cyan-600 border-cyan-600 text-white shadow-lg shadow-cyan-900/50" : "bg-green-600 border-green-600 text-white") : (isDrone ? "bg-gray-900 border-cyan-900/50 text-cyan-500 hover:border-cyan-500" : "bg-gray-900 border-gray-800 text-gray-400 hover:border-gray-600")}`}>
-                            {cat.name}
-                            {isManagingCats && !isDrone && <Pencil size={10} className="absolute top-1 right-1 text-green-500 opacity-50" />}
-                        </button>
-                    )}
-                    {isManagingCats && editingCatId !== cat.id && !isDrone && (
-                        <button onClick={(e) => { e.stopPropagation(); handleDeleteCategory(cat.id, cat.name); }} className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 shadow-lg hover:scale-110 transition z-10"><XCircle size={12} /></button>
-                    )}
-                </div>
-            )})}
-            {isManagingCats && (
-                <form onSubmit={handleAddCategory} className="flex items-center gap-2">
-                    <input type="text" value={newCatName} onChange={(e) => setNewCatName(e.target.value)} placeholder="Nouv..." className="bg-gray-900 border border-gray-700 rounded-full px-4 py-2 text-sm focus:border-green-500 outline-none w-24" />
-                    <button type="submit" className="bg-green-600 hover:bg-green-700 text-white p-2 rounded-full"><PlusCircle size={18} /></button>
-                </form>
-            )}
+          {/* SÉLECTEUR DE TRI */}
+          <button 
+            onClick={() => setOrdreTri(ordreTri === "desc" ? "asc" : "desc")}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-900 border border-gray-800 rounded-full text-sm font-bold text-gray-400 hover:text-white hover:border-green-500 transition-all"
+          >
+            <ArrowUpDown size={16} className="text-green-500" />
+            {ordreTri === "desc" ? "Plus récents" : "Plus anciens"}
+          </button>
         </div>
       </div>
 
-      {/* FORMULAIRE */}
+      {/* FORMULAIRE D'AJOUT (ADMIN) */}
       {user && (
         <div className="max-w-4xl mx-auto mb-16">
             {!isFormOpen ? (
@@ -241,7 +275,7 @@ export default function Realisations() {
             ) : (
                 <div className={`p-8 rounded-2xl border shadow-2xl transition-all duration-500 ${editingId ? 'bg-gray-800 border-green-500' : 'bg-gray-900 border-gray-800'}`}>
                     <div className="flex justify-between items-start mb-6 border-b border-gray-700 pb-4">
-                        <h2 className="text-xl font-bold flex items-center gap-2">{editingId ? (<> <Pencil className="text-green-500" /> Modifier le projet </>) : (<> <PlusCircle className="text-green-500" /> Ajouter une réalisation </>)}</h2>
+                        <h2 className="text-xl font-bold flex items-center gap-2">{editingId ? (<> <Pencil className="text-green-500" /> Modifier </>) : (<> <PlusCircle className="text-green-500" /> Publier </>)}</h2>
                         <button onClick={handleCancelEdit} className="text-gray-500 hover:text-white transition"><XCircle size={24} /></button>
                     </div>
                     <form onSubmit={handleSubmitProject} className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -250,97 +284,77 @@ export default function Realisations() {
                         <div>
                             <label className="text-sm text-gray-400 block mb-1">Catégorie</label>
                             <select value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})} className="w-full bg-black border border-gray-700 rounded p-3 focus:border-green-500 outline-none">
-                                <option value="" disabled>Choisir une catégorie...</option>
+                                <option value="" disabled>Choisir...</option>
                                 {categories.map(cat => <option key={cat.id} value={cat.name}>{cat.name}</option>)}
                             </select>
                         </div>
-                        <div><label className="text-sm text-gray-400 block mb-1">Nom du Client</label><input type="text" value={formData.client_name} onChange={(e) => setFormData({...formData, client_name: e.target.value})} className="w-full bg-black border border-gray-700 rounded p-3 focus:border-green-500 outline-none" placeholder="Ex: Nike..." /></div>
-                        <div><label className="text-sm text-gray-400 block mb-1">Site Web du Client</label><input type="url" value={formData.client_website} onChange={(e) => setFormData({...formData, client_website: e.target.value})} className="w-full bg-black border border-gray-700 rounded p-3 focus:border-green-500 outline-none" placeholder="https://..." /></div>
                         <div>
-    <label className="text-sm text-gray-400 block mb-1">Date de réalisation</label>
-    <input 
-        type="date" 
-        value={formData.project_date} 
-        onChange={(e) => setFormData({...formData, project_date: e.target.value})} 
-        className="w-full bg-black border border-gray-700 rounded p-3 focus:border-green-500 outline-none" 
-    />
-</div>
+                            <label className="text-sm text-gray-400 block mb-1">Date du projet</label>
+                            <input type="date" required value={formData.project_date} onChange={(e) => setFormData({...formData, project_date: e.target.value})} className="w-full bg-black border border-gray-700 rounded p-3 focus:border-green-500 outline-none" />
+                        </div>
+                        <div><label className="text-sm text-gray-400 block mb-1">Nom du Client</label><input type="text" value={formData.client_name} onChange={(e) => setFormData({...formData, client_name: e.target.value})} className="w-full bg-black border border-gray-700 rounded p-3 focus:border-green-500 outline-none" placeholder="Nike, Mairie..." /></div>
                         <div className="md:col-span-2"><label className="text-sm text-gray-400 block mb-1">Description</label><textarea rows={2} value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full bg-black border border-gray-700 rounded p-3 focus:border-green-500 outline-none" /></div>
-                        <div className="md:col-span-2 flex items-center gap-4 pt-4"><button type="submit" disabled={loadingForm} className="flex-1 bg-white text-black font-bold py-3 rounded hover:bg-green-500 hover:text-white transition flex justify-center gap-2">{loadingForm ? "..." : (editingId ? <><Save size={18}/> Enregistrer</> : <><PlusCircle size={18}/> Publier</>)}</button><button type="button" onClick={handleCancelEdit} className="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded text-white font-bold">Annuler</button></div>
-                        {formMessage && <div className={`md:col-span-2 p-3 rounded text-center font-bold ${formMessage.includes('Erreur') ? 'bg-red-900/50 text-red-400' : 'bg-green-900/50 text-green-400'}`}>{formMessage}</div>}
+                        <div className="md:col-span-2 flex items-center gap-4 pt-4"><button type="submit" disabled={loadingForm} className="flex-1 bg-white text-black font-bold py-3 rounded hover:bg-green-500 hover:text-white transition flex justify-center gap-2">{loadingForm ? "chargement..." : (editingId ? "Enregistrer" : "Publier")}</button><button type="button" onClick={handleCancelEdit} className="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded text-white font-bold">Annuler</button></div>
+                        {formMessage && <div className="md:col-span-2 p-3 rounded text-center font-bold bg-gray-800 text-green-400">{formMessage}</div>}
                     </form>
                 </div>
             )}
         </div>
       )}
 
-      {/* --- GRID PROJETS --- */}
+      {/* GRID DES PROJETS */}
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {!loading && projetsAffiches.length === 0 && (
             <div className="col-span-full text-center py-12 bg-gray-900/50 rounded-xl border border-dashed border-gray-800">
-                <p className="text-gray-500">Aucun projet dans cette catégorie.</p>
+                <p className="text-gray-500">Aucun projet trouvé.</p>
             </div>
         )}
         
         {projetsAffiches.map((projet) => {
           const videoId = getYouTubeID(projet.youtube_url);
-          const isBeingEdited = editingId === projet.id;
-          
           return (
-            <div key={projet.id} className={`bg-gray-900 border rounded-xl flex flex-col relative group transition-colors ${isBeingEdited ? 'border-green-500 ring-2 ring-green-500' : 'border-gray-800 hover:border-green-500 shadow-lg'}`}>
-              
+            <div key={projet.id} className="bg-gray-900 border border-gray-800 rounded-xl flex flex-col relative group hover:border-green-500 transition-all shadow-lg overflow-hidden">
               {user && (
                 <div className="absolute top-2 right-2 z-20 flex gap-2">
-                    <button onClick={() => handleEditProject(projet)} className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded shadow-lg transition hover:scale-110"><Pencil size={16} /></button>
-                    <button onClick={() => handleDeleteProject(projet.id)} className="bg-red-600 hover:bg-red-700 text-white p-2 rounded shadow-lg transition hover:scale-110"><Trash2 size={16} /></button>
+                    <button onClick={() => handleEditProject(projet)} className="bg-blue-600 text-white p-2 rounded hover:scale-110 transition"><Pencil size={14} /></button>
+                    <button onClick={() => handleDeleteProject(projet.id)} className="bg-red-600 text-white p-2 rounded hover:scale-110 transition"><Trash2 size={14} /></button>
                 </div>
               )}
 
-              {/* ✅ ZONE VIDÉO - LA MÉTHODE NATIVE */}
-              <div className="relative w-full aspect-video z-10">
+              <div className="relative aspect-video bg-black">
                 {videoId ? (
-                  <iframe
-                    className="w-full h-full rounded-t-xl" // L'arrondi est appliqué ICI
-                    src={`https://www.youtube.com/embed/${videoId}?rel=0`}
-                    title={projet.title}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen={true} // Syntaxe React correcte
-                    loading="lazy"
-                  />
-                ) : (
-                  <div className="flex items-center justify-center h-full text-gray-600 bg-black rounded-t-xl">
-                    Pas de vidéo
-                  </div>
-                )}
+                  <iframe className="w-full h-full" src={`https://www.youtube.com/embed/${videoId}?rel=0`} title={projet.title} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+                ) : <div className="flex items-center justify-center h-full text-gray-700 italic">Vidéo indisponible</div>}
               </div>
               
-              <div className="p-6 flex-1 flex flex-col justify-between rounded-b-xl z-20 bg-gray-900">
+              <div className="p-6 flex-1 flex flex-col justify-between">
                 <div>
-                    <h3 className="text-xl font-bold mb-2 text-white">{projet.title}</h3>
-                    <p className="text-gray-400 text-sm mb-2"> Publié le {projet.project_date}</p>
-                    <p className="text-gray-400 text-sm mb-4 line-clamp-3">{projet.description}</p>
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="text-xl font-bold text-white line-clamp-1">{projet.title}</h3>
+                    </div>
                     
-                    {(projet.client_name || projet.client_website) && (
-                        <div className="mt-4 pt-4 border-t border-gray-800 flex flex-col gap-2">
-                            {projet.client_name && (
-                                <div className="flex items-center text-sm text-gray-300 gap-2">
-                                    <Briefcase size={14} className="text-green-500"/>
-                                    <span className="font-semibold">{projet.client_name}</span>
-                                </div>
-                            )}
-                            {projet.client_website && (
-                                <a href={projet.client_website} target="_blank" rel="noopener noreferrer" className="flex items-center text-xs text-green-400 hover:text-white gap-2 transition w-fit">
-                                    <Globe size={14}/>
-                                    Visiter le site web
-                                </a>
-                            )}
+                    <div className="flex items-center gap-2 text-gray-500 text-xs mb-4">
+                      <Calendar size={14} className="text-green-500" />
+                      <span>{formaterDateFr(projet.project_date)}</span>
+                    </div>
+
+                    <p className="text-gray-400 text-sm mb-4 line-clamp-3 leading-relaxed">{projet.description}</p>
+                    
+                    {projet.client_name && (
+                        <div className="mt-4 pt-4 border-t border-gray-800 flex items-center text-xs text-gray-300 gap-2">
+                            <Briefcase size={14} className="text-green-500"/>
+                            <span className="font-semibold">{projet.client_name}</span>
                         </div>
                     )}
                 </div>
                 
-                <div className="flex justify-between items-center text-xs text-green-400 font-bold uppercase tracking-wider mt-4">
-                    <span>{projet.category}</span>
-                    {isBeingEdited && <span className="animate-pulse text-white">En cours...</span>}
+                <div className="flex justify-between items-center text-[10px] text-green-400 font-bold uppercase tracking-widest mt-6">
+                    <span className="bg-green-500/10 px-2 py-1 rounded">{projet.category}</span>
+                    {projet.client_website && (
+                      <a href={projet.client_website} target="_blank" rel="noreferrer" className="text-gray-500 hover:text-white transition flex items-center gap-1">
+                        Site <Globe size={10} />
+                      </a>
+                    )}
                 </div>
               </div>
             </div>
