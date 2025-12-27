@@ -23,6 +23,7 @@ interface Project {
   description: string | null;
   client_name: string | null;
   client_website: string | null;
+  project_date: string | null;
   created_at?: string;
 }
 
@@ -46,7 +47,8 @@ export default function Realisations() {
     category: "",
     description: "",
     client_name: "",
-    client_website: ""
+    client_website: "",
+    project_date: ""
   });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formMessage, setFormMessage] = useState<string | null>(null);
@@ -120,7 +122,8 @@ export default function Realisations() {
         category: catToSave, 
         description: formData.description || null,
         client_name: formData.client_name || null,
-        client_website: formData.client_website || null
+        client_website: formData.client_website || null,
+        project_date: formData.project_date || new Date().toISOString().split('T')[0]
     };
 
     let error = null;
@@ -150,7 +153,8 @@ export default function Realisations() {
         category: projet.category, 
         description: projet.description || "",
         client_name: projet.client_name || "",
-        client_website: projet.client_website || ""
+        client_website: projet.client_website || "",
+        project_date: projet.project_date || ""
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -164,7 +168,7 @@ export default function Realisations() {
   const handleCancelEdit = () => {
     setIsFormOpen(false);
     setEditingId(null);
-    setFormData({ title: "", youtube_url: "", category: "", description: "", client_name: "", client_website: "" });
+    setFormData({ title: "", youtube_url: "", category: "", description: "", client_name: "", client_website: "", project_date: "" });
     setFormMessage(null);
   };
 
