@@ -175,10 +175,6 @@ export default function Realisations() {
       
       {/* HEADER */}
       <div className="max-w-6xl mx-auto mb-8">
-        <Link href="/" className="inline-flex items-center text-gray-400 hover:text-white transition mb-6">
-          <ArrowLeft className="mr-2" size={20} />
-          Retour à l'accueil
-        </Link>
         <div className="flex flex-wrap justify-between items-end gap-4">
             <h1 className="text-4xl font-bold text-green-500">Nos Réalisations</h1>
             {user && (
