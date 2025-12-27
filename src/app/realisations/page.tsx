@@ -117,6 +117,7 @@ export default function Realisations() {
 
   const handleDeleteCategory = async (id: string, name: string) => {
     if (name === "Drone") { alert("🔒 Impossible de supprimer 'Drone'."); return; }
+    if (name === "Divers") { alert("🔒 Impossible de supprimer 'Divers'."); return; }
     const videosUsingCat = projets.filter(p => p.category === name).length;
     if (videosUsingCat > 0) { alert(`⛔ Cette catégorie contient ${videosUsingCat} vidéo(s).`); return; }
     if (!confirm(`Supprimer la catégorie "${name}" ?`)) return;
@@ -243,7 +244,7 @@ export default function Realisations() {
                       ) : (
                           <button onClick={() => isManagingCats ? startEditingCategory(cat) : setFiltreActuel(cat.name)} className={`px-4 py-2 rounded-full text-sm font-bold transition-all border relative flex items-center gap-2 ${filtreActuel === cat.name ? "bg-green-600 border-green-600 text-white" : "bg-gray-900 border-gray-800 text-gray-400 hover:border-gray-600"}`}>
                               {cat.name}
-                              {isManagingCats && cat.name !== "Drone" && <Pencil size={10} className="text-green-500 opacity-50" />}
+                              {isManagingCats && cat.name !== "Drone" && cat.name !== "Divers"&& (<Pencil size={10} className="text-green-500 opacity-50" />)}
                           </button>
                       )}
                       {isManagingCats && editingCatId !== cat.id && cat.name !== "Drone" && (
