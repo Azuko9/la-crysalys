@@ -256,6 +256,15 @@ export default function Realisations() {
                         </div>
                         <div><label className="text-sm text-gray-400 block mb-1">Nom du Client</label><input type="text" value={formData.client_name} onChange={(e) => setFormData({...formData, client_name: e.target.value})} className="w-full bg-black border border-gray-700 rounded p-3 focus:border-green-500 outline-none" placeholder="Ex: Nike..." /></div>
                         <div><label className="text-sm text-gray-400 block mb-1">Site Web du Client</label><input type="url" value={formData.client_website} onChange={(e) => setFormData({...formData, client_website: e.target.value})} className="w-full bg-black border border-gray-700 rounded p-3 focus:border-green-500 outline-none" placeholder="https://..." /></div>
+                        <div>
+    <label className="text-sm text-gray-400 block mb-1">Date de réalisation</label>
+    <input 
+        type="date" 
+        value={formData.project_date} 
+        onChange={(e) => setFormData({...formData, project_date: e.target.value})} 
+        className="w-full bg-black border border-gray-700 rounded p-3 focus:border-green-500 outline-none" 
+    />
+</div>
                         <div className="md:col-span-2"><label className="text-sm text-gray-400 block mb-1">Description</label><textarea rows={2} value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full bg-black border border-gray-700 rounded p-3 focus:border-green-500 outline-none" /></div>
                         <div className="md:col-span-2 flex items-center gap-4 pt-4"><button type="submit" disabled={loadingForm} className="flex-1 bg-white text-black font-bold py-3 rounded hover:bg-green-500 hover:text-white transition flex justify-center gap-2">{loadingForm ? "..." : (editingId ? <><Save size={18}/> Enregistrer</> : <><PlusCircle size={18}/> Publier</>)}</button><button type="button" onClick={handleCancelEdit} className="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded text-white font-bold">Annuler</button></div>
                         {formMessage && <div className={`md:col-span-2 p-3 rounded text-center font-bold ${formMessage.includes('Erreur') ? 'bg-red-900/50 text-red-400' : 'bg-green-900/50 text-green-400'}`}>{formMessage}</div>}
@@ -308,6 +317,7 @@ export default function Realisations() {
               <div className="p-6 flex-1 flex flex-col justify-between rounded-b-xl z-20 bg-gray-900">
                 <div>
                     <h3 className="text-xl font-bold mb-2 text-white">{projet.title}</h3>
+                    <p className="text-gray-400 text-sm mb-2"> Publié le {projet.project_date}</p>
                     <p className="text-gray-400 text-sm mb-4 line-clamp-3">{projet.description}</p>
                     
                     {(projet.client_name || projet.client_website) && (
