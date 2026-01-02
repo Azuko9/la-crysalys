@@ -51,7 +51,7 @@ const ProjectCard = ({
             className="bg-gray-900 border border-gray-800 rounded-xl flex flex-col relative group hover:border-green-500 transition-all shadow-lg overflow-hidden cursor-pointer"
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
-            onClick={() => router.push(`/realisation/${projet.id}`)}
+            onClick={() => router.push(`/realisations/${projet.id}`)}
         >
             {/* BOUTONS ADMIN */}
             {user && (
