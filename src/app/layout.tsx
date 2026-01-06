@@ -1,58 +1,40 @@
-// app/layout.tsx (Server Component)
+// app/layout.tsx
 import { supabase } from "@/lib/supabaseClient";
 import "./globals.css";
 import Header from "@/components/Header";
 
-export default async function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  // 1. Récupération de tous les réglages
-  const { data: settings } = await supabase.from("site_settings").select("*");
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // On récupère les réglages SANS CACHE (important pour voir les modifs direct)
+  const { data: settings } = await supabase
+    .from("site_settings")
+    .select("key, value");
 
-  // 2. Transformation en objet avec valeurs par défaut de secours
+  const getS = (key: string, def: string) => settings?.find(s => s.key === key)?.value || def;
+
   const theme = {
-    bg_color: settings?.find(s => s.key === "bg_color")?.value || "#000000",
-    primary_color: settings?.find(s => s.key === "primary_color")?.value || "#22c55e",
-    accent_color: settings?.find(s => s.key === "accent_color")?.value || "#3b82f6",
-    // AJOUTS POUR LA VERSION AVANCÉE
-    border_radius: settings?.find(s => s.key === "border_radius")?.value || "0px",
-    border_opacity: settings?.find(s => s.key === "border_opacity")?.value || "0.2",
+    bg: getS("bg_color", "#000000"),
+    primary: getS("primary_color", "#a23939"),
+    radius: getS("border_radius", "0px"),
+    opacity: getS("border_opacity", "0.2"),
   };
 
   return (
     <html lang="fr">
       <head>
-        {/* 3. Injection des variables CSS pour tout le site */}
         <style dangerouslySetInnerHTML={{ __html: `
           :root {
-            --bg-color: ${theme.bg_color};
-            --primary-color: ${theme.primary_color};
-            --accent-color: ${theme.accent_color};
-            --radius: ${theme.border_radius};
-            --border-opacity: ${theme.border_opacity};
+            --bg-color: ${theme.bg};
+            --primary-color: ${theme.primary};
+            --radius: ${theme.radius};
+            --border-opacity: ${theme.opacity};
           }
-
-          /* On force le fond sur le body pour éviter le flash blanc */
-          body { 
-            background-color: var(--bg-color) !important; 
-          }
-
-          /* Gestion dynamique des arrondis sur les éléments qui utilisent 'rounded-dynamic' */
-          .rounded-dynamic {
-            border-radius: var(--radius) !important;
-          }
-
-          /* On applique l'opacité variable sur les bordures par défaut (zinc-800) */
-          .border-zinc-800 {
-            border-color: rgba(255, 255, 255, var(--border-opacity)) !important;
-          }
+          body { background-color: var(--bg-color) !important; }
+          .rounded-dynamic { border-radius: var(--radius) !important; }
+          .border-zinc-800 { border-color: rgba(255, 255, 255, var(--border-opacity)) !important; }
         `}} />
       </head>
-      {/* On utilise bg-background définie dans tailwind.config.ts */}
       <body className="bg-background text-white antialiased">
-        <Header />
+        < Header />
         {children}
       </body>
     </html>

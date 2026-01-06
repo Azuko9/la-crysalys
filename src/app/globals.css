@@ -4,37 +4,7 @@
 
 :root {
   --bg-color: #000000;
-  --primary-color: #22c55e;
-  --accent-color: #3b82f6;
-}
-
-body {
-  background-color: var(--bg-color);
-  color: white;
-}
-
-/* FORCE LE PLEIN ÉCRAN POUR LES VIDÉOS */
-iframe:fullscreen {
-  width: 100vw !important;
-  height: 100vh !important;
-  max-width: none !important;
-  max-height: none !important;
-  min-width: 100% !important;
-  min-height: 100% !important;
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  z-index: 2147483647 !important; /* Z-index maximum possible */
-  border-radius: 0 !important;
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-/* Version spécifique pour Webkit (Chrome/Safari) si le standard ne suffit pas */
-iframe:-webkit-full-screen {
-  width: 100vw !important;
-  height: 100vh !important;
-  max-width: none !important;
-  max-height: none !important;
-  z-index: 2147483647 !important;
+  --primary-color: #a23939;
+  --radius: 0px;
+  --border-opacity: 0.2;
 }
