@@ -26,7 +26,7 @@ export default function DronePage() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-black text-white pb-24">
+    <main className="min-h-screen bg-background text-white pb-24">
       
       {/* --- SECTION HERO : L'EXPERTISE TECHNIQUE --- */}
       <section className="pt-32 pb-16 px-8 border-b border-zinc-900">
@@ -42,7 +42,7 @@ export default function DronePage() {
               <h1 className="text-8xl md:text-[12rem] font-black italic uppercase tracking-tighter leading-[0.75] mb-12">
                 Drone<span className="text-blue-600">.</span>
               </h1>
-              <div className="bg-zinc-900/20 border border-zinc-800 p-6 rounded-2xl inline-flex items-center gap-4">
+              <div className="bg-zinc-900/20 border border-zinc-800 p-6 rounded-dynamic inline-flex items-center gap-4">
                 <div className="w-3 h-3 rounded-full bg-blue-600 animate-pulse"></div>
                 <span className="text-xs font-bold uppercase tracking-widest">Opérations en cours : France / Europe</span>
               </div>
@@ -50,7 +50,7 @@ export default function DronePage() {
 
             {/* Fiche Technique Latérale */}
             <div className="w-full lg:w-96 space-y-4">
-               <div className="p-6 bg-zinc-900/40 border border-zinc-800 rounded-3xl backdrop-blur-md">
+               <div className="p-6 bg-zinc-900/40 border border-zinc-800 rounded-dynamic backdrop-blur-md">
                   <h3 className="text-[10px] font-black uppercase text-zinc-500 mb-6 tracking-widest flex items-center gap-2">
                     <Info size={14}/> Spécifications Flotte
                   </h3>
@@ -73,7 +73,7 @@ export default function DronePage() {
                     </div>
                   </div>
                </div>
-               <button className="group w-full bg-blue-600 hover:bg-blue-500 text-black py-5 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] transition-all flex items-center justify-center gap-2">
+               <button className="group w-full bg-blue-600 hover:bg-blue-500 text-black py-5 rounded-dynamic font-black uppercase text-[10px] tracking-[0.2em] transition-all flex items-center justify-center gap-2">
                  Demander un devis <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform"/>
                </button>
             </div>
@@ -139,9 +139,9 @@ export default function DronePage() {
               const videoId = getYouTubeID(p.youtube_url);
               return (
                 <div key={p.id} className="group cursor-pointer">
-                  <div className="aspect-video bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-800 group-hover:border-blue-600 transition-all relative shadow-2xl">
+                  <div className="aspect-video bg-zinc-900 rounded-dynamic overflow-hidden border border-zinc-800 group-hover:border-blue-600 transition-all relative shadow-2xl">
                      <iframe 
-                        className="absolute inset-0 w-full h-full p-0.5 rounded-2xl" 
+                        className="absolute inset-0 w-full h-full p-0.5 rounded-dynamic" 
                         src={`https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&controls=1`} 
                         title={p.title}
                         allowFullScreen 

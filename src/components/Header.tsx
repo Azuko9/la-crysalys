@@ -47,7 +47,7 @@ export default function Header() {
   ];
 
   return (
-    <header className="fixed top-0 left-0 w-full z-50 bg-black/80 backdrop-blur-md border-b border-gray-800 transition-all duration-300">
+    <header className="fixed top-0 left-0 w-full z-50 bg-background/80 backdrop-blur-md border-b border-gray-800 transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           
@@ -74,7 +74,7 @@ export default function Header() {
                   href={link.href}
                   className={`text-sm font-bold transition-colors duration-300 ${
                     isActive 
-                      ? "text-green-500" // 1. Si la page est active : Vert (priorité absolue)
+                      ? "text-primary" // 1. Si la page est active : Vert (priorité absolue)
                       : isDrone
                         ? "text-cyan-400 hover:text-cyan-200" // 2. Si c'est le lien Drone (et pas actif) : Cyan
                         : "text-gray-300 hover:text-white"    // 3. Pour tous les autres liens : Gris
@@ -101,7 +101,7 @@ export default function Header() {
              {isLoggedIn && (
                 <Link href="/admin" className="text-red-500 font-bold text-sm">Admin</Link>
              )}
-             <Link href="/contact" className="text-green-500 font-bold text-sm">
+             <Link href="/contact" className="text-primary font-bold text-sm">
                 Contact
              </Link>
           </div>

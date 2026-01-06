@@ -19,8 +19,8 @@ export default function Home() {
       </video>
 
       {/* --- 3. L'OVERLAY (COUCHÉ NOIRE SEMI-TRANSPARENTE) --- */}
-      {/* Ajuste bg-black/50 (50% d'opacité) selon tes besoins : /30, /70... */}
-      <div className="absolute top-0 left-0 w-full h-full bg-black/60 -z-10"></div>
+      {/* Ajuste bg-background/50 (50% d'opacité) selon tes besoins : /30, /70... */}
+      <div className="absolute top-0 left-0 w-full h-full bg-background/60 -z-10"></div>
 
       {/* --- 4. TON CONTENU (Texte, boutons...) --- */}
       {/* Important : relative et z-10 pour passer devant la vidéo et l'overlay */}
@@ -43,7 +43,7 @@ export default function Home() {
         <div className="flex flex-col sm:flex-row justify-center gap-6">
           <Link 
             href="/realisations" 
-            className="bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-8 rounded-full flex items-center justify-center gap-3 transition transform hover:scale-105 text-lg shadow-lg shadow-green-900/30"
+            className="bg-primary hover:bg-green-700 text-white font-bold py-4 px-8 rounded-full flex items-center justify-center gap-3 transition transform hover:scale-105 text-lg shadow-lg shadow-green-900/30"
           >
             Voir nos réalisations <ArrowRight />
           </Link>

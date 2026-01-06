@@ -49,11 +49,11 @@ export default function Contact() {
   };
 
   return (
-    <main className="min-h-screen bg-black text-white px-8 pb-8 pt-8">
+    <main className="min-h-screen bg-background text-white px-8 pb-8 pt-8">
       
       {/* HEADER */}
       <div className="max-w-6xl mx-auto mb-16 pt-20">
-        <h1 className="text-4xl md:text-5xl font-bold text-green-500 mb-4">
+        <h1 className="text-4xl md:text-5xl font-bold text-primary mb-4">
           Contact & Équipe
         </h1>
         <p className="text-gray-400 text-lg">
@@ -64,18 +64,18 @@ export default function Contact() {
       <section className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-12">
         
         {/* COLONNE GAUCHE : INFOS */}
-        <div className="lg:col-span-1 bg-gray-900 p-8 rounded-2xl border border-gray-800 h-fit">
+        <div className="lg:col-span-1 bg-gray-900 p-8 rounded-dynamic border border-gray-800 h-fit">
           <h4 className="text-xl font-bold text-white mb-6">Nos Coordonnées</h4>
           <div className="space-y-6">
             <div className="flex items-start">
-              <Phone className="text-green-500 mr-4 mt-1" size={20} />
+              <Phone className="text-primary mr-4 mt-1" size={20} />
               <div>
                 <p className="font-bold text-gray-300">Téléphone</p>
                 <p className="text-gray-400">06 76 13 08 27</p>
               </div>
             </div>
             <div className="flex items-start">
-              <Mail className="text-green-500 mr-4 mt-1" size={20} />
+              <Mail className="text-primary mr-4 mt-1" size={20} />
               <div>
                 <p className="font-bold text-gray-300">Email</p>
                 <a href="mailto:Crysalys_production@outlook.fr" className="text-gray-400 hover:text-white transition">
@@ -84,7 +84,7 @@ export default function Contact() {
               </div>
             </div>
             <div className="flex items-start">
-              <MapPin className="text-green-500 mr-4 mt-1" size={20} />
+              <MapPin className="text-primary mr-4 mt-1" size={20} />
               <div>
                 <p className="font-bold text-gray-300">Zone d'intervention</p>
                 <p className="text-gray-400">Nouvelle-Aquitaine, National & International</p>
@@ -94,12 +94,12 @@ export default function Contact() {
         </div>
 
         {/* COLONNE DROITE : FORMULAIRE */}
-        <div className="lg:col-span-2 bg-gray-900 p-8 rounded-2xl border border-gray-800">
+        <div className="lg:col-span-2 bg-gray-900 p-8 rounded-dynamic border border-gray-800">
           <h4 className="text-xl font-bold text-white mb-6">Envoyez-nous un message</h4>
           
           {/* Message de Succès */}
           {status === "success" && (
-            <div className="mb-6 bg-green-900/30 border border-green-500 p-4 rounded-lg flex items-center text-green-400">
+            <div className="mb-6 bg-green-900/30 border border-primary p-4 rounded-lg flex items-center text-green-400">
               <CheckCircle className="mr-3" />
               <div>
                 <strong>Message envoyé !</strong>
@@ -126,7 +126,7 @@ export default function Contact() {
                   value={formData.nom}
                   onChange={handleChange}
                   required
-                  className="w-full bg-black border border-gray-700 rounded-lg p-3 text-white focus:border-green-500 outline-none transition"
+                  className="w-full bg-background border border-gray-700 rounded-lg p-3 text-white focus:border-primary outline-none transition"
                   placeholder="Votre nom"
                 />
               </div>
@@ -139,7 +139,7 @@ export default function Contact() {
                   value={formData.email}
                   onChange={handleChange} 
                   required
-                  className="w-full bg-black border border-gray-700 rounded-lg p-3 text-white focus:border-green-500 outline-none transition"
+                  className="w-full bg-background border border-gray-700 rounded-lg p-3 text-white focus:border-primary outline-none transition"
                   placeholder="votre@email.com"
                 />
               </div>
@@ -151,7 +151,7 @@ export default function Contact() {
                 id="objet" 
                 value={formData.objet}
                 onChange={handleChange}
-                className="w-full bg-black border border-gray-700 rounded-lg p-3 text-white focus:border-green-500 outline-none transition"
+                className="w-full bg-background border border-gray-700 rounded-lg p-3 text-white focus:border-primary outline-none transition"
               >
                 <option value="devis">Demande de Devis</option>
                 <option value="info">Renseignements</option>
@@ -167,7 +167,7 @@ export default function Contact() {
                 value={formData.message}
                 onChange={handleChange}
                 required
-                className="w-full bg-black border border-gray-700 rounded-lg p-3 text-white focus:border-green-500 outline-none transition"
+                className="w-full bg-background border border-gray-700 rounded-lg p-3 text-white focus:border-primary outline-none transition"
                 placeholder="Décrivez votre projet..."
               ></textarea>
             </div>
@@ -176,7 +176,7 @@ export default function Contact() {
               type="submit" 
               disabled={status === "loading" || status === "success"}
               className={`w-full font-bold py-4 rounded-lg transition flex items-center justify-center gap-2 
-                ${status === "success" ? "bg-green-600 text-white" : "bg-green-600 hover:bg-green-700 text-white"}
+                ${status === "success" ? "bg-primary text-white" : "bg-primary hover:bg-green-700 text-white"}
                 ${status === "loading" ? "opacity-50 cursor-not-allowed" : ""}
               `}
             >

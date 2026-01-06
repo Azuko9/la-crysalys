@@ -33,11 +33,11 @@ export default function Login() {
   };
 
   return (
-    <main className="min-h-screen bg-black flex items-center justify-center p-4">
-      <div className="bg-gray-900 p-8 rounded-2xl border border-gray-800 w-full max-w-md shadow-2xl">
+    <main className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="bg-gray-900 p-8 rounded-dynamic border border-gray-800 w-full max-w-md shadow-2xl">
         <div className="flex justify-center mb-6">
           <div className="bg-green-900/30 p-4 rounded-full">
-            <Lock className="text-green-500" size={32} />
+            <Lock className="text-primary" size={32} />
           </div>
         </div>
         
@@ -53,7 +53,7 @@ export default function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full bg-black border border-gray-700 rounded-lg p-3 text-white focus:border-green-500 outline-none"
+              className="w-full bg-background border border-gray-700 rounded-lg p-3 text-white focus:border-primary outline-none"
               placeholder="admin@crysalys.com"
             />
           </div>
@@ -65,7 +65,7 @@ export default function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full bg-black border border-gray-700 rounded-lg p-3 text-white focus:border-green-500 outline-none"
+              className="w-full bg-background border border-gray-700 rounded-lg p-3 text-white focus:border-primary outline-none"
               placeholder="••••••••"
             />
           </div>
@@ -79,7 +79,7 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition disabled:opacity-50"
+            className="w-full bg-primary hover:bg-green-700 text-white font-bold py-3 rounded-lg transition disabled:opacity-50"
           >
             {loading ? "Connexion..." : "Se connecter"}
           </button>

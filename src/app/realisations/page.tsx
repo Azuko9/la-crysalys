@@ -65,14 +65,14 @@ export default function Realisations() {
   const shorts = filtered.filter(p => p.youtube_url.includes('/shorts/') || p.category?.includes('Short'));
   const videosClassiques = filtered.filter(p => !p.youtube_url.includes('/shorts/') && !p.category?.includes('Short'));
 
-  if (loading) return <div className="h-screen bg-black flex items-center justify-center text-green-500 font-bold tracking-widest uppercase font-mono">Chargement Crysalys...</div>;
+  if (loading) return <div className="h-screen bg-background flex items-center justify-center text-primary font-bold tracking-widest uppercase font-mono">Chargement Crysalys...</div>;
 
   return (
-    <main className="min-h-screen bg-black text-white px-8 pb-20 pt-28">
+    <main className="min-h-screen bg-background text-white px-8 pb-20 pt-28">
       <div className="max-w-7xl mx-auto mb-12 flex justify-between items-end">
         <div>
           <h1 className="text-6xl font-black italic uppercase tracking-tighter">Portfolio</h1>
-          <p className="text-green-500 font-bold uppercase text-xs tracking-widest mt-2">Réalisations & Productions</p>
+          <p className="text-primary font-bold uppercase text-xs tracking-widest mt-2">Réalisations & Productions</p>
         </div>
         {user && (
           <button onClick={() => setIsManagingCats(!isManagingCats)} className="flex items-center gap-2 px-4 py-2 rounded-full border border-zinc-800 text-zinc-400 hover:text-white transition">
@@ -86,13 +86,13 @@ export default function Realisations() {
       <div className="max-w-7xl mx-auto mb-16 flex flex-wrap gap-3">
         <button onClick={() => setFiltreActuel("Tout")} className={`px-6 py-2 rounded-full text-[10px] font-bold border transition-all ${filtreActuel === "Tout" ? "bg-white text-black" : "bg-zinc-900 text-gray-500 border-zinc-800"}`}>TOUT</button>
         {categories.map(cat => (
-          <button key={cat.id} onClick={() => setFiltreActuel(cat.name)} className={`px-6 py-2 rounded-full text-[10px] font-bold border transition-all ${filtreActuel === cat.name ? "bg-green-600 text-white border-green-600" : "bg-zinc-900 text-gray-500 border-zinc-800"}`}>{cat.name.toUpperCase()}</button>
+          <button key={cat.id} onClick={() => setFiltreActuel(cat.name)} className={`px-6 py-2 rounded-full text-[10px] font-bold border transition-all ${filtreActuel === cat.name ? "bg-primary text-white border-green-600" : "bg-zinc-900 text-gray-500 border-zinc-800"}`}>{cat.name.toUpperCase()}</button>
         ))}
       </div>
 
       {user && (
         <div className="max-w-7xl mx-auto mb-20">
-          <button onClick={() => { setProjectToEdit(null); setIsFormOpen(true); }} className="w-full py-10 border-2 border-dashed border-zinc-800 hover:border-green-500 rounded-3xl text-zinc-500 hover:text-green-500 transition-all font-bold uppercase tracking-widest flex items-center justify-center gap-4">
+          <button onClick={() => { setProjectToEdit(null); setIsFormOpen(true); }} className="w-full py-10 border-2 border-dashed border-zinc-800 hover:border-primary rounded-dynamic text-zinc-500 hover:text-primary transition-all font-bold uppercase tracking-widest flex items-center justify-center gap-4">
             <PlusCircle size={24}/> Ajouter une réalisation
           </button>
         </div>
@@ -118,7 +118,7 @@ export default function Realisations() {
 
       {/* Rendu des Vidéos avec typage explicite (p: Project) */}
       <section className="max-w-7xl mx-auto">
-        <h2 className="text-xl font-black italic uppercase text-green-500 mb-8 border-l-4 border-green-500 pl-4 tracking-tighter">Productions</h2>
+        <h2 className="text-xl font-black italic uppercase text-primary mb-8 border-l-4 border-primary pl-4 tracking-tighter">Productions</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {videosClassiques.map((p: Project) => (
             <ProjectCard 
@@ -163,8 +163,8 @@ function ProjectCard({ projet, user, onEdit, fetchProjects }: ProjectCardProps) 
   };
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden group hover:border-green-500 transition-all cursor-pointer" onClick={() => router.push(`/realisations/${projet.id}`)}>
-      <div className="relative aspect-video bg-black">
+    <div className="bg-zinc-900 border border-zinc-800 rounded-dynamic overflow-hidden group hover:border-primary transition-all cursor-pointer" onClick={() => router.push(`/realisations/${projet.id}`)}>
+      <div className="relative aspect-video bg-background">
         {videoId && <img src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" alt={projet.title} />}
         {user && (
           <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">

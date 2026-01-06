@@ -93,11 +93,11 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 p-4 backdrop-blur-xl animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/95 p-4 backdrop-blur-xl animate-in fade-in duration-300">
       <div className="bg-zinc-900 border border-zinc-800 p-8 rounded-[2.5rem] w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-y-auto text-white no-scrollbar">
         
         <div className="flex justify-between items-center mb-10">
-          <h3 className="text-3xl font-black italic uppercase tracking-tighter text-green-500">
+          <h3 className="text-3xl font-black italic uppercase tracking-tighter text-primary">
             {project ? 'Modifier' : 'Ajouter'} <span className="text-white">Réalisation</span>
           </h3>
           <button onClick={onClose} className="text-zinc-600 hover:text-white transition-colors">
@@ -108,12 +108,12 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
         <form onSubmit={handleSubmit} className="space-y-6">
           <input 
             type="text" placeholder="Titre" required 
-            className="w-full bg-black border border-zinc-800 p-5 rounded-2xl outline-none focus:border-green-500 font-bold"
+            className="w-full bg-background border border-zinc-800 p-5 rounded-dynamic outline-none focus:border-primary font-bold"
             value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} 
           />
           <input 
             type="url" placeholder="Lien YouTube / Shorts" required 
-            className="w-full bg-black border border-zinc-800 p-5 rounded-2xl outline-none focus:border-green-500"
+            className="w-full bg-background border border-zinc-800 p-5 rounded-dynamic outline-none focus:border-primary"
             value={formData.youtube_url} onChange={e => setFormData({...formData, youtube_url: e.target.value})} 
           />
 
@@ -125,7 +125,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
                 <button 
                   key={cat.id} type="button" onClick={() => toggleCat(cat.name)}
                   className={`px-5 py-2 rounded-xl text-[10px] font-black border transition-all ${
-                    selectedCats.includes(cat.name) ? 'bg-green-600 border-green-600 text-white' : 'bg-black border-zinc-800 text-zinc-600'
+                    selectedCats.includes(cat.name) ? 'bg-primary border-green-600 text-white' : 'bg-background border-zinc-800 text-zinc-600'
                   }`}
                 >
                   {cat.name.toUpperCase()}
@@ -143,7 +143,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
                 <textarea 
                   placeholder="Détails vol, altitude... (Active le label Drone)" 
                   rows={2} 
-                  className="w-full bg-black border border-zinc-800 p-4 rounded-2xl outline-none focus:border-blue-500 text-sm italic"
+                  className="w-full bg-background border border-zinc-800 p-4 rounded-dynamic outline-none focus:border-blue-500 text-sm italic"
                   value={formData.drone_details} onChange={e => setFormData({...formData, drone_details: e.target.value})} 
                 />
              </div>
@@ -156,7 +156,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
                 <textarea 
                   placeholder="Montage, Colorimétrie... (Active le label Post-Prod)" 
                   rows={2} 
-                  className="w-full bg-black border border-zinc-800 p-4 rounded-2xl outline-none focus:border-purple-500 text-sm italic"
+                  className="w-full bg-background border border-zinc-800 p-4 rounded-dynamic outline-none focus:border-purple-500 text-sm italic"
                   value={formData.postprod_details} onChange={e => setFormData({...formData, postprod_details: e.target.value})} 
                 />
              </div>
@@ -167,12 +167,12 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
             <div className="flex flex-col md:flex-row gap-4">
               <textarea 
                 placeholder="Description globale..." 
-                className="flex-1 bg-black border border-zinc-800 p-5 rounded-2xl outline-none focus:border-green-500"
+                className="flex-1 bg-background border border-zinc-800 p-5 rounded-dynamic outline-none focus:border-primary"
                 value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} 
               />
               <input 
                 type="date" required
-                className="bg-black border border-zinc-800 p-5 rounded-2xl outline-none text-white h-fit"
+                className="bg-background border border-zinc-800 p-5 rounded-dynamic outline-none text-white h-fit"
                 value={formData.project_date} onChange={e => setFormData({...formData, project_date: e.target.value})} 
               />
             </div>
@@ -180,7 +180,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
 
           <button 
             type="submit" 
-            className="w-full bg-green-600 hover:bg-green-500 text-black font-black py-6 rounded-3xl uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-3 shadow-2xl active:scale-[0.98]"
+            className="w-full bg-primary hover:bg-green-500 text-black font-black py-6 rounded-dynamic uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-3 shadow-2xl active:scale-[0.98]"
           >
             <CloudUpload size={24}/>
             {project ? 'Mettre à jour' : 'Publier la réalisation'}

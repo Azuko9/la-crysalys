@@ -48,8 +48,8 @@ export default function RealisationDetail() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="w-12 h-12 border border-green-500 border-t-transparent animate-spin"></div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-12 h-12 border border-primary border-t-transparent animate-spin"></div>
       </div>
     );
   }
@@ -60,7 +60,7 @@ export default function RealisationDetail() {
   const isShort = project.youtube_url.includes('/shorts/') || project.category?.includes('Short');
 
   return (
-    <main className="min-h-screen bg-black text-white pb-24 pt-32 px-4 md:px-8">
+    <main className="min-h-screen bg-background text-white pb-24 pt-32 px-4 md:px-8">
       
       <div className="max-w-[1600px] mx-auto relative z-10">
         
@@ -75,7 +75,7 @@ export default function RealisationDetail() {
             </Link>
             <div className="flex items-center gap-6">
                 <span className="text-zinc-800 font-bold text-[10px] uppercase tracking-[0.3em]">REF_{project.id.slice(0,8).toUpperCase()}</span>
-                <Share2 size={16} className="text-zinc-600 hover:text-green-500 cursor-pointer transition-colors" />
+                <Share2 size={16} className="text-zinc-600 hover:text-primary cursor-pointer transition-colors" />
             </div>
         </div>
 
@@ -120,7 +120,7 @@ export default function RealisationDetail() {
                     <Monitor size={14}/>
                     <span className="text-[10px] font-black uppercase tracking-[0.4em]">Technical_Notes</span>
                 </div>
-                <p className="text-zinc-400 text-2xl leading-tight whitespace-pre-line font-medium border-l-2 border-green-500 pl-8 italic">
+                <p className="text-zinc-400 text-2xl leading-tight whitespace-pre-line font-medium border-l-2 border-primary pl-8 italic">
                 {project.description || "No technical specifications provided."}
                 </p>
             </div>
@@ -136,7 +136,7 @@ export default function RealisationDetail() {
                   <div className="flex flex-col gap-2">
                       <span className="text-zinc-700 text-[9px] font-black uppercase tracking-widest">Release Date</span>
                       <span className="text-xl font-bold uppercase italic text-white flex items-center gap-4">
-                          <Calendar size={18} className="text-green-500"/>
+                          <Calendar size={18} className="text-primary"/>
                           {project.project_date ? new Date(project.project_date).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long' }) : "--"}
                       </span>
                   </div>
@@ -145,7 +145,7 @@ export default function RealisationDetail() {
                     <div className="flex flex-col gap-2 border-t border-zinc-900 pt-6">
                         <span className="text-zinc-700 text-[9px] font-black uppercase tracking-widest">Client / Partner</span>
                         <span className="text-xl font-bold uppercase italic text-white flex items-center gap-4">
-                            <Briefcase size={18} className="text-green-500"/>
+                            <Briefcase size={18} className="text-primary"/>
                             {project.client_name}
                         </span>
                     </div>
@@ -156,7 +156,7 @@ export default function RealisationDetail() {
                           href={project.client_website} 
                           target="_blank" 
                           rel="noopener noreferrer"
-                          className="flex items-center justify-center gap-3 w-full bg-white text-black font-black py-5 hover:bg-green-600 hover:text-white transition-all uppercase text-[10px] tracking-[0.3em] mt-8"
+                          className="flex items-center justify-center gap-3 w-full bg-white text-black font-black py-5 hover:bg-primary hover:text-white transition-all uppercase text-[10px] tracking-[0.3em] mt-8"
                       >
                           External Link <ExternalLink size={14} />
                       </a>
@@ -170,10 +170,10 @@ export default function RealisationDetail() {
         <div className="mt-40 border border-zinc-800 p-12 flex flex-col md:flex-row justify-between items-center gap-12 bg-zinc-900/5">
             <div className="text-center md:text-left">
                 <h2 className="text-5xl md:text-8xl font-black uppercase italic tracking-tighter leading-[0.8]">
-                    Ready to <br /> <span className="text-green-500">Produce?</span>
+                    Ready to <br /> <span className="text-primary">Produce?</span>
                 </h2>
             </div>
-            <Link href="/contact" className="group bg-green-600 text-black px-16 py-8 font-black uppercase text-sm tracking-[0.3em] hover:bg-white transition-all flex items-center gap-4">
+            <Link href="/contact" className="group bg-primary text-black px-16 py-8 font-black uppercase text-sm tracking-[0.3em] hover:bg-white transition-all flex items-center gap-4">
                 Start Project <Play size={18} className="fill-current" />
             </Link>
         </div>

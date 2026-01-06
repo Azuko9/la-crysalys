@@ -71,14 +71,14 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, re
   return (
     <div className="max-w-7xl mx-auto mb-10 grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-4 duration-500">
       
-      <div className="p-6 bg-zinc-900 rounded-3xl border border-zinc-800 shadow-2xl">
-        <h3 className="font-bold mb-6 flex items-center gap-2 text-green-500 uppercase text-[10px] tracking-[0.2em]">
+      <div className="p-6 bg-zinc-900 rounded-dynamic border border-zinc-800 shadow-2xl">
+        <h3 className="font-bold mb-6 flex items-center gap-2 text-primary uppercase text-[10px] tracking-[0.2em]">
           <Tag size={16}/> Gestion des Métiers
         </h3>
 
         <div className="flex flex-wrap gap-2 mb-6">
           {categories.map(cat => (
-            <div key={cat.id} className="flex items-center gap-2 bg-black px-3 py-1.5 rounded-xl border border-zinc-800 transition-all hover:border-zinc-700">
+            <div key={cat.id} className="flex items-center gap-2 bg-background px-3 py-1.5 rounded-xl border border-zinc-800 transition-all hover:border-zinc-700">
               
               {editingId === cat.id ? (
                 <div className="flex items-center gap-2">
@@ -86,9 +86,9 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, re
                     autoFocus
                     value={editValue}
                     onChange={(e) => setEditValue(e.target.value)}
-                    className="bg-zinc-800 text-[10px] uppercase font-black px-2 py-1 rounded outline-none border border-green-500 w-24 text-white"
+                    className="bg-zinc-800 text-[10px] uppercase font-black px-2 py-1 rounded outline-none border border-primary w-24 text-white"
                   />
-                  <button onClick={() => handleUpdateName(cat.id)} className="text-green-500"><Check size={14}/></button>
+                  <button onClick={() => handleUpdateName(cat.id)} className="text-primary"><Check size={14}/></button>
                   <button onClick={() => setEditingId(null)} className="text-zinc-500"><X size={14}/></button>
                 </div>
               ) : (
@@ -121,16 +121,16 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, re
         <div className="flex gap-2">
           <input 
             value={newCatName} onChange={e => setNewCatName(e.target.value)}
-            className="bg-black border border-zinc-800 p-4 rounded-xl flex-1 text-sm outline-none focus:border-green-500 transition-all text-white" 
+            className="bg-background border border-zinc-800 p-4 rounded-xl flex-1 text-sm outline-none focus:border-primary transition-all text-white" 
             placeholder="Nouveau métier..."
           />
-          <button onClick={handleAdd} className="bg-green-600 hover:bg-green-500 px-6 rounded-xl font-bold text-black transition-all">
+          <button onClick={handleAdd} className="bg-primary hover:bg-green-500 px-6 rounded-xl font-bold text-black transition-all">
             <Plus size={24}/>
           </button>
         </div>
       </div>
 
-      <div className="p-6 bg-zinc-900 rounded-3xl border border-zinc-800 shadow-2xl opacity-60">
+      <div className="p-6 bg-zinc-900 rounded-dynamic border border-zinc-800 shadow-2xl opacity-60">
         <h3 className="font-bold mb-4 flex items-center gap-2 text-blue-500 uppercase text-[10px] tracking-[0.2em]">
           <Layers size={16}/> Labels Systèmes
         </h3>
@@ -141,7 +141,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, re
             </div>
           ))}
         </div>
-        <div className="flex items-start gap-3 p-4 bg-amber-500/5 border border-amber-500/10 rounded-2xl text-amber-500/70">
+        <div className="flex items-start gap-3 p-4 bg-amber-500/5 border border-amber-500/10 rounded-dynamic text-amber-500/70">
             <AlertTriangle size={18} className="shrink-0" />
             <p className="text-[10px] font-bold leading-relaxed uppercase tracking-tighter">
                 Sécurité active : La suppression d'une catégorie est bloquée tant que des vidéos y sont rattachées pour éviter les erreurs d'affichage sur le portfolio.

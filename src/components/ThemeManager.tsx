@@ -1,83 +1,102 @@
-// src/components/ThemeManager.tsx
 "use client";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { Palette, Save } from "lucide-react";
+import { Palette, Save, Box, Droplets } from "lucide-react";
 
 export default function ThemeManager() {
-  const [colors, setColors] = useState({
+  const [settings, setSettings] = useState({
     bg_color: "#000000",
-    primary_color: "#22c55e",
+    primary_color: "#22491fff",
+    border_radius: "0px",
+    border_opacity: "0.2",
   });
 
   useEffect(() => {
-    // Charger les couleurs actuelles depuis Supabase au montage
     const fetchSettings = async () => {
-      const { data } = await supabase.from("site_settings").select("*");
+      const { data } = await supabase.from("site_settings").select("key, value");
       if (data) {
-        const newColors = { ...colors };
+        const newSettings = { ...settings };
         data.forEach(s => {
-          if (s.key in newColors) newColors[s.key as keyof typeof colors] = s.value;
+          if (s.key in newSettings) {
+             // @ts-ignore
+             newSettings[s.key] = s.value;
+          }
         });
-        setColors(newColors);
-        applyColors(newColors); // Appliquer au chargement
+        setSettings(newSettings);
       }
     };
     fetchSettings();
   }, []);
 
-  const applyColors = (theme: typeof colors) => {
-    document.documentElement.style.setProperty("--bg-color", theme.bg_color);
-    document.documentElement.style.setProperty("--primary-color", theme.primary_color);
-  };
-
   const handleSave = async () => {
-    for (const [key, value] of Object.entries(colors)) {
-      await supabase.from("site_settings").upsert({ key, value }, { onConflict: 'key' });
+    // Transformation pour le format d'insertion Supabase
+    const updates = Object.entries(settings).map(([key, value]) => ({ key, value }));
+    
+    const { error } = await supabase
+      .from("site_settings")
+      .upsert(updates, { onConflict: 'key' });
+    
+    if (!error) {
+      alert("Design Système mis à jour ! Rechargez la page pour voir les changements.");
+      window.location.reload(); // Force le rafraîchissement pour l'injection CSS
     }
-    applyColors(colors);
-    alert("Couleurs mises à jour !");
   };
 
   return (
-    <div className="p-6 bg-zinc-900 border border-zinc-800 rounded-3xl mb-10">
-      <h3 className="text-green-500 font-black uppercase text-[10px] tracking-widest mb-6 flex items-center gap-2">
-        <Palette size={16}/> Personnalisation du Thème
-      </h3>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <div className="flex flex-col gap-2">
-          <label className="text-xs font-bold text-zinc-500 uppercase">Couleur de fond</label>
-          <div className="flex gap-4 items-center">
-            <input 
-              type="color" 
-              value={colors.bg_color} 
-              onChange={(e) => setColors({...colors, bg_color: e.target.value})}
-              className="w-12 h-12 bg-transparent cursor-pointer"
-            />
-            <span className="font-mono text-sm">{colors.bg_color}</span>
+    <div className="max-w-4xl mx-auto p-8 bg-zinc-900 border border-zinc-800 rounded-dynamic">
+      <div className="flex items-center gap-3 mb-10 border-b border-zinc-800 pb-6">
+        <Palette className="text-primary" size={24} />
+        <h2 className="text-xl font-black uppercase italic tracking-tighter text-white">Personnalisation du Thème</h2>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-10">
+        {/* COULEURS */}
+        <div className="space-y-6">
+          <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary flex items-center gap-2">
+            <Droplets size={14}/> Couleurs
+          </h3>
+          <div className="flex justify-between items-center">
+            <label className="text-xs font-bold text-zinc-500 uppercase">Fond (Background)</label>
+            <input type="color" value={settings.bg_color} 
+              onChange={(e) => setSettings({...settings, bg_color: e.target.value})}
+              className="w-10 h-10 bg-transparent cursor-pointer border border-zinc-800" />
+          </div>
+          <div className="flex justify-between items-center">
+            <label className="text-xs font-bold text-zinc-500 uppercase">Accent (Primary)</label>
+            <input type="color" value={settings.primary_color} 
+              onChange={(e) => setSettings({...settings, primary_color: e.target.value})}
+              className="w-10 h-10 bg-transparent cursor-pointer border border-zinc-800" />
           </div>
         </div>
 
-        <div className="flex flex-col gap-2">
-          <label className="text-xs font-bold text-zinc-500 uppercase">Couleur Primaire (Accents)</label>
-          <div className="flex gap-4 items-center">
-            <input 
-              type="color" 
-              value={colors.primary_color} 
-              onChange={(e) => setColors({...colors, primary_color: e.target.value})}
-              className="w-12 h-12 bg-transparent cursor-pointer"
-            />
-            <span className="font-mono text-sm">{colors.primary_color}</span>
+        {/* STRUCTURE */}
+        <div className="space-y-6">
+          <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-500 flex items-center gap-2">
+            <Box size={14}/> Structure
+          </h3>
+          <div className="space-y-3">
+            <div className="flex justify-between text-xs text-zinc-500 font-bold uppercase">
+              <span>Arrondis : {settings.border_radius}</span>
+            </div>
+            <input type="range" min="0" max="50" step="2"
+              value={parseInt(settings.border_radius)}
+              onChange={(e) => setSettings({...settings, border_radius: `${e.target.value}px`})}
+              className="w-full accent-primary bg-zinc-800 h-1 cursor-pointer appearance-none" />
+          </div>
+          <div className="space-y-3">
+            <div className="flex justify-between text-xs text-zinc-500 font-bold uppercase">
+              <span>Opacité Bordures : {Math.round(parseFloat(settings.border_opacity) * 100)}%</span>
+            </div>
+            <input type="range" min="0" max="1" step="0.05"
+              value={settings.border_opacity}
+              onChange={(e) => setSettings({...settings, border_opacity: e.target.value})}
+              className="w-full accent-primary bg-zinc-800 h-1 cursor-pointer appearance-none" />
           </div>
         </div>
       </div>
 
-      <button 
-        onClick={handleSave}
-        className="w-full bg-white text-black font-black py-4 rounded-xl uppercase text-[10px] tracking-widest hover:bg-green-500 transition-all flex items-center justify-center gap-2"
-      >
-        <Save size={16}/> Enregistrer les réglages
+      <button onClick={handleSave} className="w-full bg-primary text-black font-black py-5 rounded-dynamic uppercase text-[10px] tracking-[0.4em] hover:bg-white transition-all">
+        Appliquer les modifications
       </button>
     </div>
   );
