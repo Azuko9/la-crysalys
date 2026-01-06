@@ -38,8 +38,10 @@ export default function Header() {
   if (pathname === "/") return null;
 
   const navLinks = [
-    { name: "Réalisations", href: "/realisations" },
     { name: "Expertise Drone", href: "/expertise"},
+    { name: "Post-Productions", href: "/postprod" },
+    { name: "Productions", href: "/realisations" },
+    
     { name: "Nos Presta", href: "/prestation" },
     { name: "Contact", href: "/contact" },
   ];

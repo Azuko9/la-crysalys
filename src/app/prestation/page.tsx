@@ -20,6 +20,20 @@ export default function Prestation() {
           Nous adaptons nos moyens techniques à votre histoire.
         </p>
       </div>
+            {/* --- CTA --- */}
+      <div className="max-w-4xl mx-auto text-center bg-gray-900 p-4 m-12 rounded-3xl border border-gray-800">
+        <h3 className="text-2xl font-bold text-white mb-4">Un projet sur mesure ?</h3>
+        <p className="text-gray-400 mb-8">
+          Nous nous adaptons à votre budget et vos exigences spécifiques (Drone FPV, Événementiel, Clip...).
+        </p>
+        <Link 
+          href="/contact" 
+          className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-full transition transform hover:scale-105 inline-block"
+        >
+          Demander un Devis
+        </Link>
+      </div>
+
 
       {/* --- SECTION 1 : PUBLICITÉ --- */}
       <section className="max-w-6xl mx-auto mb-20">
@@ -34,7 +48,7 @@ export default function Prestation() {
             <div className="bg-gray-500 text-black font-bold text-center py-2 rounded mb-6 w-32 uppercase text-sm tracking-wider">
               Pack Silver
             </div>
-            <div className="text-4xl font-bold text-white mb-2">850 €</div>
+            {/*<div className="text-4xl font-bold text-white mb-2">850 €</div>*/}
             <p className="text-gray-400 mb-6 italic">1/2 journée tournage + 2 jours montage</p>
             
             <ul className="space-y-4 mb-8 flex-1">
@@ -57,8 +71,8 @@ export default function Prestation() {
             <div className="bg-yellow-500 text-black font-bold text-center py-2 rounded mb-6 w-32 uppercase text-sm tracking-wider flex items-center justify-center gap-2">
                Pack Gold <Star size={14} fill="black" />
             </div>
-            <div className="text-4xl font-bold text-white mb-2">1 600 €</div>
-            <p className="text-gray-400 mb-6 italic">2 demi-journées tournage + 3 jours montage</p>
+            {/*<div className="text-4xl font-bold text-white mb-2">1 600 €</div>*/}
+            <p className="text-gray-400 mb-6 italic">2 demi-journées tournage + 3 jours montage</p> 
             
             <ul className="space-y-4 mb-8 flex-1">
               <li className="flex items-start"><Check className="text-yellow-500 mr-2 shrink-0" size={18} /> Tout du Pack Silver</li>
@@ -85,7 +99,7 @@ export default function Prestation() {
            {/* Carte Silver Corp */}
            <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800 hover:border-blue-500 transition">
               <div className="text-2xl font-bold mb-2 text-gray-300">Pack Silver</div>
-              <div className="text-3xl font-bold text-blue-400 mb-4">1 195 €</div>
+              {/*<div className="text-3xl font-bold text-blue-400 mb-4">1 195 €</div>*/}
               <ul className="space-y-2 text-gray-400 mb-6">
                   <li>• 1 jour tournage + 3 jours montage</li>
                   <li>• Interviews + Scénario original</li>
@@ -96,7 +110,7 @@ export default function Prestation() {
            {/* Carte Gold Corp */}
            <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800 hover:border-yellow-500 transition">
               <div className="text-2xl font-bold mb-2 text-yellow-500">Pack Gold</div>
-              <div className="text-3xl font-bold text-white mb-4">2 300 €</div>
+              {/*<div className="text-3xl font-bold text-white mb-4">2 300 €</div>*/} 
               <ul className="space-y-2 text-gray-400 mb-6">
                   <li>• 2 jours tournage + 5 jours montage</li>
                   <li>• Scénario complet + Dialogues</li>
@@ -106,19 +120,7 @@ export default function Prestation() {
         </div>
       </section>
 
-      {/* --- CTA FINAL --- */}
-      <div className="max-w-4xl mx-auto text-center bg-gray-900 p-12 rounded-3xl border border-gray-800">
-        <h3 className="text-2xl font-bold text-white mb-4">Un projet sur mesure ?</h3>
-        <p className="text-gray-400 mb-8">
-          Nous nous adaptons à votre budget et vos exigences spécifiques (Drone FPV, Événementiel, Clip...).
-        </p>
-        <Link 
-          href="/contact" 
-          className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-full transition transform hover:scale-105 inline-block"
-        >
-          Demander un Devis
-        </Link>
-      </div>
+
 
     </main>
   );
