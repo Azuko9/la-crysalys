@@ -2,10 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --bg-color: #000000;
+  --primary-color: #22c55e;
+  --accent-color: #3b82f6;
+}
 
 body {
-  background-color: #000000;
-  color: #ffffff;
+  background-color: var(--bg-color);
+  color: white;
 }
 
 /* FORCE LE PLEIN ÉCRAN POUR LES VIDÉOS */
