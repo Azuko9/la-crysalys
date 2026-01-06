@@ -4,7 +4,11 @@
 
 :root {
   --bg-color: #000000;
-  --primary-color: #376140;
-  --radius: 0px;
-  --border-opacity: 0.2;
+  --primary-color: #22c55e;
+  --accent-color: #3b82f6;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: white;
 }

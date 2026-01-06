@@ -20,21 +20,24 @@ export default async function RootLayout({
   const getS = (key: string, def: string) => settings?.find(s => s.key === key)?.value || def;
 
   const theme = {
-    bg: getS("bg_color", "#000000"),
-    primary: getS("primary_color", "#a23939"),
-    radius: getS("border_radius", "10px"),
-    opacity: getS("border_opacity", "0.2"),
+    bg_color: settings?.find(s => s.key === "bg_color")?.value || "#000000",
+    primary_color: settings?.find(s => s.key === "primary_color")?.value || "#22c55e",
+    accent_color: settings?.find(s => s.key === "accent_color")?.value || "#3b82f6",
+    // AJOUTS POUR LA VERSION AVANCÉE
+    border_radius: settings?.find(s => s.key === "border_radius")?.value || "0px",
+    border_opacity: settings?.find(s => s.key === "border_opacity")?.value || "0.2",
   };
 
   return (
     <html lang="fr">
       <head>
-        <style dangerouslySetInnerHTML={{ __html: `
+        <style dangerouslySetInnerHTML={{
+          __html: `
           :root {
-            --bg-color: ${theme.bg};
-            --primary-color: ${theme.primary};
-            --radius: ${theme.radius};
-            --border-opacity: ${theme.opacity};
+                  --bg-color: ${theme.bg_color};
+                  --primary-color: ${theme.primary_color};
+                  --radius: ${theme.border_radius};
+                  --border-opacity: ${theme.border_opacity};
           }
           body { background-color: var(--bg-color) !important; }
         `}} />
@@ -43,7 +46,7 @@ export default async function RootLayout({
         <Header />
         {children}
       </body>
-    </html>  
+    </html>
   );
 
 
