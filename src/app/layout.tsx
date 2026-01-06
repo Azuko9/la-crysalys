@@ -3,8 +3,16 @@ import { supabase } from "@/lib/supabaseClient";
 import "./globals.css";
 import Header from "@/components/Header";
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  // On récupère les réglages SANS CACHE (important pour voir les modifs direct)
+// FORCE LE RENDU DYNAMIQUE (Désactive le cache de page)
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+export default async function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  // Récupération des données sans cache
   const { data: settings } = await supabase
     .from("site_settings")
     .select("key, value");
@@ -29,12 +37,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             --border-opacity: ${theme.opacity};
           }
           body { background-color: var(--bg-color) !important; }
-          .rounded-dynamic { border-radius: var(--radius) !important; }
-          .border-zinc-800 { border-color: rgba(255, 255, 255, var(--border-opacity)) !important; }
         `}} />
       </head>
       <body className="bg-background text-white antialiased">
-        < Header />
+        <Header />
         {children}
       </body>
     </html>
