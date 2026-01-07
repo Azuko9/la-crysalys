@@ -23,27 +23,34 @@ export default async function RootLayout({
     bg_color: settings?.find(s => s.key === "bg_color")?.value || "#000000",
     primary_color: settings?.find(s => s.key === "primary_color")?.value || "#22c55e",
     accent_color: settings?.find(s => s.key === "accent_color")?.value || "#3b82f6",
-    // AJOUTS POUR LA VERSION AVANCÉE
+    card_bg: getS("card_bg", "#18181b"),
     border_radius: settings?.find(s => s.key === "border_radius")?.value || "0px",
-    border_opacity: settings?.find(s => s.key === "border_opacity")?.value || "0.2",
+   
   };
 
   return (
-    <html lang="fr">
+<html lang="fr">
       <head>
-        <style dangerouslySetInnerHTML={{
-          __html: `
+        <style dangerouslySetInnerHTML={{ __html: `
           :root {
-                  --bg-color: ${theme.bg_color};
-                  --primary-color: ${theme.primary_color};
-                  --radius: ${theme.border_radius};
-                  --border-opacity: ${theme.border_opacity};
+            --bg-color: ${theme.bg_color};
+            --primary-color: ${theme.primary_color};
+            --radius: ${theme.border_radius};
+            --card-bg: ${theme.card_bg};
           }
+
           body { background-color: var(--bg-color) !important; }
+
+          /* On force le changement de couleur sur tous tes blocs zinc-900/zinc-950 */
+          .bg-zinc-900, .bg-zinc-900\/20, .bg-zinc-900\/40, .bg-card-dynamic {
+            background-color: var(--card-bg) !important;
+          }
+
+          .rounded-dynamic { border-radius: var(--radius) !important; }
         `}} />
       </head>
       <body className="bg-background text-white antialiased">
-        <Header />
+        <Header/>
         {children}
       </body>
     </html>

@@ -12,3 +12,6 @@ body {
   background-color: var(--bg-color);
   color: white;
 }
+.bg-zinc-900, .bg-zinc-900\/40, .bg-card-dynamic { 
+   background-color: var(--card-bg) !important; 
+}
