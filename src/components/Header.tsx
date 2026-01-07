@@ -72,7 +72,13 @@ export default function Header() {
                 <Link
                   key={link.name}
                   href={link.href}
-             
+                  className={`text-sm font-bold transition-colors duration-300 ${
+                    isActive 
+                      ? "text-primary" // 1. Si la page est active : Vert (priorité absolue)
+                      : isDrone
+                        ? "text-white hover:text-white-200" // 2. Si c'est le lien Drone (et pas actif) 
+                        : "text-gray-300 hover:text-white"    // 3. Pour tous les autres liens : Gris
+                  }`}
                 >
                   {link.name}
                 </Link>
