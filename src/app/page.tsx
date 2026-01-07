@@ -33,7 +33,7 @@ export default function Home() {
   <span 
     className="text-transparent bg-clip-text bg-gradient-to-r"
     style={{ 
-      backgroundImage: `linear-gradient(to right, var(--primary-color), #ffffff88)` 
+      backgroundImage: `linear-gradient(to right, var(--primary-color), #ffffff55)` 
     }}
   >
     Sublimez votre histoire.
