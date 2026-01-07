@@ -76,7 +76,7 @@ export default function Header() {
                     isActive 
                       ? "text-primary" // 1. Si la page est active : Vert (priorité absolue)
                       : isDrone
-                        ? "text-cyan-400 hover:text-white-200" // 2. Si c'est le lien Drone (et pas actif) 
+                        ? "text-white-400 hover:text-white-200" // 2. Si c'est le lien Drone (et pas actif) 
                         : "text-gray-300 hover:text-white"    // 3. Pour tous les autres liens : Gris
                   }`}
                 >
