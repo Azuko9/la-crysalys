@@ -101,7 +101,7 @@ export default function Realisations() {
       {/* Rendu des Shorts avec typage explicite (p: Project) */}
       {shorts.length > 0 && (
         <section className="max-w-7xl mx-auto mb-24">
-          <h2 className="text-xl font-black italic uppercase text-red-600 mb-8 border-l-4 border-red-600 pl-4 tracking-tighter">YouTube Shorts</h2>
+          <h2 className="text-xl font-black italic uppercase text-primary mb-8 border-l-4 border-primary pl-4 tracking-tighter">YouTube Shorts</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
             {shorts.map((p: Project) => (
               <ProjectCard 

@@ -22,7 +22,7 @@ export default async function RootLayout({
   const theme = {
     bg: getS("bg_color", "#000000"),
     primary: getS("primary_color", "#a23939"),
-    radius: getS("border_radius", "0px"),
+    radius: getS("border_radius", "10px"),
     opacity: getS("border_opacity", "0.2"),
   };
 
@@ -43,8 +43,8 @@ export default async function RootLayout({
         <Header />
         {children}
       </body>
-    </html>
+    </html>  
   );
 
-  
+
 }
