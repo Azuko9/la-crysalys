@@ -7,7 +7,8 @@ const config: Config = {
     extend: {
       colors: {
         background: "var(--bg-color)",
-        primary: "var(--primary-color)", // C'est ici que le lien se fait
+        primary: "var(--primary-color)",
+        card: "var(--card-bg)", // C'est ici que le lien se fait
       },
     },
   },
