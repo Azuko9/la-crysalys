@@ -94,7 +94,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/95 p-4 backdrop-blur-xl animate-in fade-in duration-300">
-      <div className="bg-zinc-900 border border-zinc-800 p-8 rounded-[2.5rem] w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-y-auto text-white no-scrollbar">
+      <div className="bg-card border border-zinc-800 p-8 rounded-[2.5rem] w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-y-auto text-white no-scrollbar">
         
         <div className="flex justify-between items-center mb-10">
           <h3 className="text-3xl font-black italic uppercase tracking-tighter text-primary">

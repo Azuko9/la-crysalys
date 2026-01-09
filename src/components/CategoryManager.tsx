@@ -71,7 +71,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, re
   return (
     <div className="max-w-7xl mx-auto mb-10 grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-4 duration-500">
       
-      <div className="p-6 bg-zinc-900 rounded-dynamic border border-zinc-800 shadow-2xl">
+      <div className="p-6 bg-card rounded-dynamic border border-zinc-800 shadow-2xl">
         <h3 className="font-bold mb-6 flex items-center gap-2 text-primary uppercase text-[10px] tracking-[0.2em]">
           <Tag size={16}/> Gestion des Métiers
         </h3>
@@ -130,7 +130,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, re
         </div>
       </div>
 
-      <div className="p-6 bg-zinc-900 rounded-dynamic border border-zinc-800 shadow-2xl opacity-60">
+      <div className="p-6 bg-card rounded-dynamic border border-zinc-800 shadow-2xl opacity-60">
         <h3 className="font-bold mb-4 flex items-center gap-2 text-blue-500 uppercase text-[10px] tracking-[0.2em]">
           <Layers size={16}/> Labels Systèmes
         </h3>

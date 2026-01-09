@@ -53,8 +53,8 @@ export default function Contact() {
       
       {/* HEADER */}
       <div className="max-w-6xl mx-auto mb-16 pt-20">
-        <h1 className="text-4xl md:text-5xl font-bold text-primary mb-4">
-          Contact & Équipe
+        <h1 className="text-4xl md:text-5xl font-bold text-primary mb-4 ">
+          Contact
         </h1>
         <p className="text-gray-400 text-lg">
           Une idée ? Un projet ? Parlons-en.
@@ -64,7 +64,7 @@ export default function Contact() {
       <section className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-12">
         
         {/* COLONNE GAUCHE : INFOS */}
-        <div className="lg:col-span-1 bg-gray-900 p-8 rounded-dynamic border border-gray-800 h-fit">
+        <div className="lg:col-span-1 bg-card p-8 rounded-dynamic border border-gray-800 h-fit">
           <h4 className="text-xl font-bold text-white mb-6">Nos Coordonnées</h4>
           <div className="space-y-6">
             <div className="flex items-start">
@@ -94,7 +94,7 @@ export default function Contact() {
         </div>
 
         {/* COLONNE DROITE : FORMULAIRE */}
-        <div className="lg:col-span-2 bg-gray-900 p-8 rounded-dynamic border border-gray-800">
+        <div className="lg:col-span-2 bg-card p-8 rounded-dynamic border border-gray-800">
           <h4 className="text-xl font-bold text-white mb-6">Envoyez-nous un message</h4>
           
           {/* Message de Succès */}

@@ -12,6 +12,20 @@ body {
   background-color: var(--bg-color);
   color: white;
 }
-.bg-zinc-900, .bg-zinc-900\/40, .bg-card-dynamic { 
+.bg-card, .bg-card\/40, .bg-card-dynamic { 
    background-color: var(--card-bg) !important; 
 }
+
+
+/* src/app/globals.css */
+@layer utilities {
+  .text-outline-black {
+    -webkit-text-stroke: 2px black;
+  }
+  
+  .text-outline-white {
+    -webkit-text-stroke: 2px white;
+  }
+}
+
+

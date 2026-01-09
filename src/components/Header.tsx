@@ -64,7 +64,7 @@ export default function Header() {
                 key={link.name}
                 href={link.href}
                 className={`text-sm font-bold transition-colors ${
-                  pathname === link.href ? "text-primary" : "text-gray-300 hover:text-white"
+                  pathname === link.href ? "text-primary" : "text-primary hover:text-white"
                 }`}
               >
                 {link.name}

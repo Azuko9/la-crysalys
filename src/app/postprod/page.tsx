@@ -37,14 +37,14 @@ export default function PostProdPage() {
                 <div className="h-[1px] w-12 bg-primary"></div>
                 <span className="text-primary font-black uppercase text-[10px] tracking-[0.4em]">Studio / Editing</span>
               </div>
-              <h1 className="text-8xl md:text-[12rem] font-black italic uppercase tracking-tighter leading-[0.75] mb-12">
+              <h1 className="text-8xl md:text-[12rem] font-black italic uppercase tracking-tighter leading-[0.75] mb-12 text-outline-black">
                 Post<span className="text-primary">.</span><br />Prod
               </h1>
 
             </div>
 
             <div className="w-full lg:w-96 space-y-4">
-               <div className="p-6 bg-zinc-900/40 border border-zinc-800 rounded-dynamic backdrop-blur-md">
+               <div className="p-6 bg-card/40 border border-zinc-800 rounded-dynamic backdrop-blur-md">
                   <h3 className="text-[10px] font-black uppercase text-zinc-500 mb-6 tracking-widest flex items-center gap-2">
                     <Terminal size={14}/> Technical Specs
                   </h3>
@@ -95,7 +95,7 @@ export default function PostProdPage() {
 // Réutiliser les mêmes composants FeatureCard et ProjectItem que ci-dessus
 function FeatureCard({ icon, title, text }: any) {
   return (
-    <div className="p-8 bg-zinc-900/20 border border-zinc-800 rounded-dynamic hover:border-primary/50 transition-colors group">
+    <div className="p-8 bg-card border border-zinc-800 rounded-dynamic hover:border-primary/50 transition-colors group">
       <div className="text-primary mb-6 group-hover:scale-110 transition-transform">{icon}</div>
       <h4 className="text-lg font-black italic uppercase mb-2">{title}</h4>
       <p className="text-xs text-zinc-500 leading-relaxed uppercase font-bold tracking-tighter">{text}</p>
@@ -107,7 +107,7 @@ function ProjectItem({ project }: any) {
   const videoId = getYouTubeID(project.youtube_url);
   return (
     <div className="group cursor-pointer">
-      <div className="aspect-video bg-zinc-900 rounded-dynamic overflow-hidden border border-zinc-800 group-hover:border-primary transition-all relative shadow-2xl">
+      <div className="aspect-video bg-card rounded-dynamic overflow-hidden border border-zinc-800 group-hover:border-primary transition-all relative shadow-2xl">
          <iframe className="absolute inset-0 w-full h-full p-0.5 rounded-dynamic" src={`https://www.youtube.com/embed/${videoId}?rel=0`} allowFullScreen />
       </div>
       <h3 className="mt-6 font-bold uppercase italic text-lg tracking-tighter group-hover:text-primary transition-colors">{project.title}</h3>

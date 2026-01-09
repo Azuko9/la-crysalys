@@ -34,7 +34,7 @@ export default function Login() {
 
   return (
     <main className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="bg-gray-900 p-8 rounded-dynamic border border-gray-800 w-full max-w-md shadow-2xl">
+      <div className="bg-card p-8 rounded-dynamic border border-gray-800 w-full max-w-md shadow-2xl">
         <div className="flex justify-center mb-6">
           <div className="bg-green-900/30 p-4 rounded-full">
             <Lock className="text-primary" size={32} />

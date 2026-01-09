@@ -71,7 +71,7 @@ export default function Realisations() {
     <main className="min-h-screen bg-background text-white px-8 pb-20 pt-28">
       <div className="max-w-7xl mx-auto mb-12 flex justify-between items-end">
         <div>
-          <h1 className="text-6xl font-black italic uppercase tracking-tighter">Portfolio</h1>
+          <h1 className="text-6xl font-black italic uppercase tracking-tighter text-outline-black">Portfolio</h1>
           <p className="text-primary font-bold uppercase text-xs tracking-widest mt-2">Réalisations & Productions</p>
         </div>
         {user && (
@@ -84,9 +84,9 @@ export default function Realisations() {
       {isManagingCats && user && <CategoryManager categories={categories} refreshCategories={fetchCategories} />}
 
       <div className="max-w-7xl mx-auto mb-16 flex flex-wrap gap-3">
-        <button onClick={() => setFiltreActuel("Tout")} className={`px-6 py-2 rounded-full text-[10px] font-bold border transition-all ${filtreActuel === "Tout" ? "bg-white text-black" : "bg-zinc-900 text-gray-500 border-zinc-800"}`}>TOUT</button>
+        <button onClick={() => setFiltreActuel("Tout")} className={`px-6 py-2 rounded-full text-[10px] font-bold border transition-all ${filtreActuel === "Tout" ? "bg-white text-black" : "bg-card text-gray-500 border-zinc-800"}`}>TOUT</button>
         {categories.map(cat => (
-          <button key={cat.id} onClick={() => setFiltreActuel(cat.name)} className={`px-6 py-2 rounded-full text-[10px] font-bold border transition-all ${filtreActuel === cat.name ? "bg-primary text-white border-green-600" : "bg-zinc-900 text-gray-500 border-zinc-800"}`}>{cat.name.toUpperCase()}</button>
+          <button key={cat.id} onClick={() => setFiltreActuel(cat.name)} className={`px-6 py-2 rounded-full text-[10px] font-bold border transition-all ${filtreActuel === cat.name ? "bg-primary text-white border-green-600" : "bg-card text-gray-500 border-zinc-800"}`}>{cat.name.toUpperCase()}</button>
         ))}
       </div>
 
@@ -163,7 +163,7 @@ function ProjectCard({ projet, user, onEdit, fetchProjects }: ProjectCardProps) 
   };
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-dynamic overflow-hidden group hover:border-primary transition-all cursor-pointer" onClick={() => router.push(`/realisations/${projet.id}`)}>
+    <div className="bg-card border border-zinc-800 rounded-dynamic overflow-hidden group hover:border-primary transition-all cursor-pointer" onClick={() => router.push(`/realisations/${projet.id}`)}>
       <div className="relative aspect-video bg-background">
         {videoId && <img src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" alt={projet.title} />}
         {user && (

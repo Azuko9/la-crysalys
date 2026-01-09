@@ -78,7 +78,7 @@ export default function AdminDashboard() {
 
         <div className="flex flex-col sm:flex-row items-center gap-4">
           {/* SÉLECTEUR D'ONGLETS BRUTALISTE */}
-          <nav className="flex bg-zinc-900 p-1 rounded-dynamic border border-zinc-800">
+          <nav className="flex bg-card p-1 rounded-dynamic border border-zinc-800">
             <button 
               onClick={() => setActiveTab("messages")}
               className={`flex items-center gap-2 px-6 py-3 rounded-dynamic text-[10px] font-black uppercase tracking-widest transition-all ${
@@ -99,7 +99,7 @@ export default function AdminDashboard() {
 
           <button 
             onClick={handleLogout}
-            className="p-4 text-zinc-600 hover:text-red-500 transition-colors bg-zinc-900/50 rounded-dynamic border border-zinc-800"
+            className="p-4 text-zinc-600 hover:text-red-500 transition-colors bg-card/50 rounded-dynamic border border-zinc-800"
             title="Quitter l'espace admin"
           >
             <LogOut size={20} />
@@ -131,17 +131,17 @@ export default function AdminDashboard() {
             {loading ? (
               <div className="space-y-6">
                 {[1, 2, 3].map(i => (
-                  <div key={i} className="h-48 bg-zinc-900/50 border border-zinc-800 animate-pulse rounded-dynamic" />
+                  <div key={i} className="h-48 bg-card/50 border border-zinc-800 animate-pulse rounded-dynamic" />
                 ))}
               </div>
             ) : messages.length === 0 ? (
-              <div className="text-zinc-600 italic py-32 bg-zinc-900/10 rounded-dynamic text-center border border-zinc-800 border-dashed uppercase text-[10px] font-black tracking-[0.5em]">
+              <div className="text-zinc-600 italic py-32 bg-card/10 rounded-dynamic text-center border border-zinc-800 border-dashed uppercase text-[10px] font-black tracking-[0.5em]">
                  No data available _ Tout est calme.
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-8">
                 {messages.map((msg) => (
-                  <div key={msg.id} className="bg-zinc-900/20 border border-zinc-800 p-8 rounded-dynamic relative group hover:border-primary transition-all duration-500">
+                  <div key={msg.id} className="bg-card border border-zinc-800 p-8 rounded-dynamic relative group hover:border-primary transition-all duration-500">
                     
                     {/* Bouton supprimer discret */}
                     <button 
@@ -177,7 +177,7 @@ export default function AdminDashboard() {
                       href={`mailto:${msg.email}`} 
                       className="inline-flex items-center text-[10px] font-black uppercase tracking-[0.3em] text-primary hover:text-white transition-all gap-4 group"
                     >
-                      <div className="w-12 h-12 bg-zinc-900 border border-zinc-800 flex items-center justify-center group-hover:bg-primary group-hover:text-black transition-all">
+                      <div className="w-12 h-12 bg-card border border-zinc-800 flex items-center justify-center group-hover:bg-primary group-hover:text-black transition-all">
                         <ExternalLink size={16} /> 
                       </div>
                       Reply to : {msg.email}

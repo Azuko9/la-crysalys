@@ -127,7 +127,7 @@ export default function RealisationDetail() {
           </div>
 
           <div className="lg:col-span-4 space-y-6">
-            <div className="bg-zinc-900/10 p-8 border border-zinc-800">
+            <div className="bg-card/10 p-8 border border-zinc-800">
                 <h3 className="text-[10px] font-black uppercase text-zinc-500 mb-10 tracking-[0.4em] flex items-center gap-2">
                   <Info size={14}/> Project_Data
                 </h3>
@@ -167,7 +167,7 @@ export default function RealisationDetail() {
         </div>
 
         {/* CTA SECTION - STYLE BRUTALISTE */}
-        <div className="mt-40 border border-zinc-800 p-12 flex flex-col md:flex-row justify-between items-center gap-12 bg-zinc-900/5">
+        <div className="mt-40 border border-zinc-800 p-12 flex flex-col md:flex-row justify-between items-center gap-12 bg-card/5">
             <div className="text-center md:text-left">
                 <h2 className="text-5xl md:text-8xl font-black uppercase italic tracking-tighter leading-[0.8]">
                     Ready to <br /> <span className="text-primary">Produce?</span>

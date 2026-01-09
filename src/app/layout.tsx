@@ -2,6 +2,7 @@
 import { supabase } from "@/lib/supabaseClient";
 import "./globals.css";
 import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 
 // FORCE LE RENDU DYNAMIQUE (Désactive le cache de page)
 export const dynamic = "force-dynamic";
@@ -52,6 +53,7 @@ export default async function RootLayout({
       <body className="bg-background text-white antialiased">
         <Header/>
         {children}
+        <Footer/>
       </body>
     </html>
   );
