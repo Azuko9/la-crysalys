@@ -8,22 +8,27 @@ import { useRouter } from "next/navigation";
 import { CategoryManager, type Category } from "@/components/CategoryManager";
 import ProjectModal from "@/components/ProjectModal";
 
-// 1. Export de l'interface pour qu'elle soit accessible par ProjectModal
 export interface Project {
   id: string;
   title: string;
   youtube_url: string;
-  category: string; // Stocké sous forme "Immobilier, Drone"
+  category: string;
   description: string | null;
+  description_drone?: string | null;
+  description_postprod?: string | null;
+  client_name?: string | null;
+  client_website?: string | null;
   project_date: string | null;
+  
 }
 
-// 2. Interface pour les props de la Card
+// 1. AJOUT DE LA PROPRIÉTÉ isVertical dans l'interface
 interface ProjectCardProps {
   projet: Project;
   user: any;
   onEdit: (p: Project) => void;
   fetchProjects: () => Promise<void>;
+  isVertical?: boolean; // Optionnel, par défaut false
 }
 
 export default function Realisations() {
@@ -56,12 +61,10 @@ export default function Realisations() {
     setCategories((data as Category[]) || []);
   };
 
-  // Filtrage
   const filtered = filtreActuel === "Tout" 
     ? projets 
     : projets.filter(p => p.category?.includes(filtreActuel));
 
-  // Séparation Shorts / Productions
   const shorts = filtered.filter(p => p.youtube_url.includes('/shorts/') || p.category?.includes('Short'));
   const videosClassiques = filtered.filter(p => !p.youtube_url.includes('/shorts/') && !p.category?.includes('Short'));
 
@@ -93,7 +96,6 @@ export default function Realisations() {
         ))}
       </div>
 
-      {/* BOUTON AJOUTER (ADMIN) */}
       {user && (
         <div className="max-w-7xl mx-auto mb-20">
           <button onClick={() => { setProjectToEdit(null); setIsFormOpen(true); }} className="w-full py-10 border-2 border-dashed border-zinc-800 hover:border-primary rounded-dynamic text-zinc-500 hover:text-primary transition-all font-bold uppercase tracking-widest flex items-center justify-center gap-4 text-xs">
@@ -106,6 +108,7 @@ export default function Realisations() {
       {shorts.length > 0 && (
         <section className="max-w-7xl mx-auto mb-24">
           <h2 className="text-xl font-black italic uppercase text-primary mb-8 border-l-4 border-primary pl-4 tracking-tighter">YouTube Shorts</h2>
+          {/* Grid ajustée pour les formats verticaux */}
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
             {shorts.map((p: Project) => (
               <ProjectCard 
@@ -114,6 +117,7 @@ export default function Realisations() {
                 user={user} 
                 onEdit={(proj: Project) => { setProjectToEdit(proj); setIsFormOpen(true); }} 
                 fetchProjects={fetchProjects} 
+                isVertical={true} // <--- ON ACTIVE LE MODE VERTICAL ICI
               />
             ))}
           </div>
@@ -131,12 +135,12 @@ export default function Realisations() {
               user={user} 
               onEdit={(proj: Project) => { setProjectToEdit(proj); setIsFormOpen(true); }} 
               fetchProjects={fetchProjects} 
+              isVertical={false} // Mode classique 16/9
             />
           ))}
         </div>
       </section>
 
-      {/* MODAL EDIT/ADD */}
       {isFormOpen && (
         <ProjectModal 
           isOpen={isFormOpen} 
@@ -151,19 +155,17 @@ export default function Realisations() {
 }
 
 // ------------------------------------------------------------------
-// COMPOSANT CARTE AVEC VIDEO ON HOVER CORRIGÉ
+// COMPOSANT CARTE AVEC MODE VERTICAL
 // ------------------------------------------------------------------
-function ProjectCard({ projet, user, onEdit, fetchProjects }: ProjectCardProps) {
+function ProjectCard({ projet, user, onEdit, fetchProjects, isVertical = false }: ProjectCardProps) {
   const videoId = getYouTubeID(projet.youtube_url);
   const router = useRouter();
-  
-  // 1. État local pour détecter le survol
   const [isHovered, setIsHovered] = useState(false);
   
   const categoriesList = projet.category ? projet.category.split(',').map((c) => c.trim()) : [];
 
   const handleDelete = async (e: React.MouseEvent) => {
-    e.stopPropagation(); // Empêche de cliquer sur la carte quand on supprime
+    e.stopPropagation();
     if (confirm("Supprimer cette vidéo ?")) {
       const { error } = await supabase.from('portfolio_items').delete().eq('id', projet.id);
       if (!error) fetchProjects();
@@ -174,26 +176,29 @@ function ProjectCard({ projet, user, onEdit, fetchProjects }: ProjectCardProps) 
     <div 
       className="bg-card border border-zinc-800 rounded-dynamic overflow-hidden group hover:border-primary transition-all cursor-pointer relative flex flex-col h-full" 
       onClick={() => router.push(`/realisations/${projet.id}`)}
-      onMouseEnter={() => setIsHovered(true)} // Déclencheur ON
-      onMouseLeave={() => setIsHovered(false)} // Déclencheur OFF
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       
-      {/* ZONE MEDIA (Image ou Iframe) */}
-      <div className="relative aspect-video bg-black overflow-hidden">
+      {/* CHANGEMENT ICI : 
+         Si isVertical est vrai -> aspect-[9/16] (Vertical Smartphone)
+         Sinon -> aspect-video (16/9 Classique)
+      */}
+      <div className={`relative ${isVertical ? 'aspect-[9/16]' : 'aspect-video'} bg-black overflow-hidden`}>
         
-        {/* A. Si survolé + ID valide : Iframe en autoplay muet */}
         {isHovered && videoId ? (
           <iframe
             className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+            // Pour les shorts, loop=1 et playlist=videoId assurent la boucle propre
             src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&showinfo=0&loop=1&playlist=${videoId}`}
             title={projet.title}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             style={{ border: 0 }}
           />
         ) : (
-          /* B. Sinon : Image de couverture statique */
           videoId && (
             <img 
+              // Pour les shorts, on utilise maxresdefault, mais "object-cover" va centrer l'image verticalement
               src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`} 
               className="w-full h-full object-cover opacity-90 group-hover:opacity-0 transition-opacity duration-300" 
               alt={projet.title} 
@@ -201,20 +206,17 @@ function ProjectCard({ projet, user, onEdit, fetchProjects }: ProjectCardProps) 
           )
         )}
 
-        {/* C. Boutons Admin (toujours visibles si admin connecté) */}
         {user && (
           <div className="absolute top-2 right-2 flex gap-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
             <button 
               onClick={(e) => { e.stopPropagation(); onEdit(projet); }} 
               className="bg-blue-600/90 hover:bg-blue-500 p-2 rounded text-white backdrop-blur-sm"
-              title="Modifier"
             >
               <Pencil size={14}/>
             </button>
             <button 
               onClick={handleDelete} 
               className="bg-red-600/90 hover:bg-red-500 p-2 rounded text-white backdrop-blur-sm"
-              title="Supprimer"
             >
               <Trash2 size={14}/>
             </button>
@@ -222,14 +224,13 @@ function ProjectCard({ projet, user, onEdit, fetchProjects }: ProjectCardProps) 
         )}
       </div>
 
-      {/* ZONE TEXTE */}
       <div className="p-4 bg-card flex-1 flex flex-col justify-between relative z-10">
         <h3 className="font-black uppercase text-xs line-clamp-1 tracking-wider text-white group-hover:text-primary transition-colors">
           {projet.title}
         </h3>
         <div className="flex flex-wrap gap-1 mt-3">
           {categoriesList.map((cat, i) => (
-            <span key={i} className="text-[8px] bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded uppercase font-bold tracking-wide">
+            <span key={i} className="text-[8px] bg-transparent border border-primary text-primary px-2 py-0.5 rounded uppercase font-bold tracking-wide">
               {cat}
             </span>
           ))}

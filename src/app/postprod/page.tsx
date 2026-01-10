@@ -154,12 +154,12 @@ function PostProdProjectRow({ project, user, onEdit, fetchProjects, index }: { p
       {/* 1. COLONNE GAUCHE : TEXTE */}
       <div className="w-full lg:w-5/12 flex flex-col gap-6 order-2 lg:order-1">
         <div className="flex items-center gap-4">
-            <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">0{index + 1}</span>
-            <div className="h-[1px] flex-1 bg-zinc-800"></div>
+            <span className="text-[10px] font-black text-primary uppercase tracking-widest">0{index + 1}</span>
+            <div className="h-[1px] flex-1 bg-primary"></div>
             {project.category && (
               <div className="flex flex-wrap gap-2"> 
                 {project.category.split(',').map((cat: string, i: number) => ( 
-                  <span key={i} className="text-[9px] font-bold text-primary uppercase tracking-widest border border-zinc-800 px-2 py-1 rounded bg-primary/10">
+                  <span key={i} className="text-[9px] font-bold text-primary uppercase tracking-widest border border-primary px-2 py-1 rounded bg-primary/10">
                     {cat.trim()} 
                   </span>
                 ))}
@@ -175,7 +175,7 @@ function PostProdProjectRow({ project, user, onEdit, fetchProjects, index }: { p
         </h3>
 
         <p className="text-zinc-400 text-sm leading-relaxed border-l-2 border-zinc-800 pl-6 line-clamp-4">
-            {project.description || "Aucune description technique disponible."}
+            {project.description_postprod || "Aucune description technique disponible."}
         </p>
 
         <button 

@@ -4,7 +4,11 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { getYouTubeID } from "@/lib/utils";
-import { ArrowLeft, Calendar, Briefcase, ExternalLink, Info, Monitor, Share2, Check } from "lucide-react";
+import { 
+  ArrowLeft, Calendar, Briefcase, ExternalLink, Info, 
+  Share2, Check, Wind, Layers, AlignLeft, User, Globe,
+  Cpu, Activity
+} from "lucide-react";
 
 export default function RealisationDetail() {
   const { id } = useParams();
@@ -12,8 +16,6 @@ export default function RealisationDetail() {
   
   const [project, setProject] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  
-  // État pour gérer l'animation de copie du lien
   const [isCopied, setIsCopied] = useState(false);
 
   useEffect(() => {
@@ -26,34 +28,15 @@ export default function RealisationDetail() {
     if (id) fetchProject();
   }, [id, router]);
 
-  // --- FONCTION DE PARTAGE INTELLIGENTE ---
   const handleShare = async () => {
     if (!project) return;
-    
-    const shareData = {
-      title: project.title,
-      text: `Découvre le projet "${project.title}" réalisé par Crysalys.`,
-      url: window.location.href, // L'URL actuelle de la page
-    };
-
-    // 1. Essayer le partage natif (Mobile)
+    const url = window.location.href;
     if (navigator.share) {
-      try {
-        await navigator.share(shareData);
-        return; 
-      } catch (err) {
-        console.log("Partage annulé ou non supporté, passage au copier-coller.");
-      }
+      try { await navigator.share({ title: project.title, url }); return; } catch (err) {}
     }
-
-    // 2. Fallback : Copier dans le presse-papier (Desktop)
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 2000); // Remet l'icône normale après 2s
-    } catch (err) {
-      console.error("Échec de la copie", err);
-    }
+    await navigator.clipboard.writeText(url);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
   };
 
   if (loading) return (
@@ -67,120 +50,172 @@ export default function RealisationDetail() {
   const videoId = getYouTubeID(project.youtube_url);
   const isShort = project.youtube_url.includes('/shorts/') || project.category?.includes('Short');
 
+  // NETTOYAGE DES TAGS DANS LA DESCRIPTION GÉNÉRALE
+  const cleanDescription = project.description
+    ? project.description
+        .split('[DRONE]:')[0]
+        .split('[POST-PROD]:')[0]
+        .trim()
+    : null;
+
   return (
     <main className="min-h-screen bg-background text-white pb-24 pt-32 px-4 md:px-8">
-      <div className="max-w-5xl mx-auto relative z-10">
+      <div className="max-w-6xl mx-auto relative z-10">
         
-        {/* --- HEADER NAVIGATION --- */}
+        {/* --- HEADER --- */}
         <div className="flex justify-between items-center mb-10 border-b border-zinc-900 pb-6">
-          
-          {/* BOUTON RETOUR (Router Back) */}
-          <button 
-            onClick={() => router.back()} 
-            className="inline-flex items-center text-zinc-500 hover:text-primary transition group uppercase text-[10px] font-black tracking-[0.3em]"
-          >
-            <ArrowLeft className="mr-3 group-hover:-translate-x-2 transition-transform" size={14} />
-            Retour
+          <button onClick={() => router.back()} className="inline-flex items-center text-zinc-500 hover:text-primary transition group uppercase text-[10px] font-black tracking-[0.3em]">
+            <ArrowLeft className="mr-3 group-hover:-translate-x-2 transition-transform" size={14} /> Retour
           </button>
-
           <div className="flex items-center gap-6">
-             <span className="text-[9px] font-black text-zinc-700 uppercase hidden sm:block">REF_{project.id.slice(0,4)}</span>
-             
-             {/* --- BOUTON SHARE FONCTIONNEL --- */}
-             <button 
-                onClick={handleShare}
-                className="flex items-center gap-2 text-zinc-600 hover:text-white transition-colors group relative"
-                title="Partager ce projet"
-             >
-                <span className={`text-[9px] font-bold uppercase transition-all duration-300 ${isCopied ? "text-primary opacity-100" : "opacity-0 -translate-x-2"}`}>
-                  Lien copié !
-                </span>
-                <div className={`p-2 rounded-dynamic transition-all duration-300 ${isCopied ? "bg-primary text-black" : "bg-card group-hover:bg-zinc-800"}`}>
+             <button onClick={handleShare} className="flex items-center gap-2 text-zinc-600 hover:text-white transition-colors group relative">
+                <span className={`text-[9px] font-bold uppercase transition-all ${isCopied ? "text-primary opacity-100" : "opacity-0"}`}>Copié !</span>
+                <div className={`p-2 rounded-dynamic transition-all ${isCopied ? "bg-primary text-black" : "bg-card group-hover:bg-zinc-800"}`}>
                    {isCopied ? <Check size={14} /> : <Share2 size={14} />}
                 </div>
              </button>
           </div>
         </div>
 
-        {/* --- CONTENEUR VIDÉO (Format "Boxed") --- */}
-        <div className="flex justify-center w-full mb-12">
-            <div className={`relative bg-black border border-zinc-800 shadow-2xl shadow-black overflow-hidden
-              ${isShort ? 'w-[300px] aspect-[9/16]' : 'w-full max-w-3xl aspect-video'}`}
-            >
+        {/* --- VIDEO PLAYER --- */}
+        <div className="flex justify-center w-full mb-16">
+            <div className={`relative bg-black border border-zinc-800 shadow-2xl shadow-black overflow-hidden group ${isShort ? 'w-[350px] aspect-[9/16] rounded-dynamic' : 'w-full aspect-video rounded-dynamic'}`}>
               {videoId ? (
                 <iframe
                   className="absolute top-0 left-0 w-full h-full"
                   src={`https://www.youtube.com/embed/${videoId}?autoplay=1&modestbranding=1&rel=0&showinfo=0&fs=1`}
-                  title="YouTube video player"
-                  frameBorder="0"
+                  title={project.title}
+                  // C'EST ICI LA CORRECTION PRINCIPALE : ajout de "fullscreen"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
                   allowFullScreen
                 />
               ) : (
-                <div className="flex items-center justify-center h-full text-zinc-700 font-bold uppercase text-xs">
-                  Vidéo non disponible
-                </div>
+                <div className="flex items-center justify-center h-full text-zinc-700 font-bold uppercase text-xs">Vidéo non disponible</div>
               )}
             </div>
         </div>
 
-        {/* --- CONTENU --- */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
           
-          {/* GAUCHE */}
-          <div className="md:col-span-8 space-y-8">
+          {/* --- COLONNE GAUCHE : LES TEXTES --- */}
+          <div className="lg:col-span-8 space-y-12">
+            
+            {/* Titre & Tags */}
             <div>
-              <h1 className="text-3xl md:text-5xl font-black italic uppercase tracking-tighter leading-none mb-4">
+              <h1 className="text-4xl md:text-6xl font-black italic uppercase tracking-tighter leading-[0.9] mb-6">
                 {project.title}<span className="text-primary">.</span>
               </h1>
               <div className="flex flex-wrap gap-2">
                 {project.category?.split(',').map((cat: string, i: number) => (
-                  <span key={i} className="text-[8px] font-bold uppercase tracking-widest border border-zinc-800 bg-card px-2 py-1 text-zinc-500 rounded">
+                  <span key={i} className="text-[9px] font-black uppercase tracking-widest border border-zinc-800 bg-zinc-900/50 px-3 py-1.5 text-zinc-400 rounded-full">
                     {cat.trim()}
                   </span>
                 ))}
               </div>
             </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-zinc-600">
-                <Monitor size={12}/>
-                <span className="text-[9px] font-black uppercase tracking-[0.3em]">Notes_Production</span>
+            {/* 1. Contexte Général (NETTOYÉ) */}
+            {cleanDescription && (
+              <div className="prose prose-invert max-w-none">
+                <div className="flex items-center gap-3 text-zinc-500 mb-4">
+                  <div className="h-[1px] w-8 bg-zinc-700"></div>
+                  <span className="text-[10px] font-black uppercase tracking-[0.3em]">Brief Mission</span>
+                </div>
+                <p className="text-zinc-300 text-lg leading-relaxed font-medium whitespace-pre-wrap">
+                  {cleanDescription}
+                </p>
               </div>
-              <p className="text-zinc-400 text-base md:text-lg leading-relaxed font-medium border-l-2 border-primary pl-5 italic">
-                {project.description || "Aucune description disponible."}
-              </p>
+            )}
+
+            {/* --- BLOCS TECHNIQUES --- */}
+            <div className="grid grid-cols-1 gap-6">
+
+              {/* 2. Bloc DRONE (Style "Flight HUD") */}
+              {project.description_drone && (
+                <div className="group relative overflow-hidden rounded-dynamic border border-blue-500/20 bg-gradient-to-br from-blue-950/30 to-black p-8 transition-all hover:border-blue-500/40">
+                  <Wind className="absolute -right-6 -bottom-6 h-40 w-40 text-blue-500/5 rotate-12 transition-transform group-hover:scale-110 group-hover:rotate-6 duration-700" />
+                  <div className="relative z-10">
+                    <div className="mb-6 flex items-center gap-3 border-b border-blue-500/20 pb-4">
+                      <div className="rounded-full bg-blue-500/10 p-2 text-blue-400">
+                        <Activity size={18} />
+                      </div>
+                      <h3 className="text-xs font-black uppercase tracking-[0.3em] text-blue-100">
+                        Données de Vol
+                      </h3>
+                    </div>
+                    <p className="whitespace-pre-wrap text-sm leading-7 text-blue-200/80 font-mono">
+                      {project.description_drone}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* 3. Bloc POST-PROD (Style "Studio Darkroom") */}
+              {project.description_postprod && (
+                <div className="group relative overflow-hidden rounded-dynamic border border-purple-500/20 bg-gradient-to-br from-purple-950/30 to-black p-8 transition-all hover:border-purple-500/40">
+                  <Cpu className="absolute -right-6 -bottom-6 h-40 w-40 text-purple-500/5 -rotate-12 transition-transform group-hover:scale-110 group-hover:-rotate-6 duration-700" />
+                  <div className="relative z-10">
+                    <div className="mb-6 flex items-center gap-3 border-b border-purple-500/20 pb-4">
+                      <div className="rounded-full bg-purple-500/10 p-2 text-purple-400">
+                        <Layers size={18} />
+                      </div>
+                      <h3 className="text-xs font-black uppercase tracking-[0.3em] text-purple-100">
+                        Post-Process & VFX
+                      </h3>
+                    </div>
+                    <p className="whitespace-pre-wrap text-sm leading-7 text-purple-200/80 font-mono">
+                      {project.description_postprod}
+                    </p>
+                  </div>
+                </div>
+              )}
+              
             </div>
           </div>
 
-          {/* DROITE (Sticky) */}
-          <div className="md:col-span-4">
-            <div className="bg-card backdrop-blur-sm border border-zinc-800 p-6 rounded-dynamic sticky top-24">
-              <h3 className="text-[9px] font-black uppercase text-zinc-500 mb-6 tracking-[0.3em] flex items-center gap-2">
-                <Info size={12}/> Détails
+          {/* --- COLONNE DROITE : INFOS STICKY --- */}
+          <div className="lg:col-span-4">
+            <div className="bg-card/50 backdrop-blur-md border border-zinc-800 p-8 rounded-dynamic sticky top-32 shadow-xl">
+              <h3 className="text-[10px] font-black uppercase text-zinc-500 mb-8 tracking-[0.4em] flex items-center gap-2 border-b border-zinc-800 pb-4">
+                <Info size={14}/> Fiche Technique
               </h3>
               
-              <div className="space-y-6">
-                <div className="group">
-                  <span className="text-zinc-700 text-[8px] font-black uppercase tracking-widest block mb-1">Date</span>
-                  <span className="text-sm font-bold uppercase text-white flex items-center gap-2">
+              <div className="space-y-8">
+                {/* Date */}
+                <div>
+                  <span className="text-zinc-600 text-[9px] font-black uppercase tracking-widest block mb-2">Date de sortie</span>
+                  <span className="text-sm font-bold uppercase text-white flex items-center gap-3 bg-zinc-900/50 p-3 rounded border border-zinc-800">
                      <Calendar size={14} className="text-primary"/>
-                     {project.project_date ? new Date(project.project_date).getFullYear() : "N/A"}
+                     {project.project_date ? new Date(project.project_date).toLocaleDateString("fr-FR", { year: 'numeric', month: 'long' }) : "Non spécifiée"}
                   </span>
                 </div>
 
-                <div className="group">
-                  <span className="text-zinc-700 text-[8px] font-black uppercase tracking-widest block mb-1">Client</span>
-                  <span className="text-sm font-bold uppercase text-white flex items-center gap-2">
-                     <Briefcase size={14} className="text-primary"/>
+                {/* Client */}
+                <div>
+                  <span className="text-zinc-600 text-[9px] font-black uppercase tracking-widest block mb-2">Client / Production</span>
+                  <span className="text-sm font-bold uppercase text-white flex items-center gap-3 bg-zinc-900/50 p-3 rounded border border-zinc-800">
+                     <User size={14} className="text-primary"/>
                      {project.client_name || "Interne"}
                   </span>
                 </div>
+                
+                {/* Type de mission */}
+                <div>
+                   <span className="text-zinc-600 text-[9px] font-black uppercase tracking-widest block mb-2">Classification</span>
+                   <span className="text-sm font-bold uppercase text-white flex items-center gap-3 bg-zinc-900/50 p-3 rounded border border-zinc-800">
+                      <Briefcase size={14} className="text-primary"/>
+                      {project.category?.includes('Drone') ? 'Opération Aérienne' : 'Studio Créatif'}
+                   </span>
+                </div>
 
+                {/* Site Web */}
                 {project.client_website && (
                   <a href={project.client_website} target="_blank" rel="noopener noreferrer" 
-                     className="block w-full text-center bg-zinc-800 hover:bg-primary hover:text-black text-white py-3 text-[9px] font-black uppercase tracking-[0.2em] transition-all rounded mt-4 flex items-center justify-center gap-2">
-                    Voir le lien <ExternalLink size={10} />
+                     className="group block w-full mt-6">
+                    <div className="bg-zinc-100 hover:bg-primary text-black py-4 rounded-dynamic transition-all flex items-center justify-center gap-3 font-black uppercase text-[10px] tracking-[0.2em] shadow-lg hover:shadow-primary/20">
+                      <Globe size={14} /> Voir le site
+                      <ExternalLink size={10} className="opacity-50 group-hover:translate-x-1 transition-transform"/>
+                    </div>
                   </a>
                 )}
               </div>
