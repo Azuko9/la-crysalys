@@ -48,13 +48,13 @@ export default function Home() {
         <div className="flex flex-col sm:flex-row justify-center gap-6">
           <Link 
             href="/realisations" 
-            className="bg-primary hover:bg-white/50 text-white font-bold py-4 px-8 rounded-full flex items-center justify-center gap-3 transition transform hover:scale-105 text-lg shadow-lg"
+            className="bg-primary hover:bg-white/50 text-white font-bold py-4 px-8 rounded-dynamic flex items-center justify-center gap-3 transition transform hover:scale-105 text-lg shadow-lg"
           >
             Voir nos réalisations <ArrowRight />
           </Link>
           <Link 
             href="/contact" 
-            className="bg-transparent hover:bg-white/10 text-white border-2 border-white font-bold py-4 px-8 rounded-full transition transform hover:scale-105 text-lg flex items-center justify-center"
+            className="bg-transparent hover:bg-white/10 text-white border-2 border-white font-bold py-4 px-8 rounded-dynamic transition transform hover:scale-105 text-lg flex items-center justify-center"
           >
             Demander un devis
           </Link>

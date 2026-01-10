@@ -28,7 +28,7 @@ export default function Prestation() {
         </p>
         <Link 
           href="/contact" 
-          className="bg-primary hover:bg-green-700 text-white font-bold py-3 px-8 rounded-full transition transform hover:scale-105 inline-block"
+          className="bg-primary hover:bg-green-700 text-white font-bold py-3 px-8 rounded-dynamic transition transform hover:scale-105 inline-block"
         >
           Demander un Devis
         </Link>

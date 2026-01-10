@@ -70,7 +70,7 @@ export default function AdminDashboard() {
           <div>
             <h1 className="text-4xl font-black italic uppercase tracking-tighter">Admin_Room</h1>
             <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.3em] flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+              <span className="w-2 h-2 rounded-dynamic bg-primary animate-pulse"></span>
               Session active : {user.email}
             </p>
           </div>
