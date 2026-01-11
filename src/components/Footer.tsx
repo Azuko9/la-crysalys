@@ -189,6 +189,13 @@ export default function Footer() {
           </p>
           
           <nav className="flex items-center gap-6">
+                         <button 
+                onClick={() => setIsSecretOpen(true)}
+                className="opacity-10 hover:opacity-100 transition-opacity text-zinc-500 ml-4"
+                title="Accès Restreint"
+              >
+                  <Lock size={12} />
+              </button> 
               <Link href="/mentions-legales" className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest hover:text-primary transition-colors">
                   Mentions Légales
               </Link>
@@ -198,13 +205,7 @@ export default function Footer() {
               </Link>
               
               {/* BOUTON SECRET */}
-              <button 
-                onClick={() => setIsSecretOpen(true)}
-                className="opacity-10 hover:opacity-100 transition-opacity text-zinc-500 ml-4"
-                title="Accès Restreint"
-              >
-                  <Lock size={12} />
-              </button>
+
           </nav>
         </div>
       </footer>
