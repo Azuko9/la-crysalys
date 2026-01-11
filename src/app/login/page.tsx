@@ -3,12 +3,13 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
-import { Lock } from "lucide-react";
+import { Lock, Eye, EyeOff, AlertCircle } from "lucide-react"; // J'ai ajouté Eye/EyeOff
 
 export default function Login() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false); // Pour l'œil
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -17,17 +18,18 @@ export default function Login() {
     setLoading(true);
     setError(null);
 
-    // On demande à Supabase de nous connecter
     const { error } = await supabase.auth.signInWithPassword({
-      email,
+      email: email.trim(), // 1. On nettoie les espaces invisibles
       password,
     });
 
     if (error) {
+      // Sécurité : On reste vague sur l'erreur
       setError("Email ou mot de passe incorrect.");
       setLoading(false);
     } else {
-      // Si c'est bon, on redirige vers la page admin (qu'on va créer après)
+      // 2. IMPORTANT : On rafraîchit pour que le Middleware voit le cookie
+      router.refresh(); 
       router.push("/admin");
     }
   };
@@ -53,25 +55,35 @@ export default function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full bg-background border border-gray-700 rounded-lg p-3 text-white focus:border-primary outline-none"
+              className="w-full bg-background border border-gray-700 rounded-lg p-3 text-white focus:border-primary outline-none transition"
               placeholder="admin@crysalys.com"
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-400 mb-2">Mot de passe</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full bg-background border border-gray-700 rounded-lg p-3 text-white focus:border-primary outline-none"
-              placeholder="••••••••"
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"} // 3. Bascule texte/password
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="w-full bg-background border border-gray-700 rounded-lg p-3 text-white focus:border-primary outline-none transition pr-12"
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
           </div>
 
           {error && (
-            <div className="bg-red-500/10 border border-red-500 text-red-500 text-sm p-3 rounded">
+            <div className="bg-red-900/20 border border-red-500/50 text-red-400 text-sm p-3 rounded flex items-center gap-2 animate-in fade-in slide-in-from-top-1">
+              <AlertCircle size={16} />
               {error}
             </div>
           )}
@@ -79,7 +91,7 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-primary hover:bg-green-700 text-white font-bold py-3 rounded-lg transition disabled:opacity-50"
+            className="w-full bg-primary hover:bg-green-700 text-white font-bold py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? "Connexion..." : "Se connecter"}
           </button>
