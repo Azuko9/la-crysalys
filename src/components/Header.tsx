@@ -48,12 +48,14 @@ export default function Header() {
         <div className="flex items-center justify-between h-20">
           
           {/* LOGO - Taille adaptée pour mobile */}
-          <Link href="/" className="flex-shrink-0 relative w-32 h-16 md:w-48 md:h-48 hover:scale-105 transition">
+
+          <Link href="/" className="relative h-12 w-32 md:h-16 md:w-48 hover:scale-105 transition flex-shrink-0">
              <Image
               src="/Logo/logoAfficheBlanc.png"
               alt="Logo Crysalys"
               fill
-              className="object-contain"
+              className="object-contain" // Garde les proportions sans couper l'image
+              sizes="(max-width: 768px) 128px, 192px"
               priority
             />
           </Link>
