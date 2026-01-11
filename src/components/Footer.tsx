@@ -2,10 +2,10 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import Link from "next/link"; // <--- AJOUT IMPORTANT
 import { Paintbrush, Phone, Mail, MapPin, RotateCcw } from "lucide-react";
 
 // 1. MAPPING IMPORTANT
-// Clé (Base de données) : Nom de la variable CSS (globals.css)
 const CSS_MAPPING: Record<string, string> = {
   primary_color: "--primary-color",
   bg_color: "--bg-color", 
@@ -15,19 +15,16 @@ const CSS_MAPPING: Record<string, string> = {
 
 export default function Footer() {
   const [profiles, setProfiles] = useState<any[]>([]);
-  // Petite astuce pour forcer le rafraîchissement si besoin
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
     fetchProfiles();
     
-    // Charger le thème local au démarrage
     const localTheme = localStorage.getItem("user_theme_preference");
     if (localTheme) {
       try {
         const config = JSON.parse(localTheme);
-        // Petit délai pour s'assurer que le DOM est prêt
         setTimeout(() => applyVisualTheme(config), 100);
       } catch (e) { console.error(e); }
     }
@@ -61,23 +58,12 @@ export default function Footer() {
     }
   }, []);
 
-  // --- CŒUR DU SYSTÈME : APPLICATION CSS ---
   const applyVisualTheme = (config: any) => {
     const root = document.documentElement;
-    
     Object.entries(config).forEach(([key, value]) => {
-      // On récupère le nom de la variable CSS (--primary, etc.)
       const cssVarName = CSS_MAPPING[key];
-      
       if (cssVarName) {
-        // IMPORTANT : Si c'est une couleur HEX (#...), Tailwind avec Shadcn peut bloquer
-        // si ton globals.css attend du HSL.
-        // Cette ligne force la couleur brute.
         root.style.setProperty(cssVarName, value as string);
-        
-        // ASTUCE SUPPRÉMENTAIRE :
-        // Parfois il faut aussi mettre à jour la variable "foreground" (texte) si nécessaire
-        // Mais ici on se concentre sur les couleurs principales.
       }
     });
   };
@@ -92,11 +78,10 @@ export default function Footer() {
     window.location.reload();
   };
 
-  // Si pas monté côté client, on évite le flash
   if (!mounted) return null;
 
   return (
-    <footer className="w-full bg-zinc-900/50 backdrop-blur-md border-t border-zinc-800 py-12 mt-20 transition-colors duration-500">
+    <footer className="w-full bg-zinc-900/50 backdrop-blur-md border-t border-zinc-800 pt-12 pb-8 mt-20 transition-colors duration-500">
       <div className="max-w-7xl mx-auto px-8 flex flex-col md:flex-row justify-between items-center gap-8">
         
         {/* GAUCHE : IDENTITÉ + CONTACT */}
@@ -106,7 +91,7 @@ export default function Footer() {
               Crysalys<span className="text-primary">.</span>
             </span>
             <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-1">
-              © 2024 Production Audiovisuelle
+              Production Audiovisuelle
             </p>
           </div>
           <div className="hidden md:block w-[1px] h-8 bg-primary"></div>
@@ -130,7 +115,6 @@ export default function Footer() {
           </span>
           
           <div className="flex items-center gap-2">
-            {/* BOUTON RESET */}
             <button
                 onClick={handleResetTheme}
                 className="w-9 h-9 rounded-dynamic bg-card border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-primary hover:border-primary transition-all group"
@@ -139,44 +123,49 @@ export default function Footer() {
                 <RotateCcw size={12} className="text-white group-hover:text-primary transition-colors"/>
             </button>
 
-            {/* LISTE DES PRESETS AVEC APERÇU RÉEL */}
-<div className="flex gap-3 p-1.5 bg-black/20 rounded-dynamic border border-primary backdrop-blur-sm">
-  {profiles.length > 0 ? (
-    profiles.map((p) => (
-      <button
-        key={p.id}
-        onClick={() => handleThemeClick(p.config)}
-        className="group relative w-8 h-8 rounded-dynamic border border-white/10 hover:border-white hover:scale-110 transition-all shadow-lg overflow-hidden"
-        title={p.label}
-        // 1. COULEUR DE FOND DU SITE (L'arrière-plan du bouton)
-        style={{ 
-          backgroundColor: p.config.bg_color || '#000000' 
-        }}
-      >
-        {/* 2. COULEUR DES CARTES (Un carré à l'intérieur) */}
-        <div 
-          className="absolute inset-1.5 rounded-[2px] shadow-sm group-hover:inset-1 transition-all"
-          style={{ 
-            backgroundColor: p.config.card_bg || '#222222' 
-          }}
-        />
-
-        {/* 3. COULEUR PRIMAIRE (Le point d'accent au centre) */}
-        <div 
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full shadow-sm group-hover:w-3.5 group-hover:h-3.5 transition-all ring-1 ring-black/10" 
-          style={{ 
-            backgroundColor: p.config.primary_color || '#ffffff' 
-          }} 
-        />
-      </button>
-    ))
-  ) : (
-    <span className="text-[9px] text-zinc-700 italic px-2">...</span>
-  )}
-</div>
+            <div className="flex gap-3 p-1.5 bg-black/20 rounded-dynamic border border-primary backdrop-blur-sm">
+              {profiles.length > 0 ? (
+                profiles.map((p) => (
+                  <button
+                    key={p.id}
+                    onClick={() => handleThemeClick(p.config)}
+                    className="group relative w-8 h-8 rounded-dynamic border border-white/10 hover:border-white hover:scale-110 transition-all shadow-lg overflow-hidden"
+                    title={p.label}
+                    style={{ backgroundColor: p.config.bg_color || '#000000' }}
+                  >
+                    <div 
+                      className="absolute inset-1.5 rounded-[2px] shadow-sm group-hover:inset-1 transition-all"
+                      style={{ backgroundColor: p.config.card_bg || '#222222' }}
+                    />
+                    <div 
+                      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full shadow-sm group-hover:w-3.5 group-hover:h-3.5 transition-all ring-1 ring-black/10" 
+                      style={{ backgroundColor: p.config.primary_color || '#ffffff' }} 
+                    />
+                  </button>
+                ))
+              ) : (
+                <span className="text-[9px] text-zinc-700 italic px-2">...</span>
+              )}
+            </div>
           </div>
         </div>
+      </div>
 
+      {/* --- NOUVELLE SECTION LÉGALE AJOUTÉE ICI --- */}
+      <div className="max-w-7xl mx-auto px-8 mt-12 pt-8 border-t border-zinc-800 flex flex-col md:flex-row justify-between items-center gap-4">
+        <p className="text-[10px] text-zinc-600 font-medium uppercase tracking-widest">
+           © {new Date().getFullYear()} La Crysalys. Tous droits réservés.
+        </p>
+        
+        <nav className="flex items-center gap-6">
+            <Link href="/mentions-legales" className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest hover:text-primary transition-colors">
+                Mentions Légales
+            </Link>
+            <span className="text-zinc-800">•</span>
+            <Link href="/contact" className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest hover:text-primary transition-colors">
+                Contact
+            </Link>
+        </nav>
       </div>
     </footer>
   );
