@@ -38,6 +38,7 @@ export default function Header() {
     { name: "Post-Productions", href: "/postprod" },
     { name: "Productions", href: "/realisations" },
     { name: "Nos Presta", href: "/prestation" },
+    { name: "L'équipe", href: "/equipe" },
     { name: "Contact", href: "/contact" },
   ];
 

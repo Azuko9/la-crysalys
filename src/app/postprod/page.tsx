@@ -174,7 +174,7 @@ function PostProdProjectRow({ project, user, onEdit, fetchProjects, index }: { p
             {project.title}
         </h3>
 
-        <p className="text-zinc-400 text-sm leading-relaxed border-l-2 border-zinc-800 pl-6 line-clamp-4">
+        <p className="text-zinc-400 text-sm leading-relaxed border-l-2 border-primary pl-6 line-clamp-4">
             {project.description_postprod || "Aucune description technique disponible."}
         </p>
 

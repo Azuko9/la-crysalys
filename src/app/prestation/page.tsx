@@ -92,7 +92,7 @@ export default function Prestation() {
 
       {/* --- SECTION 2 : INSTITUTIONNEL --- */}
       <section className="max-w-6xl mx-auto mb-20">
-        <h3 className="text-3xl font-bold text-white mb-8 border-l-4 border-blue-500 pl-4">
+        <h3 className="text-3xl font-bold text-white mb-8 border-l-4 border-primary pl-4">
           Institutionnel & Corporate
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

@@ -107,7 +107,7 @@ export default function RealisationDetail() {
               </h1>
               <div className="flex flex-wrap gap-2">
                 {project.category?.split(',').map((cat: string, i: number) => (
-                  <span key={i} className="text-[9px] font-black uppercase tracking-widest border border-zinc-800 bg-zinc-900/50 px-3 py-1.5 text-zinc-400 rounded-full">
+                  <span key={i} className="text-[9px] font-black uppercase tracking-widest border border-primary bg-transparent px-3 py-1.5 text-primary rounded-dynamic">
                     {cat.trim()}
                   </span>
                 ))}
@@ -118,8 +118,8 @@ export default function RealisationDetail() {
             {cleanDescription && (
               <div className="prose prose-invert max-w-none">
                 <div className="flex items-center gap-3 text-zinc-500 mb-4">
-                  <div className="h-[1px] w-8 bg-zinc-700"></div>
-                  <span className="text-[10px] font-black uppercase tracking-[0.3em]">Brief Mission</span>
+                  <div className="h-[1px] w-8 bg-primary"></div>
+                  <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Brief Mission</span>
                 </div>
                 <p className="text-zinc-300 text-lg leading-relaxed font-medium whitespace-pre-wrap">
                   {cleanDescription}
@@ -175,15 +175,15 @@ export default function RealisationDetail() {
 
           {/* --- COLONNE DROITE : INFOS STICKY --- */}
           <div className="lg:col-span-4">
-            <div className="bg-card/50 backdrop-blur-md border border-zinc-800 p-8 rounded-dynamic sticky top-32 shadow-xl">
-              <h3 className="text-[10px] font-black uppercase text-zinc-500 mb-8 tracking-[0.4em] flex items-center gap-2 border-b border-zinc-800 pb-4">
+            <div className="bg-card backdrop-blur-md border border-primary p-8 rounded-dynamic sticky top-32 shadow-xl">
+              <h3 className="text-[10px] font-black uppercase text-primary mb-8 tracking-[0.4em] flex items-center gap-2 border-b border-primary pb-4">
                 <Info size={14}/> Fiche Technique
               </h3>
               
               <div className="space-y-8">
                 {/* Date */}
                 <div>
-                  <span className="text-zinc-600 text-[9px] font-black uppercase tracking-widest block mb-2">Date de sortie</span>
+                  <span className="text-primary text-[9px] font-black uppercase tracking-widest block mb-2">Date de sortie</span>
                   <span className="text-sm font-bold uppercase text-white flex items-center gap-3 bg-zinc-900/50 p-3 rounded border border-zinc-800">
                      <Calendar size={14} className="text-primary"/>
                      {project.project_date ? new Date(project.project_date).toLocaleDateString("fr-FR", { year: 'numeric', month: 'long' }) : "Non spécifiée"}
@@ -192,7 +192,7 @@ export default function RealisationDetail() {
 
                 {/* Client */}
                 <div>
-                  <span className="text-zinc-600 text-[9px] font-black uppercase tracking-widest block mb-2">Client / Production</span>
+                  <span className="text-primary text-[9px] font-black uppercase tracking-widest block mb-2">Client / Production</span>
                   <span className="text-sm font-bold uppercase text-white flex items-center gap-3 bg-zinc-900/50 p-3 rounded border border-zinc-800">
                      <User size={14} className="text-primary"/>
                      {project.client_name || "Interne"}
@@ -201,7 +201,7 @@ export default function RealisationDetail() {
                 
                 {/* Type de mission */}
                 <div>
-                   <span className="text-zinc-600 text-[9px] font-black uppercase tracking-widest block mb-2">Classification</span>
+                   <span className="text-primary text-[9px] font-black uppercase tracking-widest block mb-2">Classification</span>
                    <span className="text-sm font-bold uppercase text-white flex items-center gap-3 bg-zinc-900/50 p-3 rounded border border-zinc-800">
                       <Briefcase size={14} className="text-primary"/>
                       {project.category?.includes('Drone') ? 'Opération Aérienne' : 'Studio Créatif'}
