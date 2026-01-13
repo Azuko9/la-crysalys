@@ -7,19 +7,24 @@ import { usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { Menu, X } from "lucide-react"; // Icônes pour le mobile
 
+const NAV_LINKS = [
+  { name: "Expertise Drone", href: "/expertise" },
+  { name: "Post-Productions", href: "/postprod" },
+  { name: "Productions", href: "/realisations" },
+  { name: "Nos Presta", href: "/prestation" },
+  { name: "L'équipe", href: "/equipe" },
+  { name: "Contact", href: "/contact" },
+];
+
 export default function Header() {
   const pathname = usePathname();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isOpen, setIsOpen] = useState(false); // État du menu mobile
 
   useEffect(() => {
-    const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setIsLoggedIn(!!user);
-    };
-    checkUser();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    // onAuthStateChange est appelé immédiatement avec la session en cours,
+    // rendant un appel initial pour vérifier l'utilisateur redondant.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setIsLoggedIn(!!session);
     });
 
@@ -33,23 +38,13 @@ export default function Header() {
 
   if (pathname === "/") return null;
 
-  const navLinks = [
-    { name: "Expertise Drone", href: "/expertise" },
-    { name: "Post-Productions", href: "/postprod" },
-    { name: "Productions", href: "/realisations" },
-    { name: "Nos Presta", href: "/prestation" },
-    { name: "L'équipe", href: "/equipe" },
-    { name: "Contact", href: "/contact" },
-  ];
-
   return (
     <header className="fixed top-0 left-0 w-full z-[100] bg-background/90 backdrop-blur-md border-b border-zinc-800 transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           
           {/* LOGO - Taille adaptée pour mobile */}
-
-          <Link href="/" className="relative h-12 w-32 md:h-16 md:w-48 hover:scale-105 transition flex-shrink-0">
+          <Link href="/" className="relative h-12 w-32 md:h-16 md:w-48 hover:scale-105 transition flex-shrink-0" aria-label="Retour à l'accueil">
              <Image
               src="/Logo/logoAfficheBlanc.png"
               alt="Logo Crysalys"
@@ -62,12 +57,12 @@ export default function Header() {
 
           {/* MENU DESKTOP */}
           <nav className="hidden md:flex space-x-8 items-center">
-            {navLinks.map((link) => (
+            {NAV_LINKS.map((link) => (
               <Link
                 key={link.name}
                 href={link.href}
                 className={`text-sm font-bold transition-colors ${
-                  pathname === link.href ? "text-primary" : "text-primary hover:text-white"
+                  pathname.startsWith(link.href) ? "text-primary" : "text-zinc-300 hover:text-primary"
                 }`}
               >
                 {link.name}
@@ -86,19 +81,21 @@ export default function Header() {
             <button 
               onClick={() => setIsOpen(!isOpen)}
               className="text-white p-2 hover:bg-zinc-800 rounded-lg transition"
+              aria-label={isOpen ? "Fermer le menu" : "Ouvrir le menu"}
+              aria-expanded={isOpen}
             >
               {isOpen ? <X size={28} /> : <Menu size={28} />}
             </button>
           </div>
         </div>
       </div>
-
       {/* MENU MOBILE OVERLAY */}
-      <div className={`md:hidden absolute top-20 left-0 w-full bg-background/95 backdrop-blur-xl border-b border-zinc-800 transition-all duration-300 ease-in-out ${
-        isOpen ? "opacity-100 visible h-auto pb-8 bg-card" : "opacity-0 invisible h-0"
+      {/* Le menu est rendu en dehors du conteneur principal pour s'étendre sur toute la largeur */}
+      <div className={`md:hidden absolute top-20 left-0 w-full bg-card/95 backdrop-blur-xl border-b border-zinc-800 transition-all duration-300 ease-in-out ${
+        isOpen ? "opacity-100 visible h-auto pb-8" : "opacity-0 invisible h-0"
       }`}>
         <nav className="flex flex-col px-6 pt-4 space-y-4">
-          {navLinks.map((link) => (
+          {NAV_LINKS.map((link) => (
             <Link
               key={link.name}
               href={link.href}

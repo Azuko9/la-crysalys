@@ -1,8 +1,9 @@
 import React from 'react';
+import type { Metadata } from 'next';
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'Mentions Légales - La Crysalys',
-  description: 'Informations légales et mentions obligatoires du site La Crysalys.',
+  description: 'Consultez les mentions légales de La Crysalys, incluant les informations sur l\'éditeur du site, l\'hébergement et la propriété intellectuelle.',
 };
 
 export default function MentionsLegales() {

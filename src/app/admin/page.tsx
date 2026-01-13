@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import { 
@@ -16,6 +16,13 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"messages" | "design">("messages");
 
+  const fetchMessages = useCallback(async () => {
+    setLoading(true);
+    const { data } = await supabase.from('messages').select('*').order('created_at', { ascending: false });
+    if (data) setMessagesRecus(data);
+    setLoading(false);
+  }, []);
+
   // 1. INITIALISATION
   useEffect(() => {
     const init = async () => {
@@ -25,29 +32,23 @@ export default function AdminDashboard() {
         return;
       }
       setUser(user);
-      fetchMessages();
+      await fetchMessages();
     };
     init();
-  }, [router]);
+  }, [router, fetchMessages]);
 
-  const fetchMessages = async () => {
-    const { data } = await supabase.from('messages').select('*').order('created_at', { ascending: false });
-    if (data) setMessagesRecus(data);
-    setLoading(false);
-  };
-
-  const handleDeleteMessage = async (id: string) => {
+  const handleDeleteMessage = useCallback(async (id: string) => {
     if (!confirm("Voulez-vous supprimer ce message définitivement ?")) return;
     const { error } = await supabase.from('messages').delete().eq('id', id);
     if (!error) {
-      setMessagesRecus(messages.filter(msg => msg.id !== id));
+      setMessagesRecus(currentMessages => currentMessages.filter(msg => msg.id !== id));
     }
-  };
+  }, []);
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     await supabase.auth.signOut();
     router.push("/");
-  };
+  }, [router]);
 
   if (!user) return <div className="min-h-screen bg-background"></div>;
 

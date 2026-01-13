@@ -1,5 +1,11 @@
 import Link from "next/link";
 import { ArrowRight, Video } from "lucide-react";
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'La Crysalys - Production Audiovisuelle & Création de Contenu Drone',
+  description: 'La Crysalys transforme vos idées en expériences visuelles cinématographiques. Spécialistes en production vidéo, post-production et prises de vues par drone.',
+};
 
 export default function Home() {
   return (

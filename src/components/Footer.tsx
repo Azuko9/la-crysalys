@@ -16,19 +16,59 @@ const CSS_MAPPING: Record<string, string> = {
   border_radius: "--radius",
 };
 
-export default function Footer() {
+// --- SOUS-COMPOSANT : MODALE SÉCURISÉE ---
+// Isolé pour éviter que la frappe dans l'input ne fasse re-rendre tout le footer
+function SecretGateModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const router = useRouter();
-  const [profiles, setProfiles] = useState<any[]>([]);
-  const [mounted, setMounted] = useState(false);
-
-  // ÉTATS POUR LE SYSTÈME DE SÉCURITÉ
-  const [isSecretOpen, setIsSecretOpen] = useState(false);
   const [secretCode, setSecretCode] = useState("");
   const [errorShake, setErrorShake] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
 
+  const handleCodeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsVerifying(true);
+
+    const result = await verifyAdminCode(secretCode);
+    setIsVerifying(false);
+
+    if (result.success) {
+      onClose();
+      router.push("/login");
+    } else {
+      setErrorShake(true);
+      setSecretCode("");
+      setTimeout(() => setErrorShake(false), 500);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="absolute inset-0" onClick={onClose}></div>
+      <div className={`relative bg-zinc-950 border border-zinc-800 p-8 rounded-2xl w-full max-w-sm shadow-2xl flex flex-col items-center gap-6 ${errorShake ? 'animate-shake' : ''}`}>
+        <button onClick={onClose} className="absolute top-4 right-4 text-zinc-600 hover:text-white"><X size={20} /></button>
+        <div className="w-12 h-12 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-primary"><KeyRound size={24} /></div>
+        <div className="text-center">
+          <h3 className="text-white font-bold uppercase tracking-widest text-sm mb-1">Accès Sécurisé</h3>
+          <p className="text-zinc-500 text-xs">Entrez le code à 6 chiffres.</p>
+        </div>
+        <form onSubmit={handleCodeSubmit} className="w-full flex flex-col gap-4">
+          <input autoFocus type="password" value={secretCode} onChange={(e) => setSecretCode(e.target.value)} placeholder="••••••" disabled={isVerifying} className="w-full bg-black border border-zinc-800 text-center text-2xl tracking-[0.5em] text-white p-4 rounded-xl focus:border-primary outline-none transition-colors disabled:opacity-50" maxLength={6} />
+          <button type="submit" disabled={isVerifying} className="w-full bg-white text-black font-bold uppercase text-xs tracking-widest py-3 rounded-lg hover:bg-primary hover:text-white transition-colors flex justify-center items-center gap-2">
+            {isVerifying ? <Loader2 className="animate-spin" size={16} /> : "Valider l'accès"}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+export default function Footer() {
+  const [profiles, setProfiles] = useState<any[]>([]);
+  const [isSecretOpen, setIsSecretOpen] = useState(false);
+
   useEffect(() => {
-    setMounted(true);
     fetchProfiles();
     
     const localTheme = localStorage.getItem("user_theme_preference");
@@ -87,28 +127,6 @@ export default function Footer() {
     localStorage.removeItem("user_theme_preference");
     window.location.reload();
   };
-
-  // --- LOGIQUE SÉCURISÉE (6 CHIFFRES) ---
-  const handleCodeSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsVerifying(true);
-
-    // Appel au serveur pour vérifier le code
-    const result = await verifyAdminCode(secretCode);
-
-    setIsVerifying(false);
-
-    if (result.success) {
-        setIsSecretOpen(false);
-        router.push("/login");
-    } else {
-        setErrorShake(true);
-        setSecretCode("");
-        setTimeout(() => setErrorShake(false), 500);
-    }
-  };
-
-  if (!mounted) return null;
 
   return (
     <>
@@ -211,53 +229,7 @@ export default function Footer() {
       </footer>
 
       {/* --- MODAL SECRET GATE (6 CHIFFRES) --- */}
-      {isSecretOpen && (
-        <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-           {/* Clic dehors pour fermer */}
-           <div className="absolute inset-0" onClick={() => setIsSecretOpen(false)}></div>
-           
-           <div className={`relative bg-zinc-950 border border-zinc-800 p-8 rounded-2xl w-full max-w-sm shadow-2xl flex flex-col items-center gap-6 ${errorShake ? 'animate-shake' : ''}`}>
-              
-              <button 
-                onClick={() => setIsSecretOpen(false)}
-                className="absolute top-4 right-4 text-zinc-600 hover:text-white"
-              >
-                <X size={20} />
-              </button>
-
-              <div className="w-12 h-12 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-primary">
-                 <KeyRound size={24} />
-              </div>
-
-              <div className="text-center">
-                <h3 className="text-white font-bold uppercase tracking-widest text-sm mb-1">Accès Sécurisé</h3>
-                <p className="text-zinc-500 text-xs">Entrez le code à 6 chiffres.</p>
-              </div>
-
-              <form onSubmit={handleCodeSubmit} className="w-full flex flex-col gap-4">
-                 <input 
-                    autoFocus
-                    type="password" 
-                    value={secretCode}
-                    onChange={(e) => setSecretCode(e.target.value)}
-                    placeholder="••••••"
-                    disabled={isVerifying}
-                    // J'ai réduit le tracking pour que 6 chiffres rentrent joliment
-                    className="w-full bg-black border border-zinc-800 text-center text-2xl tracking-[0.5em] text-white p-4 rounded-xl focus:border-primary outline-none transition-colors disabled:opacity-50"
-                    maxLength={6}
-                 />
-                 <button 
-                    type="submit" 
-                    disabled={isVerifying}
-                    className="w-full bg-white text-black font-bold uppercase text-xs tracking-widest py-3 rounded-lg hover:bg-primary hover:text-white transition-colors flex justify-center items-center gap-2"
-                 >
-                    {isVerifying ? <Loader2 className="animate-spin" size={16} /> : "Valider l'accès"}
-                 </button>
-              </form>
-
-           </div>
-        </div>
-      )}
+      <SecretGateModal isOpen={isSecretOpen} onClose={() => setIsSecretOpen(false)} />
 
       {/* STYLE SHAKE */}
       <style jsx global>{`
