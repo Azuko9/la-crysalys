@@ -22,7 +22,7 @@ export default function MentionsLegales() {
         {/* Contenu */}
         <div className="space-y-8 text-zinc-400 leading-relaxed">
           
-          <section className="bg-card p-8 rounded-2xl border border-zinc-800">
+          <section className="bg-card p-8 rounded-dynamic border border-zinc-800">
             <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
               <span className="text-primary">1.</span> Édition du site
             </h2>
@@ -37,7 +37,7 @@ export default function MentionsLegales() {
             </ul>
           </section>
 
-          <section className="bg-card p-8 rounded-2xl border border-zinc-800">
+          <section className="bg-card p-8 rounded-dynamic border border-zinc-800">
             <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
               <span className="text-primary">2.</span> Hébergement
             </h2>
@@ -48,7 +48,7 @@ export default function MentionsLegales() {
             </p>
           </section>
 
-          <section className="bg-card p-8 rounded-2xl border border-zinc-800">
+          <section className="bg-card p-8 rounded-dynamic border border-zinc-800">
             <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
               <span className="text-primary">3.</span> Propriété intellectuelle
             </h2>

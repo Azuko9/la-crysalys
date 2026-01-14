@@ -78,14 +78,13 @@ export default function RealisationDetail() {
         </div>
 
         {/* --- VIDEO PLAYER --- */}
-        <div className="flex justify-center w-full mb-16">
-            <div className={`relative bg-black border border-zinc-800 shadow-2xl shadow-black overflow-hidden group ${isShort ? 'w-[350px] aspect-[9/16] rounded-dynamic' : 'w-full aspect-video rounded-dynamic'}`}>
+        <div className="flex justify-center w-full mb-16 rounded-dynamic overflow-hidden border border-zinc-900 shadow-xl bg-black">
+            <div className={`relative ${isShort ? 'w-[350px] aspect-[9/16]' : 'w-full aspect-video'}`}>
               {videoId ? (
                 <iframe
                   className="absolute top-0 left-0 w-full h-full"
                   src={`https://www.youtube.com/embed/${videoId}?autoplay=1&modestbranding=1&rel=0&showinfo=0&fs=1`}
                   title={project.title}
-                  // C'EST ICI LA CORRECTION PRINCIPALE : ajout de "fullscreen"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
                   allowFullScreen
                 />
@@ -102,7 +101,7 @@ export default function RealisationDetail() {
             
             {/* Titre & Tags */}
             <div>
-              <h1 className="text-4xl md:text-6xl font-black italic uppercase tracking-tighter leading-[0.9] mb-6">
+              <h1 className="text-4xl md:text-6xl font-black italic uppercase tracking-tighter leading-[0.9] mb-6 rounded-dynamic">
                 {project.title}<span className="text-primary">.</span>
               </h1>
               <div className="flex flex-wrap gap-2">
