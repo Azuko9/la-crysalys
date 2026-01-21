@@ -82,7 +82,16 @@ export default function Contact() {
       setStatus("error");
       if (result.errors) {
         // Erreurs de validation du serveur
-        setErrors(result.errors);
+        const serverErrors: Record<string, string> = {};
+        // Zod retourne un tableau d'erreurs pour chaque champ, on prend juste le premier.
+        for (const key in result.errors) {
+          const errorArray = result.errors[key as keyof typeof formData];
+          if (errorArray && errorArray.length > 0) {
+            serverErrors[key] = errorArray[0];
+          }
+        }
+        setErrors(serverErrors);
+
       } else if (result.error) {
         // Erreur générale du serveur
         setServerError(result.error);

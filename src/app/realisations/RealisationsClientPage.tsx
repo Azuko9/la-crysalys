@@ -25,11 +25,11 @@ export default function RealisationsClientPage({ initialProjects, initialCategor
   const [isManagingCats, setIsManagingCats] = useState(false);
 
   const [categories, setCategories] = useState<Category[]>(initialCategories);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false); // État pour la modale d'édition/ajout de projet
   const [projectToEdit, setProjectToEdit] = useState<Project | null>(null);
 
   const fetchCategories = useCallback(async () => {
-    const { data } = await supabase.from('categories').select('id, name').order('name');
+    const { data } = await supabase.from('categories').select('id, name, created_at').order('name');
     if (data) setCategories(data);
   }, []);
 
