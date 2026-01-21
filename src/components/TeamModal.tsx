@@ -1,26 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabaseClient";
 import { 
   XCircle, UserCheck, Instagram, Linkedin, 
   AlignLeft, Users, Handshake, UploadCloud, Loader2, Trash2, 
   Building2, Globe, Mail 
 } from "lucide-react";
-
-interface TeamMember {
-  id: string;
-  name: string;
-  role: string;
-  company: string | null; // NOUVEAU
-  bio: string | null;
-  photo_url: string | null;
-  instagram: string | null;
-  linkedin: string | null;
-  email: string | null;   // NOUVEAU
-  website: string | null; // NOUVEAU
-  member_type: 'team' | 'partner';
-}
+import { supabase } from "@/lib/supabaseClient";
+import { saveTeamMemberAction } from "@/app/actions";
+import type { TeamMember } from "@/types";
 
 interface TeamModalProps {
   isOpen: boolean;
@@ -33,8 +21,10 @@ interface TeamModalProps {
 const TeamModal: React.FC<TeamModalProps> = ({ isOpen, member, onClose, onSuccess, defaultType = 'team' }) => {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [imageToDelete, setImageToDelete] = useState<string | null>(null);
   
-  const [formData, setFormData] = useState({
+  const emptyFormData = {
     name: "",
     role: "",
     company: "", // NOUVEAU
@@ -45,27 +35,30 @@ const TeamModal: React.FC<TeamModalProps> = ({ isOpen, member, onClose, onSucces
     email: "",   // NOUVEAU
     website: "", // NOUVEAU
     member_type: 'team' as 'team' | 'partner'
-  });
+  };
+
+  const [formData, setFormData] = useState(emptyFormData);
 
   useEffect(() => {
-    if (member) {
-      setFormData({
-        name: member.name || "",
-        role: member.role || "",
-        company: member.company || "",
-        bio: member.bio || "",
-        photo_url: member.photo_url || "",
-        instagram: member.instagram || "",
-        linkedin: member.linkedin || "",
-        email: member.email || "",
-        website: member.website || "",
-        member_type: member.member_type || 'team'
-      });
-    } else {
-      setFormData({
-        name: "", role: "", company: "", bio: "", photo_url: "", instagram: "", linkedin: "", email: "", website: "",
-        member_type: defaultType
-      });
+    if (isOpen) {
+      setError(null);
+      setImageToDelete(null); // Réinitialise l'image à supprimer
+      if (member) {
+        setFormData({
+          name: member.name || "",
+          role: member.role || "",
+          company: member.company || "",
+          bio: member.bio || "",
+          photo_url: member.photo_url || "",
+          instagram: member.instagram || "",
+          linkedin: member.linkedin || "",
+          email: member.email || "",
+          website: member.website || "",
+          member_type: member.member_type || 'team'
+        });
+      } else {
+        setFormData({ ...emptyFormData, member_type: defaultType });
+      }
     }
   }, [member, isOpen, defaultType]);
 
@@ -76,9 +69,19 @@ const TeamModal: React.FC<TeamModalProps> = ({ isOpen, member, onClose, onSucces
     const fileName = `${Date.now()}.${fileExt}`;
     const filePath = `${fileName}`;
     setUploading(true);
+    setError(null);
+
+    // Marquer l'ancienne image pour suppression si elle existe
+    if (formData.photo_url) {
+      setImageToDelete(formData.photo_url);
+    }
 
     const { error: uploadError } = await supabase.storage.from('team-photos').upload(filePath, file);
-    if (uploadError) { alert("Erreur upload: " + uploadError.message); setUploading(false); return; }
+    if (uploadError) { 
+      setError("Erreur upload: " + uploadError.message); 
+      setUploading(false); 
+      return; 
+    }
 
     const { data: { publicUrl } } = supabase.storage.from('team-photos').getPublicUrl(filePath);
     setFormData({ ...formData, photo_url: publicUrl });
@@ -86,28 +89,35 @@ const TeamModal: React.FC<TeamModalProps> = ({ isOpen, member, onClose, onSucces
   };
 
   const handleRemoveImage = () => {
+    if (formData.photo_url) {
+      setImageToDelete(prev => prev ? prev : formData.photo_url); // Marque pour suppression
+    }
     setFormData({ ...formData, photo_url: "" });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const payload = { ...formData }; // Envoie tout, y compris les nouveaux champs
+    setError(null);
 
-    const { error } = member 
-      ? await supabase.from('team_members').update(payload).eq('id', member.id)
-      : await supabase.from('team_members').insert([payload]);
+    const result = await saveTeamMemberAction(formData, member ? member.id : null, imageToDelete);
 
     setLoading(false);
-    if (!error) onSuccess();
-    else alert("Erreur BDD: " + error.message);
+    if (result.success) {
+      onSuccess();
+    } else {
+      setError(result.error || "Une erreur est survenue lors de la sauvegarde.");
+      if (imageToDelete) {
+        setImageToDelete(null); // Annule la suppression si la sauvegarde échoue
+      }
+    }
   };
 
   if (!isOpen) return null;
   const isPartner = formData.member_type === 'partner';
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/95 p-4 backdrop-blur-xl animate-in fade-in duration-300 overflow-y-auto">
+    <div className="fixed inset-0 z-[100] flex items-start justify-center bg-background/95 p-4 backdrop-blur-xl animate-in fade-in duration-300 overflow-y-auto">
       <div className="bg-card border border-zinc-800 p-8 rounded-[2.5rem] w-full max-w-2xl shadow-2xl my-8 text-white relative">
         
         <div className="flex justify-between items-center mb-8 border-b border-zinc-800 pb-6">
@@ -169,6 +179,12 @@ const TeamModal: React.FC<TeamModalProps> = ({ isOpen, member, onClose, onSucces
             <label className="text-[10px] font-bold text-zinc-500 uppercase ml-1 flex items-center gap-2"><AlignLeft size={14}/> Biographie / Description</label>
             <textarea rows={4} className="w-full bg-background border border-zinc-800 p-5 rounded-dynamic outline-none focus:border-white text-zinc-300 resize-none" value={formData.bio} onChange={e => setFormData({...formData, bio: e.target.value})} />
           </div>
+
+          {error && (
+            <div className="bg-red-900/30 border border-red-500 p-3 rounded-lg text-red-400 text-xs text-center">
+              {error}
+            </div>
+          )}
 
           {/* CONTACTS & RÉSEAUX */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-zinc-800 pt-6">

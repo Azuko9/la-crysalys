@@ -1,16 +1,21 @@
 import { supabase } from "@/lib/supabaseClient";
 import RealisationsClientPage from "./RealisationsClientPage";
 import type { Metadata } from 'next';
-import type { Project } from "./RealisationsClientPage";
-import type { Category } from "@/components/CategoryManager";
+import type { Project, Category } from "@/types";
+
+// Les données sont maintenant révalidées à la demande via des Server Actions (revalidatePath).
+// On peut donc bénéficier du rendu statique par défaut de Next.js.
 
 export const metadata: Metadata = {
-  title: 'Portfolio - Nos Réalisations | La Crysalys',
-  description: 'Découvrez notre portfolio de productions audiovisuelles, incluant des projets drones, des films corporate, des publicités et des clips musicaux.',
+  title: 'Réalisations - La Crysalys',
+  description: 'Découvrez notre portfolio de productions audiovisuelles, post-productions et prises de vues par drone.',
 };
 
 async function getProjects(): Promise<Project[]> {
-  const { data } = await supabase.from('portfolio_items').select('*').order('project_date', { ascending: false });
+  const { data } = await supabase
+    .from('portfolio_items')
+    .select('*')
+    .order('project_date', { ascending: false });
   return (data as Project[]) || [];
 }
 

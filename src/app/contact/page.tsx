@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
 import Link from "next/link";
+import { sendContactMessageAction } from "@/app/actions";
 import { ArrowLeft, Mail, Phone, MapPin, Send, CheckCircle, AlertCircle } from "lucide-react";
 
 export default function Contact() {
@@ -16,6 +16,7 @@ export default function Contact() {
 
   // Nouvel état pour les erreurs de validation
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [serverError, setServerError] = useState<string | null>(null);
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
 
   // RÈGLES DE VALIDATION
@@ -67,27 +68,27 @@ export default function Contact() {
     if (!validateForm()) {
       return; // On arrête tout si c'est pas valide
     }
-
+    
     setStatus("loading");
+    setServerError(null);
 
-    const { error } = await supabase
-      .from('messages')
-      .insert([
-        {
-          nom: formData.nom.trim(), // .trim() nettoie les espaces avant/après
-          email: formData.email.trim().toLowerCase(),
-          objet: formData.objet,
-          message: formData.message.trim(), // Supabase nettoie le SQL, mais on nettoie les espaces
-        }
-      ]);
+    const result = await sendContactMessageAction(formData);
 
-    if (error) {
-      console.error(error);
-      setStatus("error");
-    } else {
+    if (result.success) {
       setStatus("success");
       setFormData({ nom: "", email: "", objet: "devis", message: "" });
       setErrors({});
+    } else {
+      setStatus("error");
+      if (result.errors) {
+        // Erreurs de validation du serveur
+        setErrors(result.errors);
+      } else if (result.error) {
+        // Erreur générale du serveur
+        setServerError(result.error);
+      } else {
+        setServerError("Une erreur inattendue est survenue.");
+      }
     }
   };
 
@@ -150,10 +151,10 @@ export default function Contact() {
             </div>
           )}
 
-          {status === "error" && (
+          {(status === "error" && serverError) && (
             <div className="mb-6 bg-red-900/30 border border-red-500 p-4 rounded-lg flex items-center text-red-400">
               <AlertCircle className="mr-3" />
-              Une erreur est survenue. Veuillez réessayer.
+              {serverError}
             </div>
           )}
           

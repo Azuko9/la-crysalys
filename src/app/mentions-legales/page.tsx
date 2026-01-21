@@ -29,11 +29,12 @@ export default function MentionsLegales() {
             <p className="mb-4">
               En vertu de l'article 6 de la loi n° 2004-575 du 21 juin 2004 pour la confiance dans l'économie numérique, il est précisé aux utilisateurs du site internet <strong>https://la-crysalys.vercel.app/</strong> l'identité des différents intervenants dans le cadre de sa réalisation et de son suivi :
             </p>
+            {/* IMPORTANT: Vous devez remplacer les informations ci-dessous par les vôtres. */}
             <ul className="space-y-2 list-disc pl-5">
-              <li><strong>Propriétaire :</strong> [TON NOM OU SOCIÉTÉ]</li>
-              <li><strong>Adresse :</strong> [TON ADRESSE POSTALE]</li>
-              <li><strong>Contact :</strong> [TON EMAIL] - [TON TÉLÉPHONE]</li>
-              <li><strong>Identification :</strong> SIRET : [NUMÉRO] (si professionnel)</li>
+              <li><strong>Propriétaire :</strong> [À COMPLÉTER : Nom de votre société ou votre nom complet]</li>
+              <li><strong>Adresse :</strong> [À COMPLÉTER : Votre adresse postale complète]</li>
+              <li><strong>Contact :</strong> [À COMPLÉTER : Votre email] - [À COMPLÉTER : Votre téléphone]</li>
+              <li><strong>Identification :</strong> SIRET : [À COMPLÉTER : Votre numéro de SIRET si applicable]</li>
             </ul>
           </section>
 

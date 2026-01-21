@@ -1,71 +1,97 @@
 "use client";
 
-import React, { useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
-import { Tag, Layers, Plus, Trash2, Pencil, Check, X, AlertTriangle } from "lucide-react";
-
-export interface Category {
-  id: string;
-  name: string;
-}
+import React, { useState, useRef, useEffect } from "react";
+import { Tag, Layers, Plus, Trash2, Pencil, Check, X, AlertTriangle, Loader2 } from "lucide-react";
+import { saveCategoryAction, deleteCategoryAction } from "@/app/actions";
+import type { Category } from "@/types";
 
 interface CategoryManagerProps {
   categories: Category[];
   refreshCategories: () => Promise<void>;
 }
 
+type LoadingState = {
+  type: 'add' | 'update' | 'delete';
+  id?: string;
+} | null;
+
+type MessageState = {
+  type: 'success' | 'error';
+  text: string;
+} | null;
+
 export const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, refreshCategories }) => {
   const [newCatName, setNewCatName] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
+  const [loading, setLoading] = useState<LoadingState>(null);
+  const [message, setMessage] = useState<MessageState>(null);
+  const editInputRef = useRef<HTMLInputElement>(null);
+
+  // Efface le message après un délai
+  useEffect(() => {
+    if (message) {
+      const timer = setTimeout(() => setMessage(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [message]);
+
+  // Met le focus sur le champ d'édition
+  useEffect(() => {
+    if (editingId && editInputRef.current) {
+      editInputRef.current.focus();
+    }
+  }, [editingId]);
 
   const handleAdd = async () => {
     if (!newCatName.trim()) return;
-    const { error } = await supabase.from('categories').insert([{ name: newCatName.trim() }]);
-    if (!error) {
+    setLoading({ type: 'add' });
+    setMessage(null);
+
+    const result = await saveCategoryAction({ name: newCatName }, null);
+
+    if (result.success) {
+      setMessage({ type: 'success', text: `Catégorie "${newCatName}" ajoutée.` });
       setNewCatName("");
       await refreshCategories();
+    } else {
+      setMessage({ type: 'error', text: result.error || "Une erreur est survenue." });
     }
+    setLoading(null);
   };
 
-  const handleUpdateName = async (id: string) => {
+  const handleUpdate = async (id: string) => {
     if (!editValue.trim()) return;
-    const { error } = await supabase
-      .from('categories')
-      .update({ name: editValue.trim() })
-      .eq('id', id);
+    setLoading({ type: 'update', id });
+    setMessage(null);
 
-    if (!error) {
+    const result = await saveCategoryAction({ name: editValue }, id);
+
+    if (result.success) {
+      setMessage({ type: 'success', text: 'Catégorie mise à jour.' });
       setEditingId(null);
       await refreshCategories();
+    } else {
+      setMessage({ type: 'error', text: result.error || "Une erreur est survenue." });
     }
+    setLoading(null);
   };
 
-  // --- SÉCURITÉ DE SUPPRESSION ---
-  const deleteCategory = async (cat: Category) => {
-    // 1. On vérifie si des vidéos utilisent cette catégorie
-    // On utilise .ilike car tes catégories sont stockées dans une string séparée par des virgules
-    const { count, error: checkError } = await supabase
-      .from('portfolio_items')
-      .select('*', { count: 'exact', head: true })
-      .ilike('category', `%${cat.name}%`);
+  const handleDelete = async (cat: Category) => {
+    if (!confirm(`Confirmez-vous la suppression définitive de "${cat.name.toUpperCase()}" ?`)) return;
+    
+    setLoading({ type: 'delete', id: cat.id });
+    setMessage(null);
 
-    if (checkError) {
-      console.error("Erreur de vérification:", checkError);
-      return;
-    }
+    const result = await deleteCategoryAction(cat.id, cat.name);
 
-    // 2. Si des vidéos sont trouvées, on bloque
-    if (count && count > 0) {
-      alert(`Action impossible : Il y a encore ${count} vidéo(s) liées à la catégorie "${cat.name.toUpperCase()}". \n\nModifiez d'abord ces vidéos avant de supprimer la catégorie.`);
-      return;
-    }
-
-    // 3. Sinon, on demande confirmation et on supprime
-    if (confirm(`Confirmez-vous la suppression définitive de "${cat.name.toUpperCase()}" ?`)) {
-      await supabase.from('categories').delete().eq('id', cat.id);
+    if (result.success) {
+      setMessage({ type: 'success', text: `Catégorie "${cat.name}" supprimée.` });
       await refreshCategories();
+    } else {
+      setMessage({ type: 'error', text: result.error || "Une erreur est survenue." });
     }
+    setLoading(null);
   };
 
   return (
@@ -76,20 +102,35 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, re
           <Tag size={16}/> Gestion des Métiers
         </h3>
 
-        <div className="flex flex-wrap gap-2 mb-6">
+        {/* --- Zone de Messages --- */}
+        {message && (
+          <div className={`p-3 rounded-lg mb-4 text-xs font-bold text-center ${message.type === 'success' ? 'bg-green-900/50 text-green-300' : 'bg-red-900/50 text-red-300'}`}>
+            {message.text}
+          </div>
+        )}
+
+        <div className="flex flex-wrap gap-2 mb-6 min-h-[60px]">
           {categories.map(cat => (
             <div key={cat.id} className="flex items-center gap-2 bg-background px-3 py-1.5 rounded-xl border border-zinc-800 transition-all hover:border-zinc-700">
               
               {editingId === cat.id ? (
                 <div className="flex items-center gap-2">
                   <input 
-                    autoFocus
+                    ref={editInputRef}
                     value={editValue}
                     onChange={(e) => setEditValue(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleUpdate(cat.id)}
                     className="bg-zinc-800 text-[10px] uppercase font-black px-2 py-1 rounded outline-none border border-primary w-24 text-white"
+                    disabled={loading?.type === 'update'}
                   />
-                  <button onClick={() => handleUpdateName(cat.id)} className="text-primary"><Check size={14}/></button>
-                  <button onClick={() => setEditingId(null)} className="text-zinc-500"><X size={14}/></button>
+                  {loading?.type === 'update' && loading.id === cat.id ? (
+                    <Loader2 size={14} className="animate-spin text-primary"/>
+                  ) : (
+                    <>
+                      <button onClick={() => handleUpdate(cat.id)} className="text-primary hover:text-white"><Check size={14}/></button>
+                      <button onClick={() => setEditingId(null)} className="text-zinc-500 hover:text-white"><X size={14}/></button>
+                    </>
+                  )}
                 </div>
               ) : (
                 <>
@@ -101,16 +142,22 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, re
                       onClick={() => { setEditingId(cat.id); setEditValue(cat.name); }}
                       className="text-zinc-600 hover:text-blue-500 transition-colors"
                       title="Modifier le nom"
+                      disabled={!!loading}
                     >
                       <Pencil size={12}/>
                     </button>
-                    <button 
-                      onClick={() => deleteCategory(cat)}
-                      className="text-zinc-600 hover:text-red-500 transition-colors"
-                      title="Supprimer"
-                    >
-                      <Trash2 size={12}/>
-                    </button>
+                    {loading?.type === 'delete' && loading.id === cat.id ? (
+                      <Loader2 size={12} className="animate-spin text-red-500"/>
+                    ) : (
+                      <button 
+                        onClick={() => handleDelete(cat)}
+                        className="text-zinc-600 hover:text-red-500 transition-colors"
+                        title="Supprimer"
+                        disabled={!!loading}
+                      >
+                        <Trash2 size={12}/>
+                      </button>
+                    )}
                   </div>
                 </>
               )}
@@ -120,12 +167,15 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, re
 
         <div className="flex gap-2">
           <input 
-            value={newCatName} onChange={e => setNewCatName(e.target.value)}
+            value={newCatName} 
+            onChange={e => setNewCatName(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
             className="bg-background border border-zinc-800 p-4 rounded-xl flex-1 text-sm outline-none focus:border-primary transition-all text-white" 
             placeholder="Nouveau métier..."
+            disabled={!!loading}
           />
-          <button onClick={handleAdd} className="bg-primary hover:bg-green-500 px-6 rounded-xl font-bold text-black transition-all">
-            <Plus size={24}/>
+          <button onClick={handleAdd} className="bg-primary hover:bg-green-500 px-6 rounded-xl font-bold text-black transition-all flex items-center justify-center disabled:opacity-50" disabled={!!loading}>
+            {loading?.type === 'add' ? <Loader2 size={24} className="animate-spin"/> : <Plus size={24}/>}
           </button>
         </div>
       </div>

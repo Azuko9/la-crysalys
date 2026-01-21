@@ -1,18 +1,21 @@
 "use client";
 
+import { saveFeatureAction, deleteFeatureAction } from "@/app/actions";
+import type { Feature } from "@/types";
+import type { User } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { 
   // Icônes générales / Admin
   PlusCircle, Pencil, Trash2, X, Save,
   // Icônes Expertise (Drone)
-  ShieldCheck, Map, Camera, FastForward, Zap, Heart, Star, CheckCircle, 
+  ShieldCheck, Map, Camera, FastForward, Zap, Heart, Star, CheckCircle,
   // Icônes Post-Prod (Nouveaux ajouts)
   Scissors, Volume2, Layers, Palette, Monitor, Cpu
 } from "lucide-react";
 
 // 1. MAPPING COMPLET DES ICÔNES
-const ICON_MAP: any = {
+const ICON_MAP: Record<string, React.ReactNode> = {
   // Expertise
   ShieldCheck: <ShieldCheck size={28}/>,
   Map: <Map size={28}/>,
@@ -39,12 +42,12 @@ interface FeaturesSectionProps {
 }
 
 export default function FeaturesSection({ pageContext }: FeaturesSectionProps) {
-  const [features, setFeatures] = useState<any[]>([]);
-  const [user, setUser] = useState<any>(null);
+  const [features, setFeatures] = useState<Feature[]>([]);
+  const [user, setUser] = useState<User | null>(null);
   
   // États de la Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [featureToEdit, setFeatureToEdit] = useState<any>(null);
+  const [featureToEdit, setFeatureToEdit] = useState<Feature | null>(null);
 
   useEffect(() => {
     const init = async () => {
@@ -61,7 +64,7 @@ export default function FeaturesSection({ pageContext }: FeaturesSectionProps) {
       .select('*')
       .eq('page_context', pageContext) // Filtre selon la page
       .order('created_at', { ascending: true });
-    setFeatures(data || []);
+    setFeatures(data as Feature[] || []);
   };
 
   return (
@@ -104,11 +107,15 @@ export default function FeaturesSection({ pageContext }: FeaturesSectionProps) {
 
 // --- SOUS-COMPOSANTS ---
 
-function FeatureCard({ feature, user, onEdit, refresh }: any) {
+function FeatureCard({ feature, user, onEdit, refresh }: { feature: Feature, user: User | null, onEdit: () => void, refresh: () => void }) {
   const handleDelete = async () => {
     if(confirm("Supprimer cet avantage ?")) {
-      const { error } = await supabase.from('expertise_features').delete().eq('id', feature.id);
-      if(!error) refresh();
+      const result = await deleteFeatureAction(feature.id);
+      if (result.success) {
+        refresh();
+      } else {
+        alert(`Erreur: ${result.error}`);
+      }
     }
   };
 
@@ -131,7 +138,7 @@ function FeatureCard({ feature, user, onEdit, refresh }: any) {
   );
 }
 
-function FeatureModal({ isOpen, feature, pageContext, onClose, onSuccess }: any) {
+function FeatureModal({ isOpen, feature, pageContext, onClose, onSuccess }: { isOpen: boolean, feature: Feature | null, pageContext: string, onClose: () => void, onSuccess: () => void }) {
   const [formData, setFormData] = useState({
     title: feature?.title || "",
     description: feature?.description || "",
@@ -142,12 +149,12 @@ function FeatureModal({ isOpen, feature, pageContext, onClose, onSuccess }: any)
     e.preventDefault();
     const payload = { ...formData, page_context: pageContext };
 
-    if (feature?.id) {
-      await supabase.from('expertise_features').update(payload).eq('id', feature.id);
+    const result = await saveFeatureAction(payload, feature ? feature.id : null);
+    if (result.success) {
+      onSuccess();
     } else {
-      await supabase.from('expertise_features').insert([payload]);
+      alert(`Erreur: ${result.error}`);
     }
-    onSuccess();
   };
 
   if (!isOpen) return null;

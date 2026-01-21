@@ -26,7 +26,7 @@ export default function Home() {
 
       {/* --- 3. L'OVERLAY (COUCHÉ NOIRE SEMI-TRANSPARENTE) --- */}
       {/* Ajuste bg-background/50 (50% d'opacité) selon tes besoins : /30, /70... */}
-      <div className="absolute top-0 left-0 w-full h-full -z-10"></div>
+      <div className="absolute top-0 left-0 w-full h-full bg-background/50 -z-10"></div>
 
       {/* --- 4. TON CONTENU (Texte, boutons...) --- */}
       {/* Important : relative et z-10 pour passer devant la vidéo et l'overlay */}

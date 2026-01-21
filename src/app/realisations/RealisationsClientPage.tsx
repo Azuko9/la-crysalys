@@ -2,47 +2,57 @@
 
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { getYouTubeID } from "@/lib/utils";
-import { PlusCircle, Settings, Pencil, Trash2 } from "lucide-react";
+import { PlusCircle, Settings } from "lucide-react"; 
 import { useRouter } from "next/navigation";
-import { CategoryManager, type Category } from "@/components/CategoryManager";
-import ProjectModal from "@/components/ProjectModal";
 import type { User } from "@supabase/supabase-js";
+import { ProjectCard } from "@/components/ProjectCard";
+import dynamic from "next/dynamic";
+import type { Project, Category } from "@/types";
 
-export interface Project {
-  id: string;
-  title: string;
-  youtube_url: string;
-  category: string;
-  description: string | null;
-  description_drone?: string | null;
-  description_postprod?: string | null;
-  client_name?: string | null;
-  client_website?: string | null;
-  project_date: string | null;
-}
+const ProjectModal = dynamic(() => import("@/components/ProjectModal"));
+const CategoryManager = dynamic(() => import("@/components/CategoryManager").then(mod => mod.CategoryManager));
 
 interface RealisationsClientPageProps {
   initialProjects: Project[];
   initialCategories: Category[];
+  defaultFilter?: string;
 }
 
-interface ProjectCardProps {
-  projet: Project;
-  user: any;
-  onEdit: (p: Project) => void;
-  fetchProjects: () => Promise<void>;
-  isVertical?: boolean;
-}
-
-export default function RealisationsClientPage({ initialProjects, initialCategories }: RealisationsClientPageProps) {
-  const [projets, setProjets] = useState<Project[]>(initialProjects);
-  const [categories, setCategories] = useState<Category[]>(initialCategories);
+export default function RealisationsClientPage({ initialProjects, initialCategories, defaultFilter = "Tout" }: RealisationsClientPageProps) {
   const [user, setUser] = useState<User | null>(null);
-  const [filtreActuel, setFiltreActuel] = useState("Tout");
+  // Utilise le filtre par défaut ou "Tout"
+  const [filtreActuel, setFiltreActuel] = useState(defaultFilter);
   const [isManagingCats, setIsManagingCats] = useState(false);
-  const [isFormOpen, setIsFormOpen] = useState(false);
+
+  const [categories, setCategories] = useState<Category[]>(initialCategories);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [projectToEdit, setProjectToEdit] = useState<Project | null>(null);
+
+  const fetchCategories = useCallback(async () => {
+    const { data } = await supabase.from('categories').select('id, name').order('name');
+    if (data) setCategories(data);
+  }, []);
+
+  const openModal = (project: Project | null) => {
+    setProjectToEdit(project);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setProjectToEdit(null);
+  };
+
+  // Gère le succès de l'ajout/modification
+  const handleModalSuccess = () => {
+    closeModal();
+    // La revalidation est maintenant gérée par le Server Action.
+  };
+
+  // Gère la suppression en rafraîchissant les données depuis la BDD
+  const handleProjectDeleted = () => {
+    // La revalidation est maintenant gérée par le Server Action.
+  };
 
   useEffect(() => {
     const checkUser = async () => {
@@ -52,22 +62,12 @@ export default function RealisationsClientPage({ initialProjects, initialCategor
     checkUser();
   }, []);
 
-  const fetchProjects = useCallback(async () => {
-    const { data } = await supabase.from('portfolio_items').select('*').order('project_date', { ascending: false });
-    setProjets((data as Project[]) || []);
-  }, []);
-
-  const fetchCategories = useCallback(async () => {
-    const { data } = await supabase.from('categories').select('*').order('name', { ascending: true });
-    setCategories((data as Category[]) || []);
-  }, []);
-
   const filtered = useMemo(() => (filtreActuel === "Tout" 
-    ? projets 
-    : projets.filter(p => p.category?.includes(filtreActuel))), [projets, filtreActuel]);
+    ? initialProjects 
+    : initialProjects.filter(p => p.category?.includes(filtreActuel))), [initialProjects, filtreActuel]);
 
-  const shorts = useMemo(() => filtered.filter(p => p.youtube_url.includes('/shorts/') || p.category?.includes('Short')), [filtered]);
-  const videosClassiques = useMemo(() => filtered.filter(p => !p.youtube_url.includes('/shorts/') && !p.category?.includes('Short')), [filtered]);
+  const shorts = useMemo(() => filtered.filter(p => p.youtube_url.includes('/shorts/')), [filtered]);
+  const videosClassiques = useMemo(() => filtered.filter(p => !p.youtube_url.includes('/shorts/')), [filtered]);
 
   return (
     <>
@@ -94,7 +94,7 @@ export default function RealisationsClientPage({ initialProjects, initialCategor
 
       {user && (
         <div className="max-w-7xl mx-auto mb-20">
-          <button onClick={() => { setProjectToEdit(null); setIsFormOpen(true); }} className="w-full py-10 border-2 border-dashed border-zinc-800 hover:border-primary rounded-dynamic text-zinc-500 hover:text-primary transition-all font-bold uppercase tracking-widest flex items-center justify-center gap-4 text-xs">
+          <button onClick={() => openModal(null)} className="w-full py-10 border-2 border-dashed border-zinc-800 hover:border-primary rounded-dynamic text-zinc-500 hover:text-primary transition-all font-bold uppercase tracking-widest flex items-center justify-center gap-4 text-xs">
             <PlusCircle size={24}/> Ajouter une réalisation
           </button>
         </div>
@@ -105,7 +105,7 @@ export default function RealisationsClientPage({ initialProjects, initialCategor
           <h2 className="text-xl font-black italic uppercase text-primary mb-8 border-l-4 border-primary pl-4 tracking-tighter">YouTube Shorts</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
             {shorts.map((p: Project) => (
-              <ProjectCard key={p.id} projet={p} user={user} onEdit={(proj: Project) => { setProjectToEdit(proj); setIsFormOpen(true); }} fetchProjects={fetchProjects} isVertical={true} />
+              <ProjectCard key={p.id} projet={p} user={user} onEdit={openModal} onDeleteSuccess={handleProjectDeleted} isVertical={true} />
             ))}
           </div>
         </section>
@@ -115,56 +115,14 @@ export default function RealisationsClientPage({ initialProjects, initialCategor
         <h2 className="text-xl font-black italic uppercase text-primary mb-8 border-l-4 border-primary pl-4 tracking-tighter">Productions</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {videosClassiques.map((p: Project) => (
-            <ProjectCard key={p.id} projet={p} user={user} onEdit={(proj: Project) => { setProjectToEdit(proj); setIsFormOpen(true); }} fetchProjects={fetchProjects} isVertical={false} />
+            <ProjectCard key={p.id} projet={p} user={user} onEdit={openModal} onDeleteSuccess={handleProjectDeleted} isVertical={false} />
           ))}
         </div>
       </section>
 
-      {isFormOpen && (
-        <ProjectModal isOpen={isFormOpen} project={projectToEdit} categories={categories} onClose={() => setIsFormOpen(false)} onSuccess={() => { setIsFormOpen(false); fetchProjects(); }} />
+      {isModalOpen && (
+        <ProjectModal isOpen={isModalOpen} project={projectToEdit} categories={categories} onClose={closeModal} onSuccess={handleModalSuccess} />
       )}
     </>
-  );
-}
-
-function ProjectCard({ projet, user, onEdit, fetchProjects, isVertical = false }: ProjectCardProps) {
-  const videoId = getYouTubeID(projet.youtube_url);
-  const router = useRouter();
-  const [isHovered, setIsHovered] = useState(false);
-  
-  const categoriesList = projet.category ? projet.category.split(',').map((c) => c.trim()) : [];
-
-  const handleDelete = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (confirm("Supprimer cette vidéo ?")) {
-      const { error } = await supabase.from('portfolio_items').delete().eq('id', projet.id);
-      if (!error) fetchProjects();
-    }
-  };
-
-  return (
-    <div className="bg-card border border-zinc-800 rounded-dynamic overflow-hidden group hover:border-primary transition-all cursor-pointer relative flex flex-col h-full" onClick={() => router.push(`/realisations/${projet.id}`)} onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
-      <div className={`relative ${isVertical ? 'aspect-[9/16]' : 'aspect-video'} bg-black overflow-hidden`}>
-        {isHovered && videoId ? (
-          <iframe className="absolute inset-0 w-full h-full object-cover pointer-events-none" src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&showinfo=0&loop=1&playlist=${videoId}`} title={projet.title} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" style={{ border: 0 }} />
-        ) : (
-          videoId && (<img src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`} className="w-full h-full object-cover opacity-90 group-hover:opacity-0 transition-opacity duration-300" alt={projet.title} />)
-        )}
-        {user && (
-          <div className="absolute top-2 right-2 flex gap-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button onClick={(e) => { e.stopPropagation(); onEdit(projet); }} className="bg-blue-600/90 hover:bg-blue-500 p-2 rounded text-white backdrop-blur-sm"><Pencil size={14}/></button>
-            <button onClick={handleDelete} className="bg-red-600/90 hover:bg-red-500 p-2 rounded text-white backdrop-blur-sm"><Trash2 size={14}/></button>
-          </div>
-        )}
-      </div>
-      <div className="p-4 bg-card flex-1 flex flex-col justify-between relative z-10">
-        <h3 className="font-black uppercase text-xs line-clamp-1 tracking-wider text-white group-hover:text-primary transition-colors">{projet.title}</h3>
-        <div className="flex flex-wrap gap-1 mt-3">
-          {categoriesList.map((cat, i) => (
-            <span key={i} className="text-[8px] bg-transparent border border-primary text-primary px-2 py-0.5 rounded uppercase font-bold tracking-wide">{cat}</span>
-          ))}
-        </div>
-      </div>
-    </div>
   );
 }

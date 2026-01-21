@@ -3,15 +3,22 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Palette, Save, Box, Droplets, RotateCcw, Bookmark, Download, CheckCircle } from "lucide-react";
 
+type ThemeSettings = {
+  bg_color: string;
+  primary_color: string;
+  border_radius: string;
+  card_bg: string;
+};
+
 export default function ThemeManager() {
-  const [settings, setSettings] = useState({
+  const [settings, setSettings] = useState<ThemeSettings>({
     bg_color: "#090909ff",
     primary_color: "#22c55e",
     border_radius: "0px",
     card_bg: "#29292cff",
   });
 
-  const [profilesPreview, setProfilesPreview] = useState<any>({
+  const [profilesPreview, setProfilesPreview] = useState<Record<string, ThemeSettings | null>>({
     profile_1: null,
     profile_2: null,
     profile_3: null,
@@ -39,7 +46,7 @@ export default function ThemeManager() {
       .upsert({ key: profileKey, value: JSON.stringify(settings) }, { onConflict: 'key' });
     
     if (!error) {
-      setProfilesPreview((prev: any) => ({ ...prev, [profileKey]: settings }));
+      setProfilesPreview((prev) => ({ ...prev, [profileKey]: settings }));
     }
   };
 
@@ -54,8 +61,8 @@ export default function ThemeManager() {
     const fetchSettings = async () => {
       const { data } = await supabase.from("site_settings").select("key, value");
       if (data) {
-        const loadedSettings = { ...settings };
-        const loadedProfiles: any = {};
+        const loadedSettings: ThemeSettings = { ...settings };
+        const loadedProfiles: Record<string, ThemeSettings | null> = {};
         
         data.forEach(s => {
           // Si c'est une clé de style simple (ex: primary_color), on l'hydrate
@@ -64,7 +71,12 @@ export default function ThemeManager() {
           }
           // Si c'est un profil JSON, on le parse
           if (s.key.startsWith('profile_')) {
-            loadedProfiles[s.key] = JSON.parse(s.value);
+            try {
+              loadedProfiles[s.key] = JSON.parse(s.value);
+            } catch (e) {
+              console.error(`Failed to parse theme profile ${s.key}:`, e);
+              loadedProfiles[s.key] = null; // Sécurisation en cas d'échec
+            }
           }
         });
         setSettings(loadedSettings);
@@ -84,7 +96,7 @@ export default function ThemeManager() {
     });
   };
 
-  const ColorField = ({ label, value, id }: { label: string, value: string, id: keyof typeof settings }) => (
+  const ColorField = ({ label, value, id }: { label: string, value: string, id: keyof ThemeSettings }) => (
     <div className="flex justify-between items-center group bg-black/20 p-2 rounded-dynamic border border-transparent hover:border-zinc-700 transition-all">
       <label className="text-[10px] font-bold text-zinc-400 uppercase group-hover:text-white transition-colors">{label}</label>
       <div className="flex items-center gap-2">
