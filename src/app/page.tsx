@@ -14,7 +14,10 @@ export default function Home() {
       
       {/* --- 2. LA VIDÉO DE FOND --- */}
       <video
+        aria-hidden="true"
         autoPlay
+        loop
+        poster="/background-poster.jpg" // AMÉLIORATION : Ajoute une image de chargement. Créez une image nommée 'background-poster.jpg' dans votre dossier /public.
         muted
         playsInline // Très important pour que ça marche sur iPhone/Safari
         className="absolute top-0 left-0 w-full h-full object-cover -z-20"
@@ -37,9 +40,9 @@ export default function Home() {
 <h1 className="text-5xl md:text-7xl font-extrabold mb-8 leading-tight tracking-tighter">
   Capturez l'instant.<br />
   <span 
-    className="text-transparent bg-clip-text bg-gradient-to-r"
+    className="text-primary text-transparent bg-clip-text bg-gradient-to-r" // OPTIMISATION ACCESSIBILITÉ: Ajout d'une couleur de base au cas où le dégradé ne s'afficherait pas.
     style={{ 
-      backgroundImage: `linear-gradient(to right, var(--primary-color), #ffffff55)` 
+      backgroundImage: `linear-gradient(to right, var(--primary-color), #ffffffdd)` 
     }}
   >
     Sublimez votre histoire.

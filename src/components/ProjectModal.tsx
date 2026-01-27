@@ -2,13 +2,14 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import {
-  AlignLeft, Calendar, Globe, Layers, Loader2, Trash2,
-  UploadCloud, User, Wind, XCircle
+  AlignLeft, Calendar, Globe, Layers, Loader2, Trash2, UploadCloud, User, Wind, XCircle, Save
 } from "lucide-react";
+import { z } from 'zod'; // Import de Zod pour la validation côté client
 
-import { saveProjectAction } from "@/app/actions";
+import { saveProjectAction } from "@/lib/actions";
 import { supabase } from "@/lib/supabaseClient";
-import type { Project, Category, PostProdDetail } from "@/app/index";
+import type { Project, Category, PostProdDetail } from "@/types";
+import { uploadFileAndGetPath } from "@/lib/clientUploadHelpers"; // Import de la fonction d'upload
 
 
 
@@ -20,77 +21,92 @@ interface ProjectModalProps {
   onSuccess: () => void;
 }
 
-// Ce type représente les données du formulaire, aligné avec le type `Project` global.
-type ProjectFormData = {
-  title: string;
-  youtube_url: string;
-  description: string;
-  description_drone: string;
-  postprod_main_description: string;
-  description_postprod: PostProdDetail[];
-  client_name: string;
-  client_website: string;
-  project_date: string;
-  postprod_before_url: string;
-  postprod_after_url: string;
-};
+const PROJECT_BUCKET_NAME = 'portfolio_images';
 
-const emptyFormData: ProjectFormData = {
+// Type pour les données du formulaire, basé sur Project mais avec des valeurs par défaut
+// Schéma Zod pour la validation côté client (doit correspondre à celui de actions.ts)
+const PostProdDetailSchema = z.object({
+  detail: z.string().min(1, "Le détail de la post-production est requis."),
+  before_path: z.string().nullable().optional(),
+  after_path: z.string().nullable().optional(),
+});
+
+const ProjectSchema = z.object({
+  title: z.string().min(1, "Le titre est requis."),
+  description: z.string().nullable(),
+  youtube_url: z.string().url("URL YouTube invalide.").nullable().optional(),
+  project_date: z.string().refine((val) => !isNaN(Date.parse(val)), "Date de projet invalide."),
+  category: z.string(),
+  client_name: z.string().nullable(),
+  client_website: z.string().nullable(),
+  description_drone: z.string().nullable(),
+  postprod_main_description: z.string().nullable(),
+  client_logo_path: z.string().nullable(),
+  postprod_before_path: z.string().nullable(),
+  postprod_after_path: z.string().nullable(),
+  description_postprod: z.array(PostProdDetailSchema).nullable(),
+});
+
+// Type pour les données du formulaire, basé sur Project mais avec des valeurs par défaut
+type ProjectFormDataType = Omit<Project, 'id' | 'created_at'>;
+
+const emptyFormData: ProjectFormDataType = {
   title: "",
   youtube_url: "",
-  description: "",
-  description_drone: "",
-  postprod_main_description: "",
+  description: null,
+  description_drone: null,
+  postprod_main_description: null,
   description_postprod: [],
-  client_name: "",
-  client_website: "",
+  client_name: null,
+  client_website: null,
   project_date: new Date().toISOString().split('T')[0],
-  postprod_before_url: "",
-  postprod_after_url: "",
+  client_logo_path: null,
+  postprod_before_path: null,
+  postprod_after_path: null,
+  category: "",
 };
 
 // --- SOUS-COMPOSANT POUR L'UPLOAD D'IMAGE ---
 interface ImageUploaderProps {
   label: string;
-  currentUrl: string;
-  onUrlChange: (url: string) => void;
+  currentPath: string | null; // Accepte un chemin
+  onPathChange: (path: string | null) => void; // Retourne un chemin
   storageBucket: string;
+  folderPath?: string; // Nouveau: chemin du dossier dans le bucket
   colorClass: string;
   disabled?: boolean;
 }
 
-const ImageUploader: React.FC<ImageUploaderProps> = ({ label, currentUrl, onUrlChange, storageBucket, colorClass, disabled = false }) => {
+const ImageUploader: React.FC<ImageUploaderProps> = ({ label, currentPath, onPathChange, storageBucket, folderPath = '', colorClass, disabled = false }) => {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
     const file = e.target.files[0];
-    const fileName = `${Date.now()}-${file.name}`;
+    
     setUploading(true);
     setUploadError(null);
 
-    const { error: uploadError } = await supabase.storage.from(storageBucket).upload(fileName, file);
-    if (uploadError) {
-      setUploadError("Erreur: " + uploadError.message);
-      setUploading(false); return;
+    // Utiliser la fonction d'upload côté client
+    const uploadedPath = await uploadFileAndGetPath(file, storageBucket, folderPath);
+    if (!uploadedPath) {
+      setUploadError("Échec de l'upload de l'image.");
     }
-
-    const { data: { publicUrl } } = supabase.storage.from(storageBucket).getPublicUrl(fileName);
-    onUrlChange(publicUrl);
+    onPathChange(uploadedPath); // Met à jour le chemin dans le formulaire parent
     setUploading(false);
   };
 
-  const handleRemoveImage = () => {
-    onUrlChange(""); // Mise à jour optimiste de l'UI
+  const handleRemoveImage = () => { // Supprime l'image du formulaire
+    onPathChange(null);
   };
 
   return (
     <div className="space-y-2">
       <label className={`text-[10px] font-bold uppercase ml-1 ${colorClass}`}>{label}</label>
-      {currentUrl ? (
+      {currentPath ? ( // Utiliser currentPath pour déterminer si une image est présente
         <div className="relative w-full h-32 rounded-dynamic overflow-hidden border border-zinc-700 group">
-          <img src={currentUrl} alt="Aperçu" className="w-full h-full object-cover" />
+          <img src={supabase.storage.from(storageBucket).getPublicUrl(currentPath).data.publicUrl} alt="Aperçu" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
             <button type="button" onClick={handleRemoveImage} className="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-full font-bold text-xs uppercase flex items-center gap-1"><Trash2 size={14} /> Changer</button>
           </div>
@@ -113,7 +129,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ label, currentUrl, onUrlC
 
 const getFinalCategories = (
   selectedCats: string[],
-  formData: ProjectFormData
+  formData: ProjectFormDataType
 ): string[] => {
   const finalLabels = new Set(selectedCats);
 
@@ -131,57 +147,74 @@ const getFinalCategories = (
 
 const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories, onClose, onSuccess }) => {
   const [selectedCats, setSelectedCats] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [initialImageUrls, setInitialImageUrls] = useState<Set<string>>(new Set());
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [formErrors, setFormErrors] = useState<z.ZodIssue[]>([]); // Pour les erreurs de validation Zod côté client
 
-  const [formData, setFormData] = useState<ProjectFormData>(emptyFormData);
+  const [initialImagePaths, setInitialImagePaths] = useState<Set<{ bucket: string; path: string }>>(new Set());
+
+  const [formData, setFormData] = useState<ProjectFormDataType>(emptyFormData);
+
+  // États pour les fichiers à uploader
+  const [clientLogoFile, setClientLogoFile] = useState<File | null>(null);
+  const [postprodBeforeFile, setPostprodBeforeFile] = useState<File | null>(null);
+  const [postprodAfterFile, setPostprodAfterFile] = useState<File | null>(null);
+  // Pour les images des détails de post-production, on garde une trace des fichiers par index et type
+  const [postprodDetailFiles, setPostprodDetailFiles] = useState<Array<{ index: number; type: 'before' | 'after'; file: File | null }>>([]);
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Logique de verrouillage de la section "étapes individuelles"
-  const isPostProdDetailsDisabled = !formData.postprod_main_description.trim();
+  const isPostProdDetailsDisabled = !formData.postprod_main_description?.trim();
 
   useEffect(() => {
     if (isOpen) {
-      setError(null);
+      setServerError(null); // Réinitialise l'erreur serveur
+      setFormErrors([]);
+      setClientLogoFile(null);
+      setPostprodBeforeFile(null);
+      setPostprodAfterFile(null);
+      setPostprodDetailFiles([]);
+      setInitialImagePaths(new Set());
+
       if (project) {
-        const urls = new Set<string>();
         // Mode édition : on charge les données du projet
         setFormData({
           title: project.title || "",
           youtube_url: project.youtube_url || "",
-          description: project.description || "",
-          description_drone: project.description_drone || "",
-          postprod_main_description: project.postprod_main_description || "",
-          // On charge le tableau JSON, ou on initialise un tableau vide s'il n'y a rien
+          description: project.description || null, // Gérer null
+          description_drone: project.description_drone || null, // Gérer null
+          postprod_main_description: project.postprod_main_description || null, // Gérer null
           description_postprod: (project.description_postprod && Array.isArray(project.description_postprod))
             ? project.description_postprod
             : [],
-          client_name: project.client_name || "",
-          client_website: project.client_website || "",
+          client_name: project.client_name || null, // Gérer null
+          client_website: project.client_website || null, // Gérer null
           project_date: project.project_date || new Date().toISOString().split('T')[0],
-          postprod_before_url: project.postprod_before_url || "",
-          postprod_after_url: project.postprod_after_url || "",
+          client_logo_path: project.client_logo_path || null,
+          postprod_before_path: project.postprod_before_path || null,
+          postprod_after_path: project.postprod_after_path || null,
+          category: project.category || "",
         });
 
-        if (project.postprod_before_url) urls.add(project.postprod_before_url);
-        if (project.postprod_after_url) urls.add(project.postprod_after_url);
+        // Collecter les chemins initiaux pour la suppression
+        const paths = new Set<{ bucket: string; path: string }>();
+        if (project.client_logo_path) paths.add({ bucket: PROJECT_BUCKET_NAME, path: project.client_logo_path });
+        if (project.postprod_before_path) paths.add({ bucket: PROJECT_BUCKET_NAME, path: project.postprod_before_path });
+        if (project.postprod_after_path) paths.add({ bucket: PROJECT_BUCKET_NAME, path: project.postprod_after_path });
         if (project.description_postprod && Array.isArray(project.description_postprod)) {
           project.description_postprod.forEach(d => {
-            if (d.before_url) urls.add(d.before_url);
-            if (d.after_url) urls.add(d.after_url);
+            if (d.before_path) paths.add({ bucket: PROJECT_BUCKET_NAME, path: d.before_path });
+            if (d.after_path) paths.add({ bucket: PROJECT_BUCKET_NAME, path: d.after_path });
           });
         }
-        setInitialImageUrls(urls);
+        setInitialImagePaths(paths);
 
         const tags = project.category ? project.category.split(',').map(t => t.trim()) : [];
         setSelectedCats(tags.filter(t => !["Drone", "Post-Prod", "Short"].includes(t)));
       } else {
         // Mode création : on réinitialise le formulaire
-        setFormData({
-          ...emptyFormData,
-          project_date: new Date().toISOString().split('T')[0],
-        });
-        setInitialImageUrls(new Set());
+        setFormData(emptyFormData);
+        setInitialImagePaths(new Set());
         setSelectedCats([]);
       }
     }
@@ -191,60 +224,173 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
     setSelectedCats(prev => prev.includes(name) ? prev.filter(t => t !== name) : [...prev, name]);
   }, []);
 
-  // Handler générique pour les champs de formulaire simples
-  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  // Handler générique pour les champs de texte/sélection
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value,
+      [name]: value === "" ? null : value, // Convertir les chaînes vides en null pour les champs optionnels
     }));
   }, []);
 
-  const handlePostprodChange = useCallback((index: number, field: keyof PostProdDetail, value: string) => {
+  // Gérer les changements de fichiers pour les images principales
+  const handleMainFileChange = (file: File | null, field: 'client_logo' | 'postprod_before' | 'postprod_after') => {
+    switch (field) {
+      case 'client_logo': setClientLogoFile(file); break;
+      case 'postprod_before': setPostprodBeforeFile(file); break;
+      case 'postprod_after': setPostprodAfterFile(file); break;
+    }
+  };
+
+  // Gérer les changements de fichiers pour les détails de post-production
+  const handlePostProdDetailFileChange = (index: number, type: 'before' | 'after', file: File | null) => {
+    setPostprodDetailFiles(prev => {
+      const existing = prev.find(item => item.index === index && item.type === type);
+      if (existing) {
+        return prev.map(item => item.index === index && item.type === type ? { ...item, file } : item);
+      }
+      return [...prev, { index, type, file }];
+    });
+  };
+
+  // Ajouter/Supprimer des détails de post-production
+  const addPostProdDetail = () => {
+    setFormData(prev => ({
+      ...prev,
+      description_postprod: [...(prev.description_postprod || []), { detail: '', before_path: null, after_path: null }]
+    }));
+  };
+
+  const removePostProdDetail = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      description_postprod: prev.description_postprod?.filter((_, i) => i !== index) || [] // Assurez-vous que c'est un tableau vide si tout est supprimé
+    }));
+    setPostprodDetailFiles(prev => prev.filter(item => item.index !== index));
+  };
+
+  const handlePostprodChange = useCallback((index: number, field: keyof PostProdDetail, value: string | null) => {
     setFormData(prev => {
       const newDetails = [...(prev.description_postprod || [])];
-      newDetails[index] = { ...newDetails[index], [field]: value };
+      if (newDetails[index]) { // S'assurer que l'élément existe
+        newDetails[index] = { ...newDetails[index], [field]: value };
+      }
       return { ...prev, description_postprod: newDetails };
     });
   }, []);
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
+    setIsSubmitting(true);
+    setFormErrors([]);
+    setServerError(null);
 
-    // On filtre les détails qui sont complètement vides avant de sauvegarder
-    const cleanedPostProd = (formData.description_postprod || []).filter(
-      d => d.detail.trim() !== '' || d.before_url || d.after_url
-    );
+    // Validation côté client avec Zod
+    const clientValidation = ProjectSchema.safeParse(formData);
+    if (!clientValidation.success) {
+      setFormErrors(clientValidation.error.issues);
+      setIsSubmitting(false);
+      return;
+    }
 
-    const payload = {
+    const dataToSave = {
       ...formData,
-      description_postprod: cleanedPostProd,
       category: getFinalCategories(selectedCats, formData).join(', '),
     };
 
-    // Déterminer les images à supprimer en comparant l'état initial et final
-    const finalImageUrls = new Set<string>();
-    if (payload.postprod_before_url) finalImageUrls.add(payload.postprod_before_url);
-    if (payload.postprod_after_url) finalImageUrls.add(payload.postprod_after_url);
-    if (payload.description_postprod) {
-      payload.description_postprod.forEach(d => {
-        if (d.before_url) finalImageUrls.add(d.before_url);
-        if (d.after_url) finalImageUrls.add(d.after_url);
-      });
-    }
-    const imagesToDelete = Array.from(initialImageUrls).filter(url => !finalImageUrls.has(url));
+    const imagesToDelete: { bucket: string; path: string }[] = [];
 
-    const result = await saveProjectAction(payload, project ? project.id : null, imagesToDelete);
+    try {
+      // --- 1. Upload des images principales et collecte des chemins ---
+      if (clientLogoFile) {
+        const path = await uploadFileAndGetPath(clientLogoFile, PROJECT_BUCKET_NAME, 'projects/logos/');
+        if (!path) throw new Error("Échec de l'upload du logo client.");
+        if (formData.client_logo_path) imagesToDelete.push({ bucket: PROJECT_BUCKET_NAME, path: formData.client_logo_path });
+        dataToSave.client_logo_path = path;
+      }
 
-    setLoading(false);
-    if (result.success) {
-      onSuccess();
-    } else {
-      setError(`Erreur lors de la sauvegarde: ${result.error}`);
+      if (postprodBeforeFile) {
+        const path = await uploadFileAndGetPath(postprodBeforeFile, PROJECT_BUCKET_NAME, 'projects/postprod/');
+        if (!path) throw new Error("Échec de l'upload de l'image 'avant'.");
+        if (formData.postprod_before_path) imagesToDelete.push({ bucket: PROJECT_BUCKET_NAME, path: formData.postprod_before_path });
+        dataToSave.postprod_before_path = path;
+      }
+
+      if (postprodAfterFile) {
+        const path = await uploadFileAndGetPath(postprodAfterFile, PROJECT_BUCKET_NAME, 'projects/postprod/');
+        if (!path) throw new Error("Échec de l'upload de l'image 'après'.");
+        if (formData.postprod_after_path) imagesToDelete.push({ bucket: PROJECT_BUCKET_NAME, path: formData.postprod_after_path });
+        dataToSave.postprod_after_path = path;
+      }
+
+      // --- 2. Upload des images des détails de post-production ---
+      if (dataToSave.description_postprod) {
+        for (let i = 0; i < dataToSave.description_postprod.length; i++) {
+          const detail = dataToSave.description_postprod[i];
+          const beforeFile = postprodDetailFiles.find(item => item.index === i && item.type === 'before')?.file;
+          const afterFile = postprodDetailFiles.find(item => item.index === i && item.type === 'after')?.file;
+
+          if (beforeFile) {
+            const path = await uploadFileAndGetPath(beforeFile, PROJECT_BUCKET_NAME, 'projects/postprod_details/');
+            if (!path) throw new Error(`Échec de l'upload de l'image 'avant' pour le détail ${i + 1}.`);
+            if (detail.before_path) imagesToDelete.push({ bucket: PROJECT_BUCKET_NAME, path: detail.before_path });
+            detail.before_path = path;
+          }
+          if (afterFile) {
+            const path = await uploadFileAndGetPath(afterFile, PROJECT_BUCKET_NAME, 'projects/postprod_details/');
+            if (!path) throw new Error(`Échec de l'upload de l'image 'après' pour le détail ${i + 1}.`);
+            if (detail.after_path) imagesToDelete.push({ bucket: PROJECT_BUCKET_NAME, path: detail.after_path });
+            detail.after_path = path;
+          }
+        }
+      }
+
+      // --- 3. Déterminer les images à supprimer (anciennes images remplacées ou supprimées) ---
+      const currentPathsInForm = new Set<string>();
+      if (dataToSave.client_logo_path) currentPathsInForm.add(dataToSave.client_logo_path);
+      if (dataToSave.postprod_before_path) currentPathsInForm.add(dataToSave.postprod_before_path);
+      if (dataToSave.postprod_after_path) currentPathsInForm.add(dataToSave.postprod_after_path);
+      if (dataToSave.description_postprod) {
+        dataToSave.description_postprod.forEach(d => {
+          if (d.before_path) currentPathsInForm.add(d.before_path);
+          if (d.after_path) currentPathsInForm.add(d.after_path);
+        });
+      }
+
+      // Filtrer les chemins initiaux qui ne sont plus présents dans le formulaire final
+      const pathsToDeleteFromStorage: { bucket: string; path: string }[] = Array.from(initialImagePaths).filter(
+        img => !currentPathsInForm.has(img.path)
+      );
+
+      // Ajouter les images marquées pour suppression par un nouvel upload
+      imagesToDelete.forEach(img => pathsToDeleteFromStorage.push(img));
+
+      // --- 4. Appeler la Server Action ---
+      const result = await saveProjectAction(dataToSave, project ? project.id : null, pathsToDeleteFromStorage);
+
+      setIsSubmitting(false);
+      if (result.success) {
+        alert("Projet sauvegardé avec succès !");
+        // Réinitialiser les fichiers après un succès
+        setClientLogoFile(null);
+        setPostprodBeforeFile(null);
+        setPostprodAfterFile(null);
+        setPostprodDetailFiles([]);
+        onSuccess(); // Ferme la modal et rafraîchit la liste
+      } else {
+        setServerError(('error' in result && result.error) || "Une erreur inconnue est survenue côté serveur."); // Utiliser 'error' in result
+        // Gérer les erreurs de validation Zod du serveur si elles sont retournées
+        if ('details' in result && result.details) {
+          setFormErrors((result.details as any).issues);
+        }
+      }
+    } catch (error: any) {
+      console.error("Erreur lors de la soumission du formulaire:", error);
+      setServerError(error.message || "Une erreur inattendue est survenue.");
+    } finally {
+      setIsSubmitting(false);
     }
-  }, [formData, selectedCats, project, onSuccess, initialImageUrls]);
+  }, [formData, selectedCats, project, onSuccess, initialImagePaths, clientLogoFile, postprodBeforeFile, postprodAfterFile, postprodDetailFiles]);
 
   if (!isOpen) return null;
 
@@ -262,7 +408,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-8"> {/* Utiliser handleSubmit du useCallback */}
 
           {/* SECTION INFOS GÉNÉRALES */}
           <div className="space-y-4">
@@ -321,7 +467,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
                 placeholder="Description globale du projet, objectifs..."
                 rows={4}
                 className="w-full bg-background border border-zinc-800 p-4 rounded-dynamic outline-none focus:border-white text-zinc-300"
-                value={formData.description} onChange={handleChange}
+                value={formData.description || ""} onChange={handleChange}
               />
             </div>
 
@@ -335,7 +481,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
                 placeholder="Détails du vol, altitude, autorisations, matériel utilisé..."
                 rows={3}
                 className="w-full bg-blue-950/20 border border-blue-900/40 p-4 rounded-dynamic outline-none focus:border-blue-500 text-sm text-blue-200 placeholder-blue-900/60"
-                value={formData.description_drone} onChange={handleChange}
+                value={formData.description_drone || ""} onChange={handleChange}
               />
             </div>
 
@@ -349,33 +495,46 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
                 placeholder="Description générale de la post-production (logiciels, techniques...)"
                 rows={3}
                 className="w-full bg-purple-950/50 border border-purple-900/50 p-3 rounded-lg outline-none focus:border-purple-500 text-sm text-purple-200 placeholder-purple-900/60"
-                value={formData.postprod_main_description}
+                value={formData.postprod_main_description || ""}
                 onChange={handleChange}
               />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                 <ImageUploader
                   label="Image Principale AVANT Post-Prod"
-                  currentUrl={formData.postprod_before_url}
-                  onUrlChange={(url) => setFormData(prev => ({ ...prev, postprod_before_url: url }))}
-                  storageBucket="postprod-images" colorClass="text-purple-400"
+                  currentPath={formData.postprod_before_path}
+                  onPathChange={(path) => setFormData(prev => ({ ...prev, postprod_before_path: path }))}
+                  storageBucket={PROJECT_BUCKET_NAME}
+                  colorClass="text-purple-400"
+                  folderPath="projects/postprod/"
                 />
                 <ImageUploader
                   label="Image Principale APRÈS Post-Prod"
-                  currentUrl={formData.postprod_after_url}
-                  onUrlChange={(url) => setFormData(prev => ({ ...prev, postprod_after_url: url }))}
-                  storageBucket="postprod-images" colorClass="text-purple-400"
+                  currentPath={formData.postprod_after_path}
+                  onPathChange={(path) => setFormData(prev => ({ ...prev, postprod_after_path: path }))}
+                  storageBucket={PROJECT_BUCKET_NAME}
+                  colorClass="text-purple-400"
+                  folderPath="projects/postprod/"
                 />
               </div>
 
               <p className="text-[10px] font-bold text-purple-400/70 uppercase tracking-widest ml-2 pt-2 border-t border-purple-900/40">Étapes individuelles (optionnel)</p>
 
+              {/* Logo Client */}
+              <ImageUploader
+                label="Logo Client"
+                currentPath={formData.client_logo_path}
+                onPathChange={(path) => setFormData(prev => ({ ...prev, client_logo_path: path }))}
+                storageBucket={PROJECT_BUCKET_NAME}
+                colorClass="text-zinc-400"
+                folderPath="projects/logos/"
+              />
               {isPostProdDetailsDisabled && (
                 <div className="p-3 bg-purple-950/70 border border-purple-800/50 rounded-lg text-center text-xs text-purple-300/80">
                   Veuillez remplir la description générale de la post-production pour pouvoir ajouter des étapes détaillées.
                 </div>
               )}
 
-              {(formData.description_postprod || []).map((item, index) => (
+              {(formData.description_postprod || []).map((item: PostProdDetail, index: number) => ( // Spécifier le type de 'item'
                 <div key={index} className="p-3 border border-purple-900/50 rounded-xl space-y-3 bg-background/30 group relative">
                   <div className="flex items-center gap-2">
                     <span className="text-purple-400 font-bold text-xs">#{index + 1}</span>
@@ -392,16 +551,20 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <ImageUploader
-                      label="Avant" currentUrl={item.before_url}
-                      onUrlChange={(url) => handlePostprodChange(index, 'before_url', url)}
-                      storageBucket="postprod-images" colorClass="text-purple-400"
+                      label="Avant" currentPath={item.before_path || null}
+                      onPathChange={(path) => handlePostprodChange(index, 'before_path', path)}
+                      storageBucket={PROJECT_BUCKET_NAME}
+                      folderPath="projects/postprod_details/"
                       disabled={isPostProdDetailsDisabled}
+                      colorClass="text-purple-400"
                     />
                     <ImageUploader
-                      label="Après" currentUrl={item.after_url}
-                      onUrlChange={(url) => handlePostprodChange(index, 'after_url', url)}
-                      storageBucket="postprod-images" colorClass="text-purple-400"
+                      label="Après" currentPath={item.after_path || null}
+                      onPathChange={(path) => handlePostprodChange(index, 'after_path', path)}
+                      storageBucket={PROJECT_BUCKET_NAME}
+                      folderPath="projects/postprod_details/"
                       disabled={isPostProdDetailsDisabled}
+                      colorClass="text-purple-400"
                     />
                   </div>
                   <button type="button" onClick={() => { setFormData(prev => ({ ...prev, description_postprod: (prev.description_postprod || []).filter((_, i) => i !== index) })); }} className="absolute -top-2 -right-2 p-1.5 bg-red-800/70 hover:bg-red-700 rounded-full text-red-300 transition-all opacity-0 group-hover:opacity-100 disabled:opacity-0" title="Supprimer ce détail" disabled={isPostProdDetailsDisabled}>
@@ -411,7 +574,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
               ))}
               <button
                 type="button"
-                onClick={() => { setFormData(prev => ({ ...prev, description_postprod: [...(prev.description_postprod || []), { detail: "", before_url: "", after_url: "" }] })); }}
+                onClick={addPostProdDetail}
                 className="text-xs font-bold text-purple-400 hover:text-white transition-colors pt-2 pl-1 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={isPostProdDetailsDisabled}
               >
@@ -426,20 +589,28 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="text-[9px] font-bold text-zinc-600 uppercase ml-1 flex items-center gap-1"><User size={10} /> Client</label>
-                <input type="text" name="client_name" className="w-full bg-background border border-zinc-800 p-3 rounded-dynamic text-sm focus:border-zinc-500"
-                  value={formData.client_name} onChange={handleChange} placeholder="Nom du client" />
+                <input type="text" name="client_name" className="w-full bg-background border border-zinc-800 p-3 rounded-dynamic text-sm focus:border-zinc-500" value={formData.client_name || ""} onChange={handleChange} placeholder="Nom du client" />
               </div>
               <div className="space-y-1">
                 <label className="text-[9px] font-bold text-zinc-600 uppercase ml-1 flex items-center gap-1"><Globe size={10} /> Site Web</label>
-                <input type="text" name="client_website" className="w-full bg-background border border-zinc-800 p-3 rounded-dynamic text-sm focus:border-zinc-500"
-                  value={formData.client_website} onChange={handleChange} placeholder="https://..." />
+                <input type="text" name="client_website" className="w-full bg-background border border-zinc-800 p-3 rounded-dynamic text-sm focus:border-zinc-500" value={formData.client_website || ""} onChange={handleChange} placeholder="https://..." />
               </div>
             </div>
           </div>
 
-          {error && (
+          {serverError && ( // Utiliser serverError
             <div className="bg-red-900/30 border border-red-500 p-3 rounded-lg text-red-400 text-xs text-center">
-              {error}
+              {serverError}
+            </div>
+          )}
+          {formErrors.length > 0 && (
+            <div className="text-red-500">
+              <p>Veuillez corriger les erreurs suivantes :</p>
+              <ul>
+                {formErrors.map((err, i) => (
+                  <li key={i}>{err.path.join('.')} : {err.message}</li>
+                ))}
+              </ul>
             </div>
           )}
 
@@ -448,9 +619,9 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
             <button type="button" onClick={onClose} className="text-zinc-400 hover:text-white font-bold uppercase text-[10px] tracking-widest px-6 py-3 rounded-dynamic transition-colors">
               Annuler
             </button>
-            <button type="submit" disabled={loading} className="bg-primary hover:bg-white hover:text-black text-black font-black py-4 px-8 rounded-dynamic uppercase text-xs tracking-[0.2em] transition-all flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(34,197,94,0.2)] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed">
-              {loading ? <Loader2 className="animate-spin" /> : <UploadCloud size={18} />}
-              {loading ? "Enregistrement..." : (project ? 'Mettre à jour' : 'Publier')}
+            <button type="submit" disabled={isSubmitting} className="bg-primary hover:bg-white hover:text-black text-black font-black py-4 px-8 rounded-dynamic uppercase text-xs tracking-[0.2em] transition-all flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(34,197,94,0.2)] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed">
+              {isSubmitting ? <Loader2 className="animate-spin" /> : <Save size={18} />}
+              {isSubmitting ? "Enregistrement..." : (project ? 'Mettre à jour' : 'Publier')}
             </button>
           </div>
         </form>

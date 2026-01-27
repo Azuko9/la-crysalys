@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { sendContactMessageAction } from "@/app/actions";
+import { sendContactMessageAction } from "@/lib/actions";
 import { ArrowLeft, Mail, Phone, MapPin, Send, CheckCircle, AlertCircle } from "lucide-react";
 
 export default function Contact() {
@@ -77,22 +77,22 @@ export default function Contact() {
     if (result.success) {
       setStatus("success");
       setFormData({ nom: "", email: "", objet: "devis", message: "" });
-      setErrors({});
+      setErrors({}); // Réinitialiser les erreurs après succès
     } else {
       setStatus("error");
-      if (result.errors) {
+      if ('errors' in result && result.errors) {
         // Erreurs de validation du serveur
         const serverErrors: Record<string, string> = {};
         // Zod retourne un tableau d'erreurs pour chaque champ, on prend juste le premier.
-        for (const key in result.errors) {
-          const errorArray = result.errors[key as keyof typeof formData];
+        for (const key in result.errors as any) {
+          const errorArray = (result.errors as any)[key as keyof typeof formData];
           if (errorArray && errorArray.length > 0) {
             serverErrors[key] = errorArray[0];
           }
         }
         setErrors(serverErrors);
 
-      } else if (result.error) {
+      } else if ('error' in result && result.error) {
         // Erreur générale du serveur
         setServerError(result.error);
       } else {

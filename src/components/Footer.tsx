@@ -3,10 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Paintbrush, Phone, Mail, MapPin, RotateCcw, Lock, KeyRound, X, Loader2 } from "lucide-react";
-// Import de l'action sécurisée
-import { verifyAdminCode } from "@/app/actions"; 
+import { Paintbrush, Phone, Mail, MapPin, RotateCcw, Lock } from "lucide-react";
 
 // 1. MAPPING IMPORTANT
 const CSS_MAPPING: Record<string, string> = {
@@ -16,53 +13,6 @@ const CSS_MAPPING: Record<string, string> = {
   border_radius: "--radius",
 };
 
-// --- SOUS-COMPOSANT : MODALE SÉCURISÉE ---
-// Isolé pour éviter que la frappe dans l'input ne fasse re-rendre tout le footer
-function SecretGateModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-  const router = useRouter();
-  const [secretCode, setSecretCode] = useState("");
-  const [errorShake, setErrorShake] = useState(false);
-  const [isVerifying, setIsVerifying] = useState(false);
-
-  const handleCodeSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsVerifying(true);
-
-    const result = await verifyAdminCode(secretCode);
-    setIsVerifying(false);
-
-    if (result.success) {
-      onClose();
-      router.push("/login");
-    } else {
-      setErrorShake(true);
-      setSecretCode("");
-      setTimeout(() => setErrorShake(false), 500);
-    }
-  };
-
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="absolute inset-0" onClick={onClose}></div>
-      <div className={`relative bg-zinc-950 border border-zinc-800 p-8 rounded-2xl w-full max-w-sm shadow-2xl flex flex-col items-center gap-6 ${errorShake ? 'animate-shake' : ''}`}>
-        <button onClick={onClose} className="absolute top-4 right-4 text-zinc-600 hover:text-white"><X size={20} /></button>
-        <div className="w-12 h-12 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-primary"><KeyRound size={24} /></div>
-        <div className="text-center">
-          <h3 className="text-white font-bold uppercase tracking-widest text-sm mb-1">Accès Sécurisé</h3>
-          <p className="text-zinc-500 text-xs">Entrez le code à 6 chiffres.</p>
-        </div>
-        <form onSubmit={handleCodeSubmit} className="w-full flex flex-col gap-4">
-          <input autoFocus type="password" value={secretCode} onChange={(e) => setSecretCode(e.target.value)} placeholder="••••••" disabled={isVerifying} className="w-full bg-black border border-zinc-800 text-center text-2xl tracking-[0.5em] text-white p-4 rounded-xl focus:border-primary outline-none transition-colors disabled:opacity-50" maxLength={6} />
-          <button type="submit" disabled={isVerifying} className="w-full bg-white text-black font-bold uppercase text-xs tracking-widest py-3 rounded-lg hover:bg-primary hover:text-white transition-colors flex justify-center items-center gap-2">
-            {isVerifying ? <Loader2 className="animate-spin" size={16} /> : "Valider l'accès"}
-          </button>
-        </form>
-      </div>
-    </div>
-  );
-}
 
 export default function Footer() {
   const [profiles, setProfiles] = useState<any[]>([]);
@@ -207,42 +157,21 @@ export default function Footer() {
           </p>
           
           <nav className="flex items-center gap-6">
-                         <button 
-                onClick={() => setIsSecretOpen(true)}
-                className="opacity-10 hover:opacity-100 transition-opacity text-zinc-500 ml-4"
+            <Link href="/mentions-legales" className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest hover:text-primary transition-colors">
+                Mentions Légales
+            </Link>
+            <span className="text-zinc-800">•</span>
+            <Link href="/contact" className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest hover:text-primary transition-colors">
+                Contact
+            </Link>
+            <Link href="/login" className="opacity-20 hover:opacity-100 transition-opacity text-zinc-500"
                 title="Accès Restreint"
-              >
-                  <Lock size={12} />
-              </button> 
-              <Link href="/mentions-legales" className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest hover:text-primary transition-colors">
-                  Mentions Légales
-              </Link>
-              <span className="text-zinc-800">•</span>
-              <Link href="/contact" className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest hover:text-primary transition-colors">
-                  Contact
-              </Link>
-              
-              {/* BOUTON SECRET */}
-
+            >
+                <Lock size={12} />
+            </Link>
           </nav>
         </div>
       </footer>
-
-      {/* --- MODAL SECRET GATE (6 CHIFFRES) --- */}
-      <SecretGateModal isOpen={isSecretOpen} onClose={() => setIsSecretOpen(false)} />
-
-      {/* STYLE SHAKE */}
-      <style jsx global>{`
-        @keyframes shake {
-          0%, 100% { transform: translateX(0); }
-          10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
-          20%, 40%, 60%, 80% { transform: translateX(4px); }
-        }
-        .animate-shake {
-          animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
-          border-color: #ef4444 !important;
-        }
-      `}</style>
     </>
   );
 }

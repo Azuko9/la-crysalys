@@ -1,5 +1,5 @@
-import { supabase } from '@/lib/supabaseClient';
 import type { Project } from '@/types';
+import { createSupabaseServerClient } from '@/app/server';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import FeaturesSection from '@/components/FeaturesSection';
@@ -13,10 +13,15 @@ export const metadata: Metadata = {
 };
 
 export default async function ExpertiseDronePage() {
+  const supabase = createSupabaseServerClient();
+
   // 2. Récupérer les projets qui ont la catégorie "Drone"
   const { data: projects, error: projectsError } = await supabase
     .from('portfolio_items')
-    .select('*')
+    // OPTIMISATION: Ne sélectionnez que les colonnes nécessaires pour cette page.
+    .select('id, title, youtube_url, description_drone') // Ces colonnes définissent le type réel des projets récupérés
+    // CORRECTION : .contains() ne fonctionne que si la colonne 'category' est de type tableau (text[]).
+    // Rétablissement de .like() pour une compatibilité immédiate. La meilleure solution reste de migrer la colonne.
     .like('category', '%Drone%')
     .order('project_date', { ascending: false });
 
@@ -50,7 +55,7 @@ export default async function ExpertiseDronePage() {
           <section>
             <h2 className="text-3xl font-black text-center mb-12 text-primary italic uppercase tracking-tighter">Nos Réalisations Drone</h2>
             <div className="space-y-16">
-              {projects.map((project: Project) => (
+              {projects.map((project: Pick<Project, 'id' | 'title' | 'youtube_url' | 'description_drone'>) => (
                 <div key={project.id} className="bg-card border border-zinc-800 rounded-dynamic p-8">
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
                     {/* Colonne de gauche : Texte */}

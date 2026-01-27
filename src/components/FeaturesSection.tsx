@@ -1,6 +1,6 @@
 "use client";
 
-import { saveFeatureAction, deleteFeatureAction } from "@/app/actions";
+import { saveFeatureAction, deleteFeatureAction } from "@/lib/actions";
 import type { Feature } from "@/types";
 import type { User } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
@@ -58,14 +58,18 @@ export default function FeaturesSection({ pageContext }: FeaturesSectionProps) {
     init();
   }, [pageContext]);
 
-  const fetchFeatures = async () => {
-    const { data } = await supabase
-      .from('expertise_features')
-      .select('*')
-      .eq('page_context', pageContext) // Filtre selon la page
-      .order('created_at', { ascending: true });
-    setFeatures(data as Feature[] || []);
-  };
+const fetchFeatures = async () => {
+    const { data, error } = await supabase
+       .from('expertise_features')
+       .select('*')
+       .eq('page_context', pageContext) // Filtre selon la page
+       .order('created_at', { ascending: true });
+      
+    if (error) {
+      console.error("Erreur lors du chargement des features :", error);
+    }
+     setFeatures(data as Feature[] || []);
+   };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -114,7 +118,7 @@ function FeatureCard({ feature, user, onEdit, refresh }: { feature: Feature, use
       if (result.success) {
         refresh();
       } else {
-        alert(`Erreur: ${result.error}`);
+        alert(`Erreur: ${'error' in result ? result.error : 'Une erreur inconnue est survenue.'}`);
       }
     }
   };
@@ -122,8 +126,8 @@ function FeatureCard({ feature, user, onEdit, refresh }: { feature: Feature, use
   return (
     <div className="p-8 bg-card border border-zinc-800 rounded-dynamic hover:border-primary/50 transition-colors group relative shadow-2xl">
       <div className="text-primary mb-6 group-hover:scale-110 transition-transform">
-        {/* Si l'icône existe dans la map on l'affiche, sinon icône par défaut */}
-        {ICON_MAP[feature.icon_name] || <ShieldCheck size={28}/>}
+        {/* Si l'icône existe dans la map on l'affiche, sinon icône par défaut (ShieldCheck) */}
+        {(feature.icon_name && ICON_MAP[feature.icon_name]) || <ShieldCheck size={28}/>}
       </div>
       <h4 className="text-lg font-black italic uppercase mb-2">{feature.title}</h4>
       <p className="text-xs text-zinc-500 leading-relaxed uppercase font-bold tracking-tighter">{feature.description}</p>
@@ -141,7 +145,7 @@ function FeatureCard({ feature, user, onEdit, refresh }: { feature: Feature, use
 function FeatureModal({ isOpen, feature, pageContext, onClose, onSuccess }: { isOpen: boolean, feature: Feature | null, pageContext: string, onClose: () => void, onSuccess: () => void }) {
   const [formData, setFormData] = useState({
     title: feature?.title || "",
-    description: feature?.description || "",
+    description: feature?.description || null,
     icon_name: feature?.icon_name || "ShieldCheck"
   });
 
@@ -153,7 +157,7 @@ function FeatureModal({ isOpen, feature, pageContext, onClose, onSuccess }: { is
     if (result.success) {
       onSuccess();
     } else {
-      alert(`Erreur: ${result.error}`);
+      alert(`Erreur: ${('error' in result && result.error) || 'Une erreur inconnue est survenue.'}`);
     }
   };
 
@@ -174,7 +178,7 @@ function FeatureModal({ isOpen, feature, pageContext, onClose, onSuccess }: { is
           </div>
           <div>
             <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Description</label>
-            <textarea required value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full bg-black border border-zinc-800 p-3 rounded text-sm text-white focus:border-primary outline-none mt-1 h-24"/>
+            <textarea value={formData.description || ""} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full bg-black border border-zinc-800 p-3 rounded text-sm text-white focus:border-primary outline-none mt-1 h-24"/>
           </div>
           <div>
             <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-2 block">Icône</label>

@@ -16,10 +16,28 @@ interface ProjectCardProps {
   isVertical?: boolean;
 }
 
+// Définir le nom du bucket pour les images de projets
+const PROJECT_BUCKET_NAME = 'portfolio_images';
+
 export function ProjectCard({ projet, user, onEdit, onDeleteSuccess, isVertical = false }: ProjectCardProps) {
   const videoId = getYouTubeID(projet.youtube_url);
   
-  const categoriesList = projet.category ? projet.category.split(',').map((c) => c.trim()) : [];
+  const categoriesList = projet.category ? projet.category.split(',').map((c) => c.trim()).filter(c => c) : [];
+
+  // Fonction pour collecter tous les chemins d'images du projet
+  const getAllImagePathsForProject = (project: Project): { bucket: string; path: string }[] => {
+    const paths: { bucket: string; path: string }[] = [];
+    if (project.client_logo_path) paths.push({ bucket: PROJECT_BUCKET_NAME, path: project.client_logo_path });
+    if (project.postprod_before_path) paths.push({ bucket: PROJECT_BUCKET_NAME, path: project.postprod_before_path });
+    if (project.postprod_after_path) paths.push({ bucket: PROJECT_BUCKET_NAME, path: project.postprod_after_path });
+    if (project.description_postprod && Array.isArray(project.description_postprod)) {
+      project.description_postprod.forEach(d => {
+        if (d.before_path) paths.push({ bucket: PROJECT_BUCKET_NAME, path: d.before_path });
+        if (d.after_path) paths.push({ bucket: PROJECT_BUCKET_NAME, path: d.after_path });
+      });
+    }
+    return paths;
+  };
 
   return (
     <div className="bg-card border border-zinc-800 rounded-dynamic overflow-hidden group transition-all relative flex flex-col h-full">
@@ -40,7 +58,13 @@ export function ProjectCard({ projet, user, onEdit, onDeleteSuccess, isVertical 
       </div>
       </Link>
         {user && (
-          <AdminProjectControls project={projet} onEdit={onEdit} onDeleteSuccess={onDeleteSuccess} className="absolute top-2 right-2 flex gap-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity" />
+          <AdminProjectControls 
+            project={projet} 
+            onEdit={onEdit} 
+            onDeleteSuccess={onDeleteSuccess} 
+            className="absolute top-2 right-2 flex gap-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity" 
+            imagesToDelete={getAllImagePathsForProject(projet)} // Passe tous les chemins d'images pour suppression
+          />
         )}
       <div className="p-4 bg-card flex-1 flex flex-col justify-between">
         <h3 className="font-black uppercase text-xs line-clamp-1 tracking-wider text-white group-hover:text-primary transition-colors">{projet.title}</h3>

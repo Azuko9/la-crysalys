@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { Tag, Layers, Plus, Trash2, Pencil, Check, X, AlertTriangle, Loader2 } from "lucide-react";
-import { saveCategoryAction, deleteCategoryAction } from "@/app/actions";
+import { saveCategoryAction, deleteCategoryAction } from "@/lib/actions";
 import type { Category } from "@/types";
 
 interface CategoryManagerProps {
@@ -55,7 +55,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, re
       setNewCatName("");
       await refreshCategories();
     } else {
-      setMessage({ type: 'error', text: result.error || "Une erreur est survenue." });
+      setMessage({ type: 'error', text: ('error' in result && result.error) || "Une erreur est survenue." });
     }
     setLoading(null);
   };
@@ -72,7 +72,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, re
       setEditingId(null);
       await refreshCategories();
     } else {
-      setMessage({ type: 'error', text: result.error || "Une erreur est survenue." });
+      setMessage({ type: 'error', text: ('error' in result && result.error) || "Une erreur est survenue." });
     }
     setLoading(null);
   };
@@ -89,7 +89,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, re
       setMessage({ type: 'success', text: `Catégorie "${cat.name}" supprimée.` });
       await refreshCategories();
     } else {
-      setMessage({ type: 'error', text: result.error || "Une erreur est survenue." });
+      setMessage({ type: 'error', text: ('error' in result && result.error) || "Une erreur est survenue." });
     }
     setLoading(null);
   };

@@ -1,5 +1,5 @@
-import { supabase } from "@/lib/supabaseClient";
 import type { Project } from '@/types';
+import { createSupabaseServerClient } from '@/app/server';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import FeaturesSection from '@/components/FeaturesSection';
@@ -13,10 +13,15 @@ export const metadata: Metadata = {
 };
 
 export default async function PostProdPage() {
+  const supabase = createSupabaseServerClient();
+
   // 1. Récupérer les projets qui ont la catégorie "Post-Prod"
   const { data: projects, error: projectsError } = await supabase
     .from('portfolio_items')
-    .select('*')
+    // OPTIMISATION: Ne sélectionnez que les colonnes nécessaires pour cette page.
+    .select('id, title, youtube_url, postprod_main_description, postprod_before_path, postprod_after_path, description_postprod') // Correction pour utiliser _path
+    // CORRECTION : .contains() ne fonctionne que si la colonne 'category' est de type tableau (text[]).
+    // Rétablissement de .like() pour une compatibilité immédiate. La meilleure solution reste de migrer la colonne.
     .like('category', '%Post-Prod%')
     .not('postprod_main_description', 'is', null) // S'assurer qu'il y a une description
     .order('project_date', { ascending: false });
@@ -50,7 +55,7 @@ export default async function PostProdPage() {
           <section>
             <h2 className="text-3xl font-black text-center mb-12 text-primary italic uppercase tracking-tighter">Nos Projets en Post-Production</h2>
             <div className="space-y-16">
-              {projects.map((project: Project) => (
+              {projects.map((project: Pick<Project, 'id' | 'title' | 'youtube_url' | 'postprod_main_description' | 'postprod_before_path' | 'postprod_after_path' | 'description_postprod'>) => (
                 <div key={project.id} className="bg-card border border-zinc-800 rounded-dynamic p-8">
                   {/* Section haute : Texte et Vidéo */}
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
@@ -83,12 +88,18 @@ export default async function PostProdPage() {
                   </div>
 
                   {/* Section basse : Comparaisons d'images */}
-                  {(project.postprod_before_url || (Array.isArray(project.description_postprod) && project.description_postprod.length > 0)) && (
+                  {(project.postprod_before_path || project.postprod_after_path || (Array.isArray(project.description_postprod) && project.description_postprod.length > 0)) && (
                     <div className="space-y-8 border-t border-zinc-700 pt-8 mt-8">
-                    {project.postprod_before_url && project.postprod_after_url && (
+                    {project.postprod_before_path && project.postprod_after_path && (
+                      // Convertir les chemins en URLs publiques pour l'affichage
+                      // Assumer 'portfolio_images' est le bucket pour les images de projets
+                      // createSupabaseServerClient() est déjà disponible dans ce composant serveur.
                       <div className="mb-8">
                         <p className="text-sm text-zinc-400 font-bold uppercase tracking-widest mb-4">Aperçu Global Avant/Après</p>
-                        <ImageCompareSlider beforeImage={project.postprod_before_url} afterImage={project.postprod_after_url} />
+                        <ImageCompareSlider
+                          beforeImage={supabase.storage.from('portfolio_images').getPublicUrl(project.postprod_before_path).data.publicUrl}
+                          afterImage={supabase.storage.from('portfolio_images').getPublicUrl(project.postprod_after_path).data.publicUrl}
+                        />
                       </div>
                     )}
 
@@ -97,8 +108,11 @@ export default async function PostProdPage() {
                         {project.description_postprod.map((item, index) => (
                           <div key={index}>
                             <p className="text-white font-bold mb-4 text-base"> #{index + 1}: <span className="text-purple-300 font-medium">{item.detail}</span></p>
-                            {item.before_url && item.after_url && (
-                              <ImageCompareSlider beforeImage={item.before_url} afterImage={item.after_url} />
+                            {item.before_path && item.after_path && (
+                              <ImageCompareSlider
+                                beforeImage={supabase.storage.from('portfolio_images').getPublicUrl(item.before_path).data.publicUrl}
+                                afterImage={supabase.storage.from('portfolio_images').getPublicUrl(item.after_path).data.publicUrl}
+                              />
                             )}
                           </div>
                         ))}

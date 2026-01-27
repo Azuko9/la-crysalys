@@ -1,11 +1,14 @@
 // app/layout.tsx
-import { supabase } from "@/lib/supabaseClient";
+import { createSupabaseServerClient } from "@/app/server";
 import "./globals.css";
+// Le module @vercel/speed-insights/next doit être installé via npm/yarn/pnpm
+import { SpeedInsights } from "@vercel/speed-insights/next"; 
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
-// FORCE LE RENDU DYNAMIQUE (Désactive le cache de page)
-export const dynamic = "force-dynamic";
+// Note: `revalidate = 0` force le rendu dynamique à chaque requête, désactivant le cache de page.
+// Si vous souhaitez un rendu statique (pour de meilleures performances), supprimez cette ligne
+// ou donnez-lui une valeur en secondes (ex: `revalidate = 60;` pour revalider toutes les 60 secondes).
 export const revalidate = 0;
 
 export default async function RootLayout({
@@ -13,6 +16,8 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const supabase = createSupabaseServerClient();
+
   // Récupération des données sans cache
   const { data: settings } = await supabase
     .from("site_settings")
@@ -24,13 +29,13 @@ export default async function RootLayout({
     bg_color: settings?.find(s => s.key === "bg_color")?.value || "#000000",
     primary_color: settings?.find(s => s.key === "primary_color")?.value || "#22c55e",
     accent_color: settings?.find(s => s.key === "accent_color")?.value || "#3b82f6",
-    card_bg: getS("card_bg", "#18181b"),
+    card_bg: settings?.find(s => s.key === "card_bg")?.value || "#18181b",
     border_radius: settings?.find(s => s.key === "border_radius")?.value || "0px",
    
   };
 
   return (
-<html lang="fr">
+<html lang="fr" suppressHydrationWarning>
       <head>
         <style dangerouslySetInnerHTML={{ __html: `
           :root {
@@ -53,6 +58,7 @@ export default async function RootLayout({
       <body className="bg-background text-white antialiased">
         <Header/>
         {children}
+        <SpeedInsights />
         <Footer/>
       </body>
     </html>

@@ -25,14 +25,16 @@ export default function AdminDashboard() {
 
   // 1. INITIALISATION
   useEffect(() => {
+    // Le middleware garantit déjà que l'utilisateur est connecté.
+    // Ce hook ne sert plus qu'à récupérer les données initiales.
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push("/login");
-        return;
+      // Si l'utilisateur est null ici, c'est une situation anormale (ex: token expiré entre temps)
+      // mais la page est déjà protégée contre l'accès initial.
+      if (user) {
+        setUser(user);
+        await fetchMessages();
       }
-      setUser(user);
-      await fetchMessages();
     };
     init();
   }, [router, fetchMessages]);

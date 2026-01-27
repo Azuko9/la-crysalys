@@ -6,8 +6,8 @@ export interface Category {
 
 export interface PostProdDetail {
   detail: string;
-  before_url: string;
-  after_url: string;
+  before_path?: string | null;
+  after_path?: string | null;
 }
 
 export interface Project {
@@ -22,9 +22,9 @@ export interface Project {
   client_name: string | null;
   client_website: string | null;
   project_date: string;
-  thumbnail_url: string | null;
-  postprod_before_url: string | null;
-  postprod_after_url: string | null;
+  client_logo_path: string | null;
+  postprod_before_path: string | null;
+  postprod_after_path: string | null;
   category: string;
 }
 
@@ -35,19 +35,19 @@ export interface TeamMember {
   role: string;
   company: string | null;
   bio: string | null;
-  photo_url: string | null;
+  photo_path: string | null;
   instagram: string | null;
   linkedin: string | null;
   email: string | null;
   website: string | null;
-  member_type: 'team' | 'partner';
+  member_type: 'team' | 'partner' | null;
 }
 
 export interface Feature {
   id: string;
   created_at: string;
   title: string;
-  description: string;
-  icon_name: string;
-  page_context: string;
+  description: string | null;
+  icon_name: string | null;
+  page_context: string | null;
 }
