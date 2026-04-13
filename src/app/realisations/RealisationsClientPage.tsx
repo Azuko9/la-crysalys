@@ -3,7 +3,6 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { PlusCircle, Settings } from "lucide-react"; 
-import { useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { ProjectCard } from "@/components/ProjectCard";
 import dynamic from "next/dynamic";
@@ -77,7 +76,7 @@ export default function RealisationsClientPage({ initialProjects, initialCategor
           <p className="text-primary font-bold uppercase text-xs tracking-widest mt-2">Réalisations & Productions</p>
         </div>
         {user && (
-          <button onClick={() => setIsManagingCats(!isManagingCats)} className="flex items-center gap-2 px-4 py-2 rounded-dynamic border border-zinc-800 text-zinc-400 hover:text-white transition text-xs font-bold uppercase">
+          <button onClick={() => setIsManagingCats(!isManagingCats)} className="flex items-center gap-2 px-4 py-2 rounded-dynamic border border-zinc-800 text-foreground/70 hover:text-foreground transition text-xs font-bold uppercase">
             <Settings size={14}/> {isManagingCats ? "Fermer" : "Gérer Catégories"}
           </button>
         )}
@@ -88,13 +87,13 @@ export default function RealisationsClientPage({ initialProjects, initialCategor
       <div className="max-w-7xl mx-auto mb-16 flex flex-wrap gap-3">
         <button onClick={() => setFiltreActuel("Tout")} className={`px-6 py-2 rounded-dynamic text-[10px] font-bold border transition-all uppercase ${filtreActuel === "Tout" ? "bg-white text-black" : "bg-card text-gray-500 border-zinc-800"}`}>TOUT</button>
         {categories.map(cat => (
-          <button key={cat.id} onClick={() => setFiltreActuel(cat.name)} className={`px-6 py-2 rounded-dynamic text-[10px] font-bold border transition-all uppercase ${filtreActuel === cat.name ? "bg-primary text-white border-primary" : "bg-card text-gray-500 border-zinc-800"}`}>{cat.name}</button>
+          <button key={cat.id} onClick={() => setFiltreActuel(cat.name)} className={`px-6 py-2 rounded-dynamic text-[10px] font-bold border transition-all uppercase ${filtreActuel === cat.name ? "bg-primary text-foreground border-primary" : "bg-card text-gray-500 border-zinc-800"}`}>{cat.name}</button>
         ))}
       </div>
 
       {user && (
         <div className="max-w-7xl mx-auto mb-20">
-          <button onClick={() => openModal(null)} className="w-full py-10 border-2 border-dashed border-zinc-800 hover:border-primary rounded-dynamic text-zinc-500 hover:text-primary transition-all font-bold uppercase tracking-widest flex items-center justify-center gap-4 text-xs">
+          <button onClick={() => openModal(null)} className="w-full py-10 border-2 border-dashed border-zinc-800 hover:border-primary rounded-dynamic text-foreground/50 hover:text-primary transition-all font-bold uppercase tracking-widest flex items-center justify-center gap-4 text-xs">
             <PlusCircle size={24}/> Ajouter une réalisation
           </button>
         </div>

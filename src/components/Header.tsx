@@ -62,7 +62,7 @@ export default function Header() {
                 key={link.name}
                 href={link.href}
                 className={`text-sm font-bold transition-colors ${
-                  pathname.startsWith(link.href) ? "text-primary" : "text-zinc-300 hover:text-primary"
+                  pathname.startsWith(link.href) ? "text-primary" : "text-foreground/80 hover:text-primary"
                 }`}
               >
                 {link.name}
@@ -80,7 +80,7 @@ export default function Header() {
           <div className="md:hidden flex items-center gap-4">
             <button 
               onClick={() => setIsOpen(!isOpen)}
-              className="text-white p-2 hover:bg-zinc-800 rounded-lg transition"
+              className="text-foreground p-2 hover:bg-zinc-800 rounded-lg transition"
               aria-label={isOpen ? "Fermer le menu" : "Ouvrir le menu"}
               aria-expanded={isOpen}
             >
@@ -100,7 +100,7 @@ export default function Header() {
               key={link.name}
               href={link.href}
               className={`text-xl font-black uppercase italic tracking-tighter ${
-                pathname === link.href ? "text-primary" : "text-white"
+                pathname === link.href ? "text-primary" : "text-foreground"
               }`}
             >
               {link.name}

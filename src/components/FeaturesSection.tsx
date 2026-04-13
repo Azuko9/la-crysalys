@@ -3,7 +3,7 @@
 import { saveFeatureAction, deleteFeatureAction } from "@/lib/actions";
 import type { Feature } from "@/types";
 import type { User } from "@supabase/supabase-js";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { 
   // Icônes générales / Admin
@@ -49,16 +49,7 @@ export default function FeaturesSection({ pageContext }: FeaturesSectionProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [featureToEdit, setFeatureToEdit] = useState<Feature | null>(null);
 
-  useEffect(() => {
-    const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-      fetchFeatures();
-    };
-    init();
-  }, [pageContext]);
-
-const fetchFeatures = async () => {
+const fetchFeatures = useCallback(async () => {
     const { data, error } = await supabase
        .from('expertise_features')
        .select('*')
@@ -69,7 +60,16 @@ const fetchFeatures = async () => {
       console.error("Erreur lors du chargement des features :", error);
     }
      setFeatures(data as Feature[] || []);
-   };
+   }, [pageContext]);
+
+  useEffect(() => {
+    const init = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+      fetchFeatures();
+    };
+    init();
+  }, [fetchFeatures]);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -88,7 +88,7 @@ const fetchFeatures = async () => {
       {user && (
         <button 
           onClick={() => { setFeatureToEdit(null); setIsModalOpen(true); }}
-          className="min-h-[200px] border-2 border-dashed border-zinc-800 hover:border-primary rounded-dynamic flex flex-col items-center justify-center gap-4 text-zinc-500 hover:text-primary transition-colors group"
+          className="min-h-[200px] border-2 border-dashed border-zinc-800 hover:border-primary rounded-dynamic flex flex-col items-center justify-center gap-4 text-foreground/50 hover:text-primary transition-colors group"
         >
           <PlusCircle size={32} className="group-hover:scale-110 transition-transform"/>
           <span className="text-xs font-black uppercase tracking-widest">Ajouter Feature</span>
@@ -130,12 +130,12 @@ function FeatureCard({ feature, user, onEdit, refresh }: { feature: Feature, use
         {(feature.icon_name && ICON_MAP[feature.icon_name]) || <ShieldCheck size={28}/>}
       </div>
       <h4 className="text-lg font-black italic uppercase mb-2">{feature.title}</h4>
-      <p className="text-xs text-zinc-500 leading-relaxed uppercase font-bold tracking-tighter">{feature.description}</p>
+      <p className="text-xs text-foreground/50 leading-relaxed uppercase font-bold tracking-tighter">{feature.description}</p>
       
       {user && (
         <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button onClick={onEdit} className="bg-blue-600 p-1.5 rounded text-white"><Pencil size={12}/></button>
-          <button onClick={handleDelete} className="bg-red-600 p-1.5 rounded text-white"><Trash2 size={12}/></button>
+          <button onClick={onEdit} className="bg-blue-600 p-1.5 rounded text-foreground"><Pencil size={12}/></button>
+          <button onClick={handleDelete} className="bg-red-600 p-1.5 rounded text-foreground"><Trash2 size={12}/></button>
         </div>
       )}
     </div>
@@ -157,7 +157,7 @@ function FeatureModal({ isOpen, feature, pageContext, onClose, onSuccess }: { is
     if (result.success) {
       onSuccess();
     } else {
-      alert(`Erreur: ${('error' in result && result.error) || 'Une erreur inconnue est survenue.'}`);
+      alert(`Erreur: ${'error' in result ? String(result.error) : 'Une erreur inconnue est survenue.'}`);
     }
   };
 
@@ -167,28 +167,28 @@ function FeatureModal({ isOpen, feature, pageContext, onClose, onSuccess }: { is
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
       <div className="bg-zinc-900 border border-zinc-800 w-full max-w-md p-6 rounded-dynamic shadow-2xl">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-black uppercase italic text-white">{feature ? "Modifier" : "Ajouter"} Feature</h2>
-          <button onClick={onClose}><X size={24} className="text-zinc-500 hover:text-white"/></button>
+          <h2 className="text-xl font-black uppercase italic text-foreground">{feature ? "Modifier" : "Ajouter"} Feature</h2>
+          <button onClick={onClose}><X size={24} className="text-foreground/50 hover:text-foreground"/></button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Titre</label>
-            <input type="text" required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full bg-black border border-zinc-800 p-3 rounded text-sm text-white focus:border-primary outline-none mt-1"/>
+            <label className="text-[10px] font-black uppercase tracking-widest text-foreground/50">Titre</label>
+            <input type="text" required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full bg-black border border-zinc-800 p-3 rounded text-sm text-foreground focus:border-primary outline-none mt-1"/>
           </div>
           <div>
-            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Description</label>
-            <textarea value={formData.description || ""} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full bg-black border border-zinc-800 p-3 rounded text-sm text-white focus:border-primary outline-none mt-1 h-24"/>
+            <label className="text-[10px] font-black uppercase tracking-widest text-foreground/50">Description</label>
+            <textarea value={formData.description || ""} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full bg-black border border-zinc-800 p-3 rounded text-sm text-foreground focus:border-primary outline-none mt-1 h-24"/>
           </div>
           <div>
-            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-2 block">Icône</label>
+            <label className="text-[10px] font-black uppercase tracking-widest text-foreground/50 mb-2 block">Icône</label>
             <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto pr-2">
               {Object.keys(ICON_MAP).map((iconKey) => (
                 <button 
                   key={iconKey}
                   type="button"
                   onClick={() => setFormData({...formData, icon_name: iconKey})}
-                  className={`p-3 rounded border transition-all ${formData.icon_name === iconKey ? "bg-primary text-black border-primary" : "bg-black border-zinc-800 text-zinc-500 hover:text-white"}`}
+                  className={`p-3 rounded border transition-all ${formData.icon_name === iconKey ? "bg-primary text-black border-primary" : "bg-black border-zinc-800 text-foreground/50 hover:text-foreground"}`}
                   title={iconKey}
                 >
                   {ICON_MAP[iconKey]}

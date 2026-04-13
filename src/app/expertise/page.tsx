@@ -31,17 +31,17 @@ export default async function ExpertiseDronePage() {
 
 
   return (
-    <main className="min-h-screen bg-background text-white pt-32 pb-20">
+    <main className="min-h-screen bg-background text-foreground pt-32 pb-20">
       <div className="max-w-6xl mx-auto px-4">
         
         {/* En-tête de la page */}
         <header className="text-center mb-16">
           <p className="text-primary font-bold uppercase tracking-widest text-sm mb-2">Savoir-Faire</p>
-          <h1 className="text-5xl md:text-6xl font-black italic uppercase tracking-tighter text-white">
+          <h1 className="text-5xl md:text-6xl font-black italic uppercase tracking-tighter text-foreground">
             Expertise Drone
           </h1>
-          <p className="mt-4 max-w-2xl mx-auto text-zinc-400 text-lg">
-            Nous maîtrisons l'art de la prise de vue aérienne pour offrir des perspectives uniques et des images à couper le souffle.
+          <p className="mt-4 max-w-2xl mx-auto text-foreground/70 text-lg">
+            Nous maîtrisons l&apos;art de la prise de vue aérienne pour offrir des perspectives uniques et des images à couper le souffle.
           </p>
         </header>
 
@@ -63,7 +63,7 @@ export default async function ExpertiseDronePage() {
                       <h3 className="text-2xl font-black text-blue-400 mb-3 flex items-center gap-2 italic uppercase tracking-tighter">
                         <Wind size={22}/> {project.title}
                       </h3>
-                      <div className="prose prose-sm prose-invert prose-zinc max-w-none text-zinc-400 leading-relaxed">
+                      <div className="prose prose-sm prose-invert prose-zinc max-w-none text-foreground/70 leading-relaxed">
                         <p className="line-clamp-6">
                           {project.description_drone || "Aucune spécificité drone détaillée pour ce projet."}
                         </p>
@@ -77,12 +77,13 @@ export default async function ExpertiseDronePage() {
                         title={project.title}
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         allowFullScreen
+                        loading="lazy"
                         className="border-0 w-full h-full"
                       ></iframe>
                     </div>
                   </div>
                   <div className="mt-8 border-t border-zinc-700 pt-6">
-                    <Link href={`/realisations/${project.id}`} className="inline-flex items-center gap-2 text-primary hover:text-white text-sm font-bold">
+                    <Link href={`/realisations/${project.id}`} className="inline-flex items-center gap-2 text-primary hover:text-foreground text-sm font-bold">
                       Voir le projet complet <ArrowRight size={16} />
                     </Link>
                   </div>

@@ -2,8 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { Project } from "@/app/realisations/RealisationsClientPage";
-import { Category } from "@/components/CategoryManager";
+import type { Project, Category } from "@/types";
 
 export function useProjects(initialProjects: Project[], initialCategories: Category[]) {
   const [projects, setProjects] = useState<Project[]>(initialProjects);
@@ -12,6 +11,7 @@ export function useProjects(initialProjects: Project[], initialCategories: Categ
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [projectToEdit, setProjectToEdit] = useState<Project | null>(null);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const fetchProjects = useCallback(async (filterFn?: (query: any) => any) => {
     let query = supabase.from('portfolio_items').select('*').order('project_date', { ascending: false });
     if (filterFn) {

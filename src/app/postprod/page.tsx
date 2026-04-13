@@ -31,17 +31,17 @@ export default async function PostProdPage() {
   }
 
   return (
-    <main className="min-h-screen bg-background text-white pt-32 pb-20">
+    <main className="min-h-screen bg-background text-foreground pt-32 pb-20">
       <div className="max-w-6xl mx-auto px-4">
         
         {/* En-tête de la page */}
         <header className="text-center mb-16">
           <p className="text-primary font-bold uppercase tracking-widest text-sm mb-2">Savoir-Faire</p>
-          <h1 className="text-5xl md:text-6xl font-black italic uppercase tracking-tighter text-white">
+          <h1 className="text-5xl md:text-6xl font-black italic uppercase tracking-tighter text-foreground">
             Post-Production & VFX
           </h1>
-          <p className="mt-4 max-w-2xl mx-auto text-zinc-400 text-lg">
-            Du montage à l'étalonnage, en passant par les effets spéciaux, nous sublimons vos images pour un résultat percutant et professionnel.
+          <p className="mt-4 max-w-2xl mx-auto text-foreground/70 text-lg">
+            Du montage à l&apos;étalonnage, en passant par les effets spéciaux, nous sublimons vos images pour un résultat percutant et professionnel.
           </p>
         </header>
 
@@ -65,7 +65,7 @@ export default async function PostProdPage() {
                         <Layers size={22}/> {project.title}
                       </h3>
                       {project.postprod_main_description && (
-                        <div className="prose prose-sm prose-invert prose-zinc max-w-none text-zinc-400 leading-relaxed">
+                        <div className="prose prose-sm prose-invert prose-zinc max-w-none text-foreground/70 leading-relaxed">
                           <p className="line-clamp-6">
                             {project.postprod_main_description || "Aucun détail de post-production pour ce projet."}
                           </p>
@@ -81,6 +81,7 @@ export default async function PostProdPage() {
                           title={project.title}
                           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                           allowFullScreen
+                          loading="lazy"
                           className="border-0 w-full h-full"
                         ></iframe>
                       )}
@@ -95,10 +96,10 @@ export default async function PostProdPage() {
                       // Assumer 'portfolio_images' est le bucket pour les images de projets
                       // createSupabaseServerClient() est déjà disponible dans ce composant serveur.
                       <div className="mb-8">
-                        <p className="text-sm text-zinc-400 font-bold uppercase tracking-widest mb-4">Aperçu Global Avant/Après</p>
+                        <p className="text-sm text-foreground/70 font-bold uppercase tracking-widest mb-4">Aperçu Global Avant/Après</p>
                         <ImageCompareSlider
-                          beforeImage={supabase.storage.from('portfolio_images').getPublicUrl(project.postprod_before_path).data.publicUrl}
-                          afterImage={supabase.storage.from('portfolio_images').getPublicUrl(project.postprod_after_path).data.publicUrl}
+                          beforeImage={supabase.storage.from('postprod-images').getPublicUrl(project.postprod_before_path).data.publicUrl}
+                          afterImage={supabase.storage.from('postprod-images').getPublicUrl(project.postprod_after_path).data.publicUrl}
                         />
                       </div>
                     )}
@@ -107,11 +108,11 @@ export default async function PostProdPage() {
                       <div className="space-y-8">
                         {project.description_postprod.map((item, index) => (
                           <div key={index}>
-                            <p className="text-white font-bold mb-4 text-base"> #{index + 1}: <span className="text-purple-300 font-medium">{item.detail}</span></p>
+                            <p className="text-foreground font-bold mb-4 text-base"> #{index + 1}: <span className="text-purple-300 font-medium">{item.detail}</span></p>
                             {item.before_path && item.after_path && (
                               <ImageCompareSlider
-                                beforeImage={supabase.storage.from('portfolio_images').getPublicUrl(item.before_path).data.publicUrl}
-                                afterImage={supabase.storage.from('portfolio_images').getPublicUrl(item.after_path).data.publicUrl}
+                                beforeImage={supabase.storage.from('postprod-images').getPublicUrl(item.before_path).data.publicUrl}
+                                afterImage={supabase.storage.from('postprod-images').getPublicUrl(item.after_path).data.publicUrl}
                               />
                             )}
                           </div>
@@ -122,7 +123,7 @@ export default async function PostProdPage() {
                   )}
                   
                   <div className="mt-8 border-t border-zinc-700 pt-6">
-                    <Link href={`/realisations/${project.id}`} className="inline-flex items-center gap-2 text-primary hover:text-white text-sm font-bold">
+                    <Link href={`/realisations/${project.id}`} className="inline-flex items-center gap-2 text-primary hover:text-foreground text-sm font-bold">
                       Voir le projet complet <ArrowRight size={16} />
                     </Link>
                   </div>

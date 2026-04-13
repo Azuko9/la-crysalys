@@ -2,12 +2,14 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Palette, Save, Box, Droplets, RotateCcw, Bookmark, Download, CheckCircle } from "lucide-react";
+import { saveSiteSettingsAction } from "@/lib/actions";
 
 type ThemeSettings = {
   bg_color: string;
   primary_color: string;
   border_radius: string;
   card_bg: string;
+  text_color: string;
 };
 
 export default function ThemeManager() {
@@ -16,6 +18,7 @@ export default function ThemeManager() {
     primary_color: "#22c55e",
     border_radius: "0px",
     card_bg: "#29292cff",
+    text_color: "#ffffff",
   });
 
   const [profilesPreview, setProfilesPreview] = useState<Record<string, ThemeSettings | null>>({
@@ -28,32 +31,38 @@ export default function ThemeManager() {
   const saveToDatabase = async (data: typeof settings) => {
     // On transforme l'objet en tableau de lignes pour la BDD : { key: 'bg_color', value: '#...' }
     const updates = Object.entries(data).map(([key, value]) => ({ key, value }));
-    const { error } = await supabase.from("site_settings").upsert(updates, { onConflict: 'key' });
     
-    if (!error) {
+    const result = await saveSiteSettingsAction(updates);
+    
+    if (result.success) {
       // On force un reload pour que l'admin voie le résultat "réel"
       if(confirm("Thème appliqué globalement au site ! Recharger pour voir le résultat ?")) {
         window.location.reload();
       }
+    } else {
+      alert('error' in result ? String(result.error) : "Erreur lors de la sauvegarde du thème.");
     }
   };
 
   // 2. Sauvegarde dans un SLOT (Preset)
   const handleSaveProfile = async (slot: number) => {
     const profileKey = `profile_${slot}`;
-    const { error } = await supabase
-      .from("site_settings")
-      .upsert({ key: profileKey, value: JSON.stringify(settings) }, { onConflict: 'key' });
+    const updates = [{ key: profileKey, value: JSON.stringify(settings) }];
     
-    if (!error) {
+    const result = await saveSiteSettingsAction(updates);
+    
+    if (result.success) {
       setProfilesPreview((prev) => ({ ...prev, [profileKey]: settings }));
+      alert(`Preset 0${slot} sauvegardé avec succès !`);
+    } else {
+      alert('error' in result ? String(result.error) : "Erreur lors de la sauvegarde du preset.");
     }
   };
 
   // 3. Charger un SLOT dans l'éditeur
   const handleLoadProfile = (slot: number) => {
     const data = profilesPreview[`profile_${slot}`];
-    if (data) setSettings(data);
+    if (data) setSettings(prev => ({ ...prev, ...data }));
     else alert("Ce profil est vide.");
   };
 
@@ -61,25 +70,25 @@ export default function ThemeManager() {
     const fetchSettings = async () => {
       const { data } = await supabase.from("site_settings").select("key, value");
       if (data) {
-        const loadedSettings: ThemeSettings = { ...settings };
         const loadedProfiles: Record<string, ThemeSettings | null> = {};
         
-        data.forEach(s => {
-          // Si c'est une clé de style simple (ex: primary_color), on l'hydrate
-          if (s.key in loadedSettings) {
-            loadedSettings[s.key as keyof typeof settings] = s.value;
-          }
-          // Si c'est un profil JSON, on le parse
-          if (s.key.startsWith('profile_')) {
-            try {
-              loadedProfiles[s.key] = JSON.parse(s.value);
-            } catch (e) {
-              console.error(`Failed to parse theme profile ${s.key}:`, e);
-              loadedProfiles[s.key] = null; // Sécurisation en cas d'échec
+        setSettings(prev => {
+          const loadedSettings = { ...prev };
+          data.forEach(s => {
+            if (s.key in loadedSettings) {
+              loadedSettings[s.key as keyof ThemeSettings] = s.value;
             }
-          }
+            if (s.key.startsWith('profile_')) {
+              try {
+                loadedProfiles[s.key] = JSON.parse(s.value);
+              } catch (e) {
+                console.error(`Failed to parse theme profile ${s.key}:`, e);
+                loadedProfiles[s.key] = null; // Sécurisation en cas d'échec
+              }
+            }
+          });
+          return loadedSettings;
         });
-        setSettings(loadedSettings);
         setProfilesPreview(loadedProfiles);
       }
     };
@@ -93,14 +102,15 @@ export default function ThemeManager() {
       primary_color: "#22c55e",
       border_radius: "0px",
       card_bg: "#29292cff",
+      text_color: "#ffffff",
     });
   };
 
   const ColorField = ({ label, value, id }: { label: string, value: string, id: keyof ThemeSettings }) => (
     <div className="flex justify-between items-center group bg-black/20 p-2 rounded-dynamic border border-transparent hover:border-zinc-700 transition-all">
-      <label className="text-[10px] font-bold text-zinc-400 uppercase group-hover:text-white transition-colors">{label}</label>
+      <label className="text-[10px] font-bold text-foreground/70 uppercase group-hover:text-foreground transition-colors">{label}</label>
       <div className="flex items-center gap-2">
-        <span className="text-[9px] font-mono text-zinc-600 uppercase">{value}</span>
+        <span className="text-[9px] font-mono text-foreground/40 uppercase">{value}</span>
         <input type="color" value={value} 
           onChange={(e) => setSettings({...settings, [id]: e.target.value})}
           className="w-8 h-8 bg-transparent cursor-pointer rounded overflow-hidden border-none" />
@@ -116,11 +126,11 @@ export default function ThemeManager() {
         <div className="flex items-center gap-3">
           <Palette className="text-primary" size={24} />
           <div>
-             <h2 className="text-xl font-black uppercase italic tracking-tighter text-white">Theme_Lab</h2>
-             <p className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">Constructeur d'identité visuelle</p>
+             <h2 className="text-xl font-black uppercase italic tracking-tighter text-foreground">Theme_Lab</h2>
+             <p className="text-[9px] text-foreground/50 font-bold uppercase tracking-widest">Constructeur d&apos;identité visuelle</p>
           </div>
         </div>
-        <button onClick={handleReset} className="flex items-center gap-2 text-[10px] font-bold uppercase text-zinc-600 hover:text-white transition-colors">
+        <button onClick={handleReset} className="flex items-center gap-2 text-[10px] font-bold uppercase text-foreground/40 hover:text-foreground transition-colors">
           <RotateCcw size={12} /> Reset Editor
         </button>
       </div>
@@ -133,15 +143,16 @@ export default function ThemeManager() {
              <ColorField label="Background (Fond)" value={settings.bg_color} id="bg_color" />
              <ColorField label="Cards (Cartes)" value={settings.card_bg} id="card_bg" />
              <ColorField label="Primary (Accent)" value={settings.primary_color} id="primary_color" />
+             <ColorField label="Textes (Général)" value={settings.text_color} id="text_color" />
           </div>
         </div>
 
         <div className="space-y-6">
           <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-500 flex items-center gap-2"><Box size={14}/> Structure</h3>
           <div className="bg-black/20 p-4 rounded-dynamic border border-transparent hover:border-zinc-700 transition-all">
-            <div className="flex justify-between text-[10px] text-zinc-400 font-bold uppercase mb-4">
+            <div className="flex justify-between text-[10px] text-foreground/70 font-bold uppercase mb-4">
               <span>Border Radius</span>
-              <span className="text-white bg-zinc-800 px-2 py-0.5 rounded">{settings.border_radius}</span>
+              <span className="text-foreground bg-zinc-800 px-2 py-0.5 rounded">{settings.border_radius}</span>
             </div>
             <input type="range" min="0" max="30" step="1" value={parseInt(settings.border_radius)}
               onChange={(e) => setSettings({...settings, border_radius: `${e.target.value}px`})}
@@ -152,7 +163,7 @@ export default function ThemeManager() {
 
       {/* ACTION PRINCIPALE */}
       <div className="bg-zinc-800/30 p-6 rounded-dynamic border border-zinc-800 mb-12 text-center">
-         <p className="text-[10px] text-zinc-500 uppercase tracking-widest mb-4">Cette action modifie l'apparence par défaut pour tous les visiteurs</p>
+         <p className="text-[10px] text-foreground/50 uppercase tracking-widest mb-4">Cette action modifie l&apos;apparence par défaut pour tous les visiteurs</p>
          <button onClick={() => saveToDatabase(settings)} className="w-full bg-primary hover:bg-white text-black font-black py-4 rounded-dynamic uppercase text-xs tracking-[0.3em] transition-all flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(34,197,94,0.2)] hover:shadow-[0_0_30px_rgba(255,255,255,0.3)]">
             <CheckCircle size={18}/> Appliquer au Site (Global)
          </button>
@@ -160,7 +171,7 @@ export default function ThemeManager() {
 
       {/* SECTION PROFILS / PRESETS */}
       <div className="pt-8 border-t border-zinc-800">
-        <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500 mb-8 flex items-center gap-2">
+        <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground/50 mb-8 flex items-center gap-2">
           <Bookmark size={14}/> Presets (Mémoire Footer)
         </h3>
         
@@ -170,19 +181,20 @@ export default function ThemeManager() {
             return (
               <div key={num} className="flex flex-col gap-4 p-5 bg-black/40 border border-zinc-800 rounded-dynamic relative group overflow-hidden hover:border-zinc-600 transition-all">
                 <div className="flex justify-between items-center">
-                  <span className="text-[10px] font-black text-zinc-500 group-hover:text-white uppercase tracking-widest transition-colors">Preset 0{num}</span>
+                  <span className="text-[10px] font-black text-foreground/50 group-hover:text-foreground uppercase tracking-widest transition-colors">Preset 0{num}</span>
                 </div>
 
                 {/* APERÇU VISUEL */}
                 <div className="flex h-12 rounded overflow-hidden border border-white/5">
                   {p ? (
                     <>
-                      <div className="w-1/3" style={{ backgroundColor: p.bg_color }} title="Fond" />
-                      <div className="w-1/3" style={{ backgroundColor: p.card_bg }} title="Cartes" />
-                      <div className="w-1/3" style={{ backgroundColor: p.primary_color }} title="Accent" />
+                      <div className="w-1/4" style={{ backgroundColor: p.bg_color }} title="Fond" />
+                      <div className="w-1/4" style={{ backgroundColor: p.card_bg }} title="Cartes" />
+                      <div className="w-1/4" style={{ backgroundColor: p.primary_color }} title="Accent" />
+                      <div className="w-1/4 flex items-center justify-center font-serif text-[10px]" style={{ backgroundColor: p.bg_color, color: p.text_color || '#ffffff' }} title="Texte">Aa</div>
                     </>
                   ) : (
-                    <div className="w-full bg-zinc-900 flex items-center justify-center text-[8px] text-zinc-700 uppercase italic">Vide</div>
+                    <div className="w-full bg-zinc-900 flex items-center justify-center text-[8px] text-foreground/30 uppercase italic">Vide</div>
                   )}
                 </div>
 

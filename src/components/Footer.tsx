@@ -11,36 +11,12 @@ const CSS_MAPPING: Record<string, string> = {
   bg_color: "--bg-color", 
   card_bg: "--card-bg",
   border_radius: "--radius",
+  text_color: "--text-color",
 };
 
 
 export default function Footer() {
-  const [profiles, setProfiles] = useState<any[]>([]);
-  const [isSecretOpen, setIsSecretOpen] = useState(false);
-
-  useEffect(() => {
-    fetchProfiles();
-    
-    const localTheme = localStorage.getItem("user_theme_preference");
-    if (localTheme) {
-      try {
-        const config = JSON.parse(localTheme);
-        setTimeout(() => applyVisualTheme(config), 100);
-      } catch (e) { console.error(e); }
-    }
-
-    const channel = supabase
-      .channel('footer-theme-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'site_settings' }, 
-      (payload) => {
-        if (payload.new && 'key' in payload.new && (payload.new as any).key.startsWith('profile_')) {
-          fetchProfiles();
-        }
-      })
-      .subscribe();
-
-    return () => { supabase.removeChannel(channel); };
-  }, []);
+  const [profiles, setProfiles] = useState<{ id: string, label: string, config: Record<string, string> }[]>([]);
 
   const fetchProfiles = useCallback(async () => {
     const { data } = await supabase
@@ -58,7 +34,31 @@ export default function Footer() {
     }
   }, []);
 
-  const applyVisualTheme = (config: any) => {
+  useEffect(() => {
+    fetchProfiles();
+    
+    const localTheme = localStorage.getItem("user_theme_preference");
+    if (localTheme) {
+      try {
+        const config = JSON.parse(localTheme);
+        setTimeout(() => applyVisualTheme(config), 100);
+      } catch (e) { console.error(e); }
+    }
+
+    const channel = supabase
+      .channel('footer-theme-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'site_settings' }, 
+      (payload) => {
+        if (payload.new && 'key' in payload.new && (payload.new as { key: string }).key.startsWith('profile_')) {
+          fetchProfiles();
+        }
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [fetchProfiles]);
+
+  const applyVisualTheme = (config: Record<string, string>) => {
     const root = document.documentElement;
     Object.entries(config).forEach(([key, value]) => {
       const cssVarName = CSS_MAPPING[key];
@@ -68,7 +68,7 @@ export default function Footer() {
     });
   };
 
-  const handleThemeClick = (config: any) => {
+  const handleThemeClick = (config: Record<string, string>) => {
     applyVisualTheme(config);
     localStorage.setItem("user_theme_preference", JSON.stringify(config));
   };
@@ -86,22 +86,22 @@ export default function Footer() {
           {/* GAUCHE : IDENTITÉ + CONTACT */}
           <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
             <div className="text-center md:text-left">
-              <span className="text-xl font-black italic uppercase tracking-tighter text-white">
+              <span className="text-xl font-black italic uppercase tracking-tighter text-foreground">
                 Crysalys<span className="text-primary">.</span>
               </span>
-              <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-1">
+              <p className="text-[10px] text-foreground/50 font-bold uppercase tracking-widest mt-1">
                 Production Audiovisuelle
               </p>
             </div>
             <div className="hidden md:block w-[1px] h-8 bg-primary"></div>
             <div className="flex gap-3">
-              <a href="tel:+33600000000" className="w-9 h-9 rounded-dynamic bg-card border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-primary hover:border-primary transition-all group">
+              <a href="tel:+33600000000" className="w-9 h-9 rounded-dynamic bg-card border border-zinc-800 flex items-center justify-center text-foreground/70 hover:text-primary hover:border-primary transition-all group">
                 <Phone size={14} className="group-hover:scale-110 transition-transform"/>
               </a>
-              <a href="mailto:contact@crysalys.fr" className="w-9 h-9 rounded-dynamic bg-card border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-primary hover:border-primary transition-all group">
+              <a href="mailto:contact@crysalys.fr" className="w-9 h-9 rounded-dynamic bg-card border border-zinc-800 flex items-center justify-center text-foreground/70 hover:text-primary hover:border-primary transition-all group">
                 <Mail size={14} className="group-hover:scale-110 transition-transform"/>
               </a>
-              <a href="https://maps.google.com" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-dynamic bg-card border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-primary hover:border-primary transition-all group">
+              <a href="https://maps.google.com" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-dynamic bg-card border border-zinc-800 flex items-center justify-center text-foreground/70 hover:text-primary hover:border-primary transition-all group">
                 <MapPin size={14} className="group-hover:scale-110 transition-transform"/>
               </a>
             </div>
@@ -109,17 +109,17 @@ export default function Footer() {
 
           {/* DROITE : SÉLECTEUR DE THÈMES */}
           <div className="flex flex-col items-center md:items-end gap-3">
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500 flex items-center gap-2">
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground/50 flex items-center gap-2">
               <Paintbrush size={12} /> Choix du thème
             </span>
             
             <div className="flex items-center gap-2">
               <button
                   onClick={handleResetTheme}
-                  className="w-9 h-9 rounded-dynamic bg-card border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-primary hover:border-primary transition-all group"
+                  className="w-9 h-9 rounded-dynamic bg-card border border-zinc-800 flex items-center justify-center text-foreground/70 hover:text-primary hover:border-primary transition-all group"
                   title="Retour au thème original"
               >
-                  <RotateCcw size={12} className="text-white group-hover:text-primary transition-colors"/>
+                  <RotateCcw size={12} className="text-foreground group-hover:text-primary transition-colors"/>
               </button>
 
               <div className="flex gap-3 p-1.5 bg-black/20 rounded-dynamic border border-primary backdrop-blur-sm">
@@ -143,7 +143,7 @@ export default function Footer() {
                     </button>
                   ))
                 ) : (
-                  <span className="text-[9px] text-zinc-700 italic px-2">...</span>
+                  <span className="text-[9px] text-foreground/30 italic px-2">...</span>
                 )}
               </div>
             </div>
@@ -152,19 +152,19 @@ export default function Footer() {
 
         {/* SECTION LÉGALE + BOUTON SECRET */}
         <div className="max-w-7xl mx-auto px-8 mt-12 pt-8 border-t border-zinc-800 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-[10px] text-zinc-600 font-medium uppercase tracking-widest">
+          <p className="text-[10px] text-foreground/40 font-medium uppercase tracking-widest">
              © {new Date().getFullYear()} La Crysalys. Tous droits réservés.
           </p>
           
           <nav className="flex items-center gap-6">
-            <Link href="/mentions-legales" className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest hover:text-primary transition-colors">
+            <Link href="/mentions-legales" className="text-[10px] text-foreground/50 font-bold uppercase tracking-widest hover:text-primary transition-colors">
                 Mentions Légales
             </Link>
-            <span className="text-zinc-800">•</span>
-            <Link href="/contact" className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest hover:text-primary transition-colors">
+            <span className="text-foreground/20">•</span>
+            <Link href="/contact" className="text-[10px] text-foreground/50 font-bold uppercase tracking-widest hover:text-primary transition-colors">
                 Contact
             </Link>
-            <Link href="/login" className="opacity-20 hover:opacity-100 transition-opacity text-zinc-500"
+            <Link href="/login" className="opacity-20 hover:opacity-100 transition-opacity text-foreground/50"
                 title="Accès Restreint"
             >
                 <Lock size={12} />

@@ -9,7 +9,7 @@ import Footer from "@/components/Footer";
 // Note: `revalidate = 0` force le rendu dynamique à chaque requête, désactivant le cache de page.
 // Si vous souhaitez un rendu statique (pour de meilleures performances), supprimez cette ligne
 // ou donnez-lui une valeur en secondes (ex: `revalidate = 60;` pour revalider toutes les 60 secondes).
-export const revalidate = 0;
+export const revalidate = 3600; // Cache les pages pendant 1h. Les Server Actions les forceront à se rafraîchir instantanément via revalidatePath de toute façon.
 
 export default async function RootLayout({
   children,
@@ -22,8 +22,6 @@ export default async function RootLayout({
   const { data: settings } = await supabase
     .from("site_settings")
     .select("key, value");
-
-  const getS = (key: string, def: string) => settings?.find(s => s.key === key)?.value || def;
 
   const theme = {
     bg_color: settings?.find(s => s.key === "bg_color")?.value || "#000000",
@@ -55,7 +53,7 @@ export default async function RootLayout({
           .rounded-dynamic { border-radius: var(--radius) !important; }
         `}} />
       </head>
-      <body className="bg-background text-white antialiased">
+      <body className="bg-background text-foreground antialiased">
         <Header/>
         {children}
         <SpeedInsights />

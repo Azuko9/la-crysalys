@@ -31,8 +31,8 @@ export async function saveProjectAction(
     revalidatePath("/postprod");
     revalidatePath("/realisations/[id]", "page");
     return { success: true, error: null, errors: null };
-  } catch (e: any) {
-    return { success: false, error: e.message, errors: null };
+  } catch (e: unknown) {
+    return { success: false, error: e instanceof Error ? e.message : String(e), errors: null };
   }
 }
 
@@ -56,8 +56,8 @@ export async function deleteProjectAction(projectId: string, imageUrls: string[]
         revalidatePath('/realisations');
         revalidatePath('/postprod');
         return { success: true, error: null, errors: null };
-    } catch (e: any) {
-        return { success: false, error: e.message, errors: null };
+    } catch (e: unknown) {
+        return { success: false, error: e instanceof Error ? e.message : String(e), errors: null };
     }
 }
 
@@ -98,7 +98,7 @@ export async function sendContactMessageAction(formData: ContactFormData) {
     // e.g., using Resend or another email service.
 
     return { success: true, errors: null, error: null };
-  } catch (e: any) {
+  } catch {
     return { success: false, errors: null, error: "Une erreur serveur est survenue. Veuillez réessayer." };
   }
 }

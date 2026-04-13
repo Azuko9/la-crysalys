@@ -51,3 +51,17 @@ export interface Feature {
   icon_name: string | null;
   page_context: string | null;
 }
+
+// src/types/index.ts
+
+export interface ContactMessage {
+  id: string;
+  nom: string;
+  email: string;
+  objet: string;
+  message: string;
+  created_at: string;
+}
+
+// ... vos autres types existants (Project, TeamMember, etc.)
+

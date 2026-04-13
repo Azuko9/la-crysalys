@@ -41,38 +41,38 @@ export default function LoginClientPage() {
           </div>
         </div>
         
-        <h1 className="text-2xl font-bold text-white text-center mb-8">
+        <h1 className="text-2xl font-bold text-foreground text-center mb-8">
           Accès Admin
         </h1>
 
         <form onSubmit={handleLogin} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-2">Email</label>
+            <label className="block text-sm font-medium text-foreground/70 mb-2">Email</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full bg-background border border-gray-700 rounded-lg p-3 text-white focus:border-primary outline-none transition"
+              className="w-full bg-background border border-gray-700 rounded-lg p-3 text-foreground focus:border-primary outline-none transition"
               placeholder="admin@crysalys.com"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-2">Mot de passe</label>
+            <label className="block text-sm font-medium text-foreground/70 mb-2">Mot de passe</label>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full bg-background border border-gray-700 rounded-lg p-3 text-white focus:border-primary outline-none transition pr-12"
+                className="w-full bg-background border border-gray-700 rounded-lg p-3 text-foreground focus:border-primary outline-none transition pr-12"
                 placeholder="••••••••"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-foreground transition"
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
@@ -89,7 +89,7 @@ export default function LoginClientPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-primary hover:bg-green-700 text-white font-bold py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-primary hover:bg-green-700 text-foreground font-bold py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? "Connexion..." : "Se connecter"}
           </button>

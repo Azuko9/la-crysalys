@@ -13,21 +13,21 @@ export default function MentionsLegales() {
         
         {/* Titre */}
         <div className="text-center space-y-4">
-          <h1 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter text-white">
+          <h1 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter text-foreground">
             Mentions <span className="text-primary">Légales</span>
           </h1>
           <div className="w-24 h-1 bg-primary mx-auto rounded-full"></div>
         </div>
 
         {/* Contenu */}
-        <div className="space-y-8 text-zinc-400 leading-relaxed">
+        <div className="space-y-8 text-foreground/70 leading-relaxed">
           
           <section className="bg-card p-8 rounded-dynamic border border-zinc-800">
-            <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+            <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
               <span className="text-primary">1.</span> Édition du site
             </h2>
             <p className="mb-4">
-              En vertu de l'article 6 de la loi n° 2004-575 du 21 juin 2004 pour la confiance dans l'économie numérique, il est précisé aux utilisateurs du site internet <strong>https://la-crysalys.vercel.app/</strong> l'identité des différents intervenants dans le cadre de sa réalisation et de son suivi :
+              En vertu de l&apos;article 6 de la loi n° 2004-575 du 21 juin 2004 pour la confiance dans l&apos;économie numérique, il est précisé aux utilisateurs du site internet <strong>https://la-crysalys.vercel.app/</strong> l&apos;identité des différents intervenants dans le cadre de sa réalisation et de son suivi :
             </p>
             {/* IMPORTANT: Vous devez remplacer les informations ci-dessous par les vôtres. */}
             <ul className="space-y-2 list-disc pl-5">
@@ -39,7 +39,7 @@ export default function MentionsLegales() {
           </section>
 
           <section className="bg-card p-8 rounded-dynamic border border-zinc-800">
-            <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+            <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
               <span className="text-primary">2.</span> Hébergement
             </h2>
             <p>
@@ -50,7 +50,7 @@ export default function MentionsLegales() {
           </section>
 
           <section className="bg-card p-8 rounded-dynamic border border-zinc-800">
-            <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+            <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
               <span className="text-primary">3.</span> Propriété intellectuelle
             </h2>
             <p>

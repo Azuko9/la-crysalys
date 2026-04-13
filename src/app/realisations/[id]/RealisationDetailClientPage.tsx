@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
@@ -8,7 +8,6 @@ import { getYouTubeID } from "@/lib/utils";
 import { ImageCompareSlider } from "@/components/ImageCompareSlider";
 import { Layers, Wind, User, Calendar, ArrowLeft, Globe, Tag } from "lucide-react";
 import type { Project } from '@/types';
-import type { User as SupabaseUser } from "@supabase/supabase-js";
 import ProjectModal from '@/components/ProjectModal';
 
 interface RealisationDetailClientProps {
@@ -17,17 +16,8 @@ interface RealisationDetailClientProps {
 
 export default function RealisationDetailClientPage({ initialProject }: RealisationDetailClientProps) {
     const [project, setProject] = useState(initialProject);
-    const [user, setUser] = useState<SupabaseUser | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const router = useRouter();
-
-    useEffect(() => {
-        const checkUser = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            setUser(user);
-        };
-        checkUser();
-    }, []);
 
     const fetchProject = async () => {
         const { data, error } = await supabase
@@ -46,21 +36,16 @@ export default function RealisationDetailClientPage({ initialProject }: Realisat
         if (data.description_postprod && typeof data.description_postprod === 'string') {
             try {
                 data.description_postprod = JSON.parse(data.description_postprod);
-            } catch (e) {
-                console.error('Failed to parse description_postprod:', e);
+            } catch (e: unknown) {
+                console.error('Failed to parse description_postprod:', e instanceof Error ? e.message : e);
                 data.description_postprod = null;
             }
         }
         setProject(data as Project);
     };
 
-    const openModal = () => setIsModalOpen(true);
     const closeModal = () => setIsModalOpen(false);
 
-    const handleDeleteSuccess = () => {
-        alert('Projet supprimé avec succès.');
-        router.push('/realisations');
-    };
 
     const handleModalSuccess = () => {
         closeModal();
@@ -72,11 +57,11 @@ export default function RealisationDetailClientPage({ initialProject }: Realisat
 
     return (
         <>
-            <main className="min-h-screen bg-background text-white pt-32 pb-20">
+            <main className="min-h-screen bg-background text-foreground pt-32 pb-20">
                 <div className="max-w-5xl mx-auto px-4">
                     
                     <div className="flex justify-between items-start mb-8">
-                        <Link href="/realisations" className="inline-flex items-center gap-2 text-zinc-400 hover:text-white transition-colors text-sm font-bold uppercase tracking-widest">
+                        <Link href="/realisations" className="inline-flex items-center gap-2 text-foreground/70 hover:text-foreground transition-colors text-sm font-bold uppercase tracking-widest">
                             <ArrowLeft size={16} />
                             Retour au portfolio
                         </Link>
@@ -86,22 +71,22 @@ export default function RealisationDetailClientPage({ initialProject }: Realisat
 
                     {/* Header */}
                     <div className="mb-8">
-                        <h1 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter text-white mb-4">{project.title}</h1>
+                        <h1 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter text-foreground mb-4">{project.title}</h1>
                     </div>
 
                     {/* Fiche Technique Horizontale */}
                     <div className="bg-card border border-zinc-800 rounded-dynamic p-6 mb-12">
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                             <div>
-                                <p className="text-xs text-zinc-500 font-bold uppercase flex items-center gap-2 mb-1"><User size={14}/> Client</p>
+                                <p className="text-xs text-foreground/50 font-bold uppercase flex items-center gap-2 mb-1"><User size={14}/> Client</p>
                                 <p className="font-semibold">{project.client_name || 'N/A'}</p>
                             </div>
                             <div>
-                                <p className="text-xs text-zinc-500 font-bold uppercase flex items-center gap-2 mb-1"><Calendar size={14}/> Date</p>
+                                <p className="text-xs text-foreground/50 font-bold uppercase flex items-center gap-2 mb-1"><Calendar size={14}/> Date</p>
                                 <p className="font-semibold">{projectDate}</p>
                             </div>
                             <div>
-                                <p className="text-xs text-zinc-500 font-bold uppercase flex items-center gap-2 mb-1"><Globe size={14}/> Site Web</p>
+                                <p className="text-xs text-foreground/50 font-bold uppercase flex items-center gap-2 mb-1"><Globe size={14}/> Site Web</p>
                                 {project.client_website ? (
                                     <a href={project.client_website} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate font-semibold">{project.client_website.replace(/https?:\/\//, '')}</a>
                                 ) : (
@@ -109,10 +94,10 @@ export default function RealisationDetailClientPage({ initialProject }: Realisat
                                 )}
                             </div>
                             <div>
-                                <p className="text-xs text-zinc-500 font-bold uppercase flex items-center gap-2 mb-1"><Tag size={14}/> Catégories</p>
+                                <p className="text-xs text-foreground/50 font-bold uppercase flex items-center gap-2 mb-1"><Tag size={14}/> Catégories</p>
                                 <div className="flex flex-wrap gap-1.5">
                                     {project.category.split(',').map((cat: string, i: number) => (
-                                        <span key={i} className="text-[9px] bg-zinc-700 text-white px-2 py-1 rounded uppercase font-bold">{cat.trim()}</span>
+                                        <span key={i} className="text-[9px] bg-zinc-700 text-foreground px-2 py-1 rounded uppercase font-bold">{cat.trim()}</span>
                                     ))}
                                 </div>
                             </div>
@@ -140,14 +125,14 @@ export default function RealisationDetailClientPage({ initialProject }: Realisat
                             {project.description && (
                                 <div>
                                     <h2 className="text-2xl font-black text-primary mb-4 italic uppercase tracking-tighter">Contexte du Projet</h2>
-                                    <div className="prose prose-invert prose-zinc max-w-none text-zinc-300 leading-relaxed whitespace-pre-wrap">
+                                    <div className="prose prose-invert prose-zinc max-w-none text-foreground/80 leading-relaxed whitespace-pre-wrap">
                                         <p>{project.description}</p>
                                     </div>
                                 </div>
                             )}
 
                             {/* SECTION POST-PRODUCTION MISE À JOUR */}
-                            {(project.postprod_main_description || project.postprod_before_url || (Array.isArray(project.description_postprod) && project.description_postprod.length > 0)) && (
+                            {(project.postprod_main_description || project.postprod_before_path || (Array.isArray(project.description_postprod) && project.description_postprod.length > 0)) && (
                                 <div className="bg-card border border-zinc-800 p-6 rounded-dynamic">
                                     <h2 className="text-xl font-black text-purple-400 mb-4 flex items-center gap-2 italic uppercase tracking-tighter"><Layers size={20}/> Post-Production & VFX</h2>
                                     
@@ -157,12 +142,12 @@ export default function RealisationDetailClientPage({ initialProject }: Realisat
                                         </div>
                                     )}
 
-                                    {project.postprod_before_url && project.postprod_after_url && (
+                                    {project.postprod_before_path && project.postprod_after_path && (
                                         <div className="mb-8">
-                                            <p className="text-xs text-zinc-500 font-bold uppercase tracking-widest mb-3">Aperçu Global</p>
+                                            <p className="text-xs text-foreground/50 font-bold uppercase tracking-widest mb-3">Aperçu Global</p>
                                             <ImageCompareSlider 
-                                                beforeImage={project.postprod_before_url}
-                                                afterImage={project.postprod_after_url}
+                                                beforeImage={supabase.storage.from('portfolio_images').getPublicUrl(project.postprod_before_path).data.publicUrl}
+                                                afterImage={supabase.storage.from('portfolio_images').getPublicUrl(project.postprod_after_path).data.publicUrl}
                                             />
                                         </div>
                                     )}
@@ -171,11 +156,11 @@ export default function RealisationDetailClientPage({ initialProject }: Realisat
                                         <div className="space-y-8">
                                             {project.description_postprod.map((item, index) => (
                                                 <div key={index} className="border-t border-zinc-700/50 pt-6">
-                                                    <p className="text-white font-bold mb-4 text-lg"> #{index + 1}: <span className="text-purple-300">{item.detail}</span></p>
-                                                    {item.before_url && item.after_url && (
+                                                    <p className="text-foreground font-bold mb-4 text-lg"> #{index + 1}: <span className="text-purple-300">{item.detail}</span></p>
+                                                    {item.before_path && item.after_path && (
                                                         <ImageCompareSlider 
-                                                            beforeImage={item.before_url}
-                                                            afterImage={item.after_url}
+                                                            beforeImage={supabase.storage.from('portfolio_images').getPublicUrl(item.before_path).data.publicUrl}
+                                                            afterImage={supabase.storage.from('portfolio_images').getPublicUrl(item.after_path).data.publicUrl}
                                                         />
                                                     )}
                                                 </div>
@@ -188,7 +173,7 @@ export default function RealisationDetailClientPage({ initialProject }: Realisat
                             {project.description_drone && (
                                 <div className="bg-card border border-zinc-800 p-6 rounded-dynamic">
                                     <h2 className="text-xl font-black text-blue-400 mb-4 flex items-center gap-2 italic uppercase tracking-tighter"><Wind size={20}/> Spécificités Drone</h2>
-                                    <div className="prose prose-sm prose-invert prose-zinc max-w-none text-zinc-400 leading-relaxed whitespace-pre-wrap">
+                                    <div className="prose prose-sm prose-invert prose-zinc max-w-none text-foreground/70 leading-relaxed whitespace-pre-wrap">
                                         <p>{project.description_drone}</p>
                                     </div>
                                 </div>

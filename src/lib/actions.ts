@@ -1,10 +1,10 @@
 "use server";
 
 import { revalidatePath } from 'next/cache';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
-import type { Project, TeamMember, Feature, Category, PostProdDetail } from '@/types';
+import type { Project, TeamMember, Feature, Category } from '@/types';
 import { z } from 'zod';
 
 // Vérification des variables d'environnement pour le client admin Supabase
@@ -47,14 +47,14 @@ async function authenticateAdmin() {
       set(name: string, value: string, options: CookieOptions) {
         try {
           cookieStore.set({ name, value, ...options });
-        } catch (error) {
+        } catch {
           // The `set` method was called from a Server Component. This can be ignored if you have middleware refreshing user sessions.
         }
       },
       remove(name: string, options: CookieOptions) {
         try {
           cookieStore.set({ name, value: '', ...options });
-        } catch (error) {
+        } catch {
           // The `delete` method was called from a Server Component. This can be ignored if you have middleware refreshing user sessions.
         }
       },
@@ -189,8 +189,8 @@ export async function saveProjectAction(
     }
 
     return { success: true, data: result.data };
-  } catch (error: any) {
-    console.error("Erreur inattendue lors de saveProjectAction:", (error as Error).message);
+  } catch (error: unknown) {
+    console.error("Erreur inattendue lors de saveProjectAction:", error instanceof Error ? error.message : String(error));
     return { success: false, error: "Une erreur inattendue est survenue lors de la sauvegarde du projet." };
   }
 }
@@ -220,8 +220,8 @@ export async function deleteProjectAction(projectId: string, imagesToDelete: { b
     revalidatePath(`/realisations/${projectId}`);
 
     return { success: true };
-  } catch (error: any) {
-    console.error("Erreur inattendue lors de deleteProjectAction:", (error as Error).message);
+  } catch (error: unknown) {
+    console.error("Erreur inattendue lors de deleteProjectAction:", error instanceof Error ? error.message : String(error));
     return { success: false, error: "Une erreur inattendue est survenue lors de la suppression du projet." };
   }
 }
@@ -311,8 +311,8 @@ export async function saveCategoryAction(
       revalidatePath('/admin');
       return { success: true, data };
     }
-  } catch (error: any) {
-    return { success: false, error: error.message };
+  } catch (error: unknown) {
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
   }
 }
 
@@ -356,8 +356,8 @@ export async function deleteCategoryAction(categoryId: string, categoryName: str
     revalidatePath('/admin');
     revalidatePath('/realisations');
     return { success: true };
-  } catch (error: any) {
-    console.error("Erreur inattendue lors de deleteCategoryAction:", (error as Error).message);
+  } catch (error: unknown) {
+    console.error("Erreur inattendue lors de deleteCategoryAction:", error instanceof Error ? error.message : String(error));
     return { success: false, error: "Une erreur inattendue est survenue lors de la suppression de la catégorie." };
   }
 }
@@ -378,8 +378,8 @@ export async function saveFeatureAction(payload: Omit<Feature, 'id' | 'created_a
         revalidatePath('/expertise');
         revalidatePath('/postprod');
         return { success: true, data };
-    } catch (error: any) {
-        console.error("Erreur inattendue lors de saveFeatureAction:", error.message);
+    } catch (error: unknown) {
+        console.error("Erreur inattendue lors de saveFeatureAction:", error instanceof Error ? error.message : String(error));
         return { success: false, error: "Une erreur inattendue est survenue lors de la sauvegarde de la fonctionnalité." };
     }
 }
@@ -402,8 +402,8 @@ export async function deleteFeatureAction(featureId: string) {
         revalidatePath('/expertise');
         revalidatePath('/postprod');
         return { success: true };
-    } catch (error: any) {
-        console.error("Erreur inattendue lors de deleteFeatureAction:", error.message); // Log détaillé
+    } catch (error: unknown) {
+        console.error("Erreur inattendue lors de deleteFeatureAction:", error instanceof Error ? error.message : String(error)); // Log détaillé
         return { success: false, error: "Une erreur inattendue est survenue lors de la suppression de la fonctionnalité." };
     }
 }
@@ -453,8 +453,8 @@ export async function saveTeamMemberAction(
         revalidatePath('/equipe');
         revalidatePath('/admin');
         return { success: true, data };
-    } catch (error: any) {
-        console.error("Erreur inattendue lors de saveTeamMemberAction:", error.message);
+    } catch (error: unknown) {
+        console.error("Erreur inattendue lors de saveTeamMemberAction:", error instanceof Error ? error.message : String(error));
         return { success: false, error: "Une erreur inattendue est survenue lors de la sauvegarde du membre de l'équipe." };
     }
 }
@@ -476,7 +476,7 @@ export async function deleteTeamMemberAction(memberId: string) {
           throw new Error(`Impossible de récupérer le membre à supprimer.`);
         }
         if (member?.photo_path) {
-            await deleteImagesFromStorage([{ bucket: 'team_images', path: member.photo_path }]);
+            await deleteImagesFromStorage([{ bucket: 'team-photos', path: member.photo_path }]);
         }
         const { error: dbError } = await supabaseAdmin.from('team_members').delete().eq('id', memberId);
         if (dbError) {
@@ -486,8 +486,8 @@ export async function deleteTeamMemberAction(memberId: string) {
         revalidatePath('/equipe');
         revalidatePath('/admin');
         return { success: true };
-    } catch (error: any) {
-        console.error("Erreur inattendue lors de deleteTeamMemberAction:", error.message);
+    } catch (error: unknown) {
+        console.error("Erreur inattendue lors de deleteTeamMemberAction:", error instanceof Error ? error.message : String(error));
         return { success: false, error: "Une erreur inattendue est survenue lors de la suppression du membre de l'équipe." };
     }
 }
@@ -500,7 +500,37 @@ const ContactFormSchema = z.object({
   message: z.string().min(10, "Le message est trop court.").max(2000, "Le message est trop long."),
 });
 
-export async function sendContactMessageAction(formData: { nom: string; email: string; objet: string; message: string; }) {
+// Cache mémoire basique pour le rate limit
+// Note: Ce cache est réinitialisé à chaque redémarrage (cold start) du serveur serverless, 
+// mais c'est largement suffisant pour stopper du spam automatisé instantané.
+const rateLimitMap = new Map<string, { count: number; lastReset: number }>();
+const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 minutes
+const MAX_REQUESTS = 3; // 3 requêtes max par IP toutes les 15 mins
+
+export async function sendContactMessageAction(formData: { nom: string; email: string; objet: string; message: string; botField?: string; }) {
+    // --- 1. SÉCURITÉ : VÉRIFICATION DU HONEYPOT ---
+    if (formData.botField && formData.botField.length > 0) {
+        console.warn("Honeypot déclenché, spam potentiel bloqué.");
+        return { success: true }; // On simule un succès pour tromper le bot
+    }
+
+    // --- 2. SÉCURITÉ : RATE LIMITING BASÉ SUR L'IP ---
+    const ip = headers().get('x-forwarded-for') || 'unknown';
+    const now = Date.now();
+    const limitInfo = rateLimitMap.get(ip) || { count: 0, lastReset: now };
+
+    if (now - limitInfo.lastReset > RATE_LIMIT_WINDOW) {
+        limitInfo.count = 1;
+        limitInfo.lastReset = now;
+    } else {
+        limitInfo.count++;
+        if (limitInfo.count > MAX_REQUESTS) {
+            console.warn(`Rate limit dépassé pour l'IP : ${ip}`);
+            return { success: false, error: "Vous avez envoyé trop de messages. Veuillez patienter quelques minutes." };
+        }
+    }
+    rateLimitMap.set(ip, limitInfo);
+
     const validatedFields = ContactFormSchema.safeParse(formData);
     if (!validatedFields.success) {
         return { success: false, errors: validatedFields.error.flatten().fieldErrors };
@@ -515,14 +545,14 @@ export async function sendContactMessageAction(formData: { nom: string; email: s
             set(name: string, value: string, options: CookieOptions) {
               try {
                 cookieStore.set({ name, value, ...options });
-              } catch (error) {
+              } catch {
                 // The `set` method was called from a Server Component. This can be ignored if you have middleware refreshing user sessions.
               }
             },
             remove(name: string, options: CookieOptions) {
               try {
                 cookieStore.set({ name, value: '', ...options });
-              } catch (error) {
+              } catch {
                 // The `delete` method was called from a Server Component. This can be ignored if you have middleware refreshing user sessions.
               }
             },
@@ -534,49 +564,27 @@ export async function sendContactMessageAction(formData: { nom: string; email: s
           throw new Error("Une erreur est survenue lors de l'envoi du message.");
         }
         return { success: true };
-    } catch (error: any) {
-        console.error("Erreur inattendue lors de l'envoi du message de contact:", (error as Error).message);
+    } catch (error: unknown) {
+        console.error("Erreur inattendue lors de l'envoi du message de contact:", error instanceof Error ? error.message : String(error));
         return { success: false, error: "Impossible d'envoyer le message. Veuillez réessayer." };
     }
 }
 
-// --- NOUVELLES ACTIONS DE LECTURE (Bypass RLS) ---
-
-export async function getSiteSettingsAction() {
+// --- ACTIONS PARAMÈTRES DU SITE (THEME) ---
+export async function saveSiteSettingsAction(updates: { key: string; value: string }[]) {
   try {
-    // Utilisation de supabaseAdmin pour contourner les RLS
-    const { data, error } = await supabaseAdmin
-      .from('site_settings')
-      .select('key, value');
-    
-    if (error) throw error;
-    
-    // Transformation en objet simple { key: value } pour faciliter l'usage
-    const settings = data?.reduce((acc: any, curr: { key: string; value: any }) => {
-      acc[curr.key] = curr.value;
-      return acc;
-    }, {}) || {};
+    const authResult = await authenticateAdmin();
+    if (!authResult.success) {
+      return authResult;
+    }
 
-    return { success: true, data: settings };
-  } catch (error: any) {
-    console.error("Erreur getSiteSettingsAction:", error.message);
-    return { success: false, error: error.message };
-  }
-}
+    const { error } = await supabaseAdmin.from("site_settings").upsert(updates, { onConflict: "key" });
+    if (error) throw new Error(error.message);
 
-export async function getFeaturesAction(context: string) {
-  try {
-    // Utilisation de supabaseAdmin pour contourner les RLS
-    const { data, error } = await supabaseAdmin
-      .from('expertise_features')
-      .select('*')
-      .eq('page_context', context)
-      .order('created_at', { ascending: true });
-
-    if (error) throw error;
-    return { success: true, data: data || [] };
-  } catch (error: any) {
-    console.error("Erreur getFeaturesAction:", error.message);
-    return { success: false, error: error.message };
+    revalidatePath('/', 'layout'); // Force le rafraîchissement global du thème
+    return { success: true };
+  } catch (error: unknown) {
+    console.error("Erreur inattendue lors de saveSiteSettingsAction:", error instanceof Error ? error.message : String(error));
+    return { success: false, error: "Une erreur inattendue est survenue lors de la sauvegarde des paramètres." };
   }
 }

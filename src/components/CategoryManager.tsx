@@ -55,7 +55,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, re
       setNewCatName("");
       await refreshCategories();
     } else {
-      setMessage({ type: 'error', text: ('error' in result && result.error) || "Une erreur est survenue." });
+      setMessage({ type: 'error', text: 'error' in result ? String(result.error) : "Une erreur est survenue." });
     }
     setLoading(null);
   };
@@ -72,7 +72,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, re
       setEditingId(null);
       await refreshCategories();
     } else {
-      setMessage({ type: 'error', text: ('error' in result && result.error) || "Une erreur est survenue." });
+      setMessage({ type: 'error', text: 'error' in result ? String(result.error) : "Une erreur est survenue." });
     }
     setLoading(null);
   };
@@ -89,7 +89,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, re
       setMessage({ type: 'success', text: `Catégorie "${cat.name}" supprimée.` });
       await refreshCategories();
     } else {
-      setMessage({ type: 'error', text: ('error' in result && result.error) || "Une erreur est survenue." });
+      setMessage({ type: 'error', text: 'error' in result ? String(result.error) : "Une erreur est survenue." });
     }
     setLoading(null);
   };
@@ -120,27 +120,27 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, re
                     value={editValue}
                     onChange={(e) => setEditValue(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleUpdate(cat.id)}
-                    className="bg-zinc-800 text-[10px] uppercase font-black px-2 py-1 rounded outline-none border border-primary w-24 text-white"
+                    className="bg-zinc-800 text-[10px] uppercase font-black px-2 py-1 rounded outline-none border border-primary w-24 text-foreground"
                     disabled={loading?.type === 'update'}
                   />
                   {loading?.type === 'update' && loading.id === cat.id ? (
                     <Loader2 size={14} className="animate-spin text-primary"/>
                   ) : (
                     <>
-                      <button onClick={() => handleUpdate(cat.id)} className="text-primary hover:text-white"><Check size={14}/></button>
-                      <button onClick={() => setEditingId(null)} className="text-zinc-500 hover:text-white"><X size={14}/></button>
+                      <button onClick={() => handleUpdate(cat.id)} className="text-primary hover:text-foreground"><Check size={14}/></button>
+                      <button onClick={() => setEditingId(null)} className="text-foreground/50 hover:text-foreground"><X size={14}/></button>
                     </>
                   )}
                 </div>
               ) : (
                 <>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-foreground/70">
                     {cat.name}
                   </span>
                   <div className="flex items-center gap-1 ml-2 border-l border-zinc-800 pl-2">
                     <button 
                       onClick={() => { setEditingId(cat.id); setEditValue(cat.name); }}
-                      className="text-zinc-600 hover:text-blue-500 transition-colors"
+                      className="text-foreground/40 hover:text-blue-500 transition-colors"
                       title="Modifier le nom"
                       disabled={!!loading}
                     >
@@ -151,7 +151,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, re
                     ) : (
                       <button 
                         onClick={() => handleDelete(cat)}
-                        className="text-zinc-600 hover:text-red-500 transition-colors"
+                        className="text-foreground/40 hover:text-red-500 transition-colors"
                         title="Supprimer"
                         disabled={!!loading}
                       >
@@ -170,7 +170,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, re
             value={newCatName} 
             onChange={e => setNewCatName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
-            className="bg-background border border-zinc-800 p-4 rounded-xl flex-1 text-sm outline-none focus:border-primary transition-all text-white" 
+            className="bg-background border border-zinc-800 p-4 rounded-xl flex-1 text-sm outline-none focus:border-primary transition-all text-foreground" 
             placeholder="Nouveau métier..."
             disabled={!!loading}
           />
@@ -194,7 +194,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, re
         <div className="flex items-start gap-3 p-4 bg-amber-500/5 border border-amber-500/10 rounded-dynamic text-amber-500/70">
             <AlertTriangle size={18} className="shrink-0" />
             <p className="text-[10px] font-bold leading-relaxed uppercase tracking-tighter">
-                Sécurité active : La suppression d'une catégorie est bloquée tant que des vidéos y sont rattachées pour éviter les erreurs d'affichage sur le portfolio.
+                Sécurité active : La suppression d&apos;une catégorie est bloquée tant que des vidéos y sont rattachées pour éviter les erreurs d&apos;affichage sur le portfolio.
             </p>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Video } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -23,7 +23,7 @@ export default function Home() {
         className="absolute top-0 left-0 w-full h-full object-cover -z-20"
       >
         {/* Le chemin commence par / car le fichier est dans le dossier 'public' */}
-        <source src="/background-video.mp4" type="video/mp4" />
+        <source src="/votre-video-background.mp4" type="video/mp4" />
         Votre navigateur ne supporte pas la lecture de vidéos.
       </video>
 
@@ -33,7 +33,7 @@ export default function Home() {
 
       {/* --- 4. TON CONTENU (Texte, boutons...) --- */}
       {/* Important : relative et z-10 pour passer devant la vidéo et l'overlay */}
-      <div className="relative z-10 max-w-5xl h-screen flex flex-col justify-between mx-auto text-center p-10 text-white">
+      <div className="relative z-10 max-w-5xl h-screen flex flex-col justify-between mx-auto text-center p-10 text-foreground">
         
 
         
@@ -50,20 +50,20 @@ export default function Home() {
 </h1>
 
         <div>
-          <p className="text-xl text-gray-300 mb-12 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-xl text-foreground/80 mb-12 max-w-3xl mx-auto leading-relaxed">
           Nous transformons vos idées en expériences visuelles cinématographiques. Expertise drone, publicité et contenu corporate de haut vol.
         </p>
 
         <div className="flex flex-col sm:flex-row justify-center gap-6">
           <Link 
             href="/realisations" 
-            className="bg-primary hover:bg-white/50 text-white font-bold py-4 px-8 rounded-dynamic flex items-center justify-center gap-3 transition transform hover:scale-105 text-lg shadow-lg"
+            className="bg-primary hover:bg-white/50 text-foreground font-bold py-4 px-8 rounded-dynamic flex items-center justify-center gap-3 transition transform hover:scale-105 text-lg shadow-lg"
           >
             Voir nos réalisations <ArrowRight />
           </Link>
           <Link 
             href="/contact" 
-            className="bg-transparent hover:bg-white/10 text-white border-2 border-white font-bold py-4 px-8 rounded-dynamic transition transform hover:scale-105 text-lg flex items-center justify-center"
+            className="bg-transparent hover:bg-white/10 text-foreground border-2 border-white font-bold py-4 px-8 rounded-dynamic transition transform hover:scale-105 text-lg flex items-center justify-center"
           >
             Demander un devis
           </Link>

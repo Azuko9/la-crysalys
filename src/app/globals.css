@@ -6,11 +6,12 @@
   --bg-color: #000000;
   --primary-color: #22c55e;
   --accent-color: #3b82f6;
+  --text-color: #ffffff;
 }
 
 body {
   background-color: var(--bg-color);
-  color: white;
+  color: var(--text-color);
 }
 .bg-card, .bg-card\/40, .bg-card-dynamic { 
    background-color: var(--card-bg) !important; 
@@ -27,5 +28,3 @@ body {
     -webkit-text-stroke: 2px white;
   }
 }
-
-

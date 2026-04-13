@@ -31,8 +31,8 @@ export const AdminProjectControls: React.FC<AdminProjectControlsProps> = ({ proj
 
   return (
     <div className={className}>
-      <button onClick={(e) => { e.stopPropagation(); onEdit(project); }} className="bg-blue-600/90 hover:bg-blue-500 p-2 rounded text-white backdrop-blur-sm" title="Modifier"><Pencil size={14}/></button>
-      <button onClick={handleDelete} className="bg-red-600/90 hover:bg-red-500 p-2 rounded text-white backdrop-blur-sm" title="Supprimer"><Trash2 size={14}/></button>
+      <button onClick={(e) => { e.stopPropagation(); onEdit(project); }} className="bg-blue-600/90 hover:bg-blue-500 p-2 rounded text-foreground backdrop-blur-sm" title="Modifier"><Pencil size={14}/></button>
+      <button onClick={handleDelete} className="bg-red-600/90 hover:bg-red-500 p-2 rounded text-foreground backdrop-blur-sm" title="Supprimer"><Trash2 size={14}/></button>
     </div>
   );
 };

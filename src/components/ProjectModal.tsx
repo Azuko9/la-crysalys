@@ -106,15 +106,16 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ label, currentPath, onPat
       <label className={`text-[10px] font-bold uppercase ml-1 ${colorClass}`}>{label}</label>
       {currentPath ? ( // Utiliser currentPath pour déterminer si une image est présente
         <div className="relative w-full h-32 rounded-dynamic overflow-hidden border border-zinc-700 group">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={supabase.storage.from(storageBucket).getPublicUrl(currentPath).data.publicUrl} alt="Aperçu" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-            <button type="button" onClick={handleRemoveImage} className="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-full font-bold text-xs uppercase flex items-center gap-1"><Trash2 size={14} /> Changer</button>
+            <button type="button" onClick={handleRemoveImage} className="bg-red-600 hover:bg-red-500 text-foreground px-3 py-1.5 rounded-full font-bold text-xs uppercase flex items-center gap-1"><Trash2 size={14} /> Changer</button>
           </div>
         </div>
       ) : (
         <div className={`relative w-full h-32 border-2 border-dashed border-zinc-700 hover:border-primary rounded-dynamic transition-colors bg-zinc-900/30 group`}>
           <input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploading || disabled} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-zinc-500 pointer-events-none">
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-foreground/50 pointer-events-none">
             {uploading ? <Loader2 size={28} className="animate-spin text-primary mb-2" /> : <UploadCloud size={28} className="mb-2 group-hover:text-primary transition-colors" />}
             <span className="text-[9px] font-bold uppercase tracking-widest">{uploading ? 'Envoi...' : 'Glisser une image'}</span>
           </div>
@@ -233,40 +234,12 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
     }));
   }, []);
 
-  // Gérer les changements de fichiers pour les images principales
-  const handleMainFileChange = (file: File | null, field: 'client_logo' | 'postprod_before' | 'postprod_after') => {
-    switch (field) {
-      case 'client_logo': setClientLogoFile(file); break;
-      case 'postprod_before': setPostprodBeforeFile(file); break;
-      case 'postprod_after': setPostprodAfterFile(file); break;
-    }
-  };
-
-  // Gérer les changements de fichiers pour les détails de post-production
-  const handlePostProdDetailFileChange = (index: number, type: 'before' | 'after', file: File | null) => {
-    setPostprodDetailFiles(prev => {
-      const existing = prev.find(item => item.index === index && item.type === type);
-      if (existing) {
-        return prev.map(item => item.index === index && item.type === type ? { ...item, file } : item);
-      }
-      return [...prev, { index, type, file }];
-    });
-  };
-
   // Ajouter/Supprimer des détails de post-production
   const addPostProdDetail = () => {
     setFormData(prev => ({
       ...prev,
       description_postprod: [...(prev.description_postprod || []), { detail: '', before_path: null, after_path: null }]
     }));
-  };
-
-  const removePostProdDetail = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      description_postprod: prev.description_postprod?.filter((_, i) => i !== index) || [] // Assurez-vous que c'est un tableau vide si tout est supprimé
-    }));
-    setPostprodDetailFiles(prev => prev.filter(item => item.index !== index));
   };
 
   const handlePostprodChange = useCallback((index: number, field: keyof PostProdDetail, value: string | null) => {
@@ -285,18 +258,18 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
     setFormErrors([]);
     setServerError(null);
 
+    const dataToSave = {
+      ...formData,
+      category: getFinalCategories(selectedCats, formData).join(', '),
+    };
+
     // Validation côté client avec Zod
-    const clientValidation = ProjectSchema.safeParse(formData);
+    const clientValidation = ProjectSchema.safeParse(dataToSave);
     if (!clientValidation.success) {
       setFormErrors(clientValidation.error.issues);
       setIsSubmitting(false);
       return;
     }
-
-    const dataToSave = {
-      ...formData,
-      category: getFinalCategories(selectedCats, formData).join(', '),
-    };
 
     const imagesToDelete: { bucket: string; path: string }[] = [];
 
@@ -378,15 +351,23 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
         setPostprodDetailFiles([]);
         onSuccess(); // Ferme la modal et rafraîchit la liste
       } else {
-        setServerError(('error' in result && result.error) || "Une erreur inconnue est survenue côté serveur."); // Utiliser 'error' in result
+        setServerError('error' in result ? String(result.error) : "Une erreur inconnue est survenue côté serveur.");
         // Gérer les erreurs de validation Zod du serveur si elles sont retournées
         if ('details' in result && result.details) {
-          setFormErrors((result.details as any).issues);
+          const flattened = result.details as { fieldErrors?: Record<string, string[]> };
+          const issuesFromServer: z.ZodIssue[] = [];
+          if (flattened.fieldErrors) {
+            Object.entries(flattened.fieldErrors).forEach(([field, msgs]) => {
+              msgs.forEach(msg => issuesFromServer.push({ path: [field], message: msg, code: 'custom' } as z.ZodIssue));
+            });
+          }
+          setFormErrors(issuesFromServer);
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erreur lors de la soumission du formulaire:", error);
-      setServerError(error.message || "Une erreur inattendue est survenue.");
+      const errorMessage = error instanceof Error ? error.message : "Une erreur inattendue est survenue.";
+      setServerError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -396,14 +377,14 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
 
   return (
     <div className="fixed inset-0 z-[100] flex items-start justify-center bg-background/95 p-4 backdrop-blur-xl animate-in fade-in duration-300 overflow-y-auto">
-      <div className="bg-card border border-zinc-800 p-8 rounded-[2.5rem] w-full max-w-3xl shadow-2xl my-8 text-white">
+      <div className="bg-card border border-zinc-800 p-8 rounded-[2.5rem] w-full max-w-3xl shadow-2xl my-8 text-foreground">
 
         {/* HEADER */}
         <div className="flex justify-between items-center mb-8 border-b border-zinc-800 pb-6">
           <h3 className="text-3xl font-black italic uppercase tracking-tighter text-primary">
-            {project ? 'Modifier' : 'Ajouter'} <span className="text-white">Projet</span>
+            {project ? 'Modifier' : 'Ajouter'} <span className="text-foreground">Projet</span>
           </h3>
-          <button onClick={onClose} className="text-zinc-600 hover:text-white transition-colors">
+          <button onClick={onClose} className="text-foreground/40 hover:text-foreground transition-colors">
             <XCircle size={32} />
           </button>
         </div>
@@ -412,7 +393,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
 
           {/* SECTION INFOS GÉNÉRALES */}
           <div className="space-y-4">
-            <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-2">Informations Générales</p>
+            <p className="text-[10px] font-black text-foreground/50 uppercase tracking-widest ml-2">Informations Générales</p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="md:col-span-2">
                 <input
@@ -422,10 +403,10 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
                 />
               </div>
               <div>
-                <label className="text-[9px] font-bold text-zinc-600 uppercase ml-1 flex items-center gap-1 mb-1"><Calendar size={10} /> Date de sortie</label>
+                <label className="text-[9px] font-bold text-foreground/40 uppercase ml-1 flex items-center gap-1 mb-1"><Calendar size={10} /> Date de sortie</label>
                 <input
                   type="date" name="project_date" required
-                  className="w-full bg-background border border-zinc-800 p-3 rounded-dynamic text-sm focus:border-zinc-500 text-white"
+                  className="w-full bg-background border border-zinc-800 p-3 rounded-dynamic text-sm focus:border-zinc-500 text-foreground"
                   value={formData.project_date} onChange={handleChange}
                 />
               </div>
@@ -439,12 +420,12 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
 
           {/* CATÉGORIES */}
           <div className="space-y-3">
-            <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-2">Tags Métiers</p>
+            <p className="text-[10px] font-black text-foreground/50 uppercase tracking-widest ml-2">Tags Métiers</p>
             <div className="flex flex-wrap gap-2 p-4 bg-background/50 border border-zinc-800 rounded-dynamic">
               {categories.map(cat => (
                 <button
                   key={cat.id} type="button" onClick={() => toggleCat(cat.name)}
-                  className={`px-4 py-1.5 rounded-full text-[10px] font-black border transition-all ${selectedCats.includes(cat.name) ? 'bg-primary border-primary text-black' : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-white'
+                  className={`px-4 py-1.5 rounded-full text-[10px] font-black border transition-all ${selectedCats.includes(cat.name) ? 'bg-primary border-primary text-black' : 'bg-zinc-800 border-zinc-700 text-foreground/70 hover:border-zinc-500 hover:text-foreground'
                     }`}
                 >
                   {cat.name.toUpperCase()}
@@ -455,18 +436,18 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
 
           {/* SECTION CONTENU DÉTAILLÉ */}
           <div className="space-y-6">
-            <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-2">Contenu Détaillé</p>
+            <p className="text-[10px] font-black text-foreground/50 uppercase tracking-widest ml-2">Contenu Détaillé</p>
 
             {/* DESCRIPTION GÉNÉRALE */}
             <div className="space-y-2">
-              <div className="flex items-center gap-2 text-zinc-400 ml-2">
+              <div className="flex items-center gap-2 text-foreground/70 ml-2">
                 <AlignLeft size={14} /> <span className="text-[10px] font-bold uppercase tracking-widest">Contexte Général</span>
               </div>
               <textarea
                 name="description"
                 placeholder="Description globale du projet, objectifs..."
                 rows={4}
-                className="w-full bg-background border border-zinc-800 p-4 rounded-dynamic outline-none focus:border-white text-zinc-300"
+                className="w-full bg-background border border-zinc-800 p-4 rounded-dynamic outline-none focus:border-white text-foreground/80"
                 value={formData.description || ""} onChange={handleChange}
               />
             </div>
@@ -525,7 +506,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
                 currentPath={formData.client_logo_path}
                 onPathChange={(path) => setFormData(prev => ({ ...prev, client_logo_path: path }))}
                 storageBucket={PROJECT_BUCKET_NAME}
-                colorClass="text-zinc-400"
+                colorClass="text-foreground/70"
                 folderPath="projects/logos/"
               />
               {isPostProdDetailsDisabled && (
@@ -575,7 +556,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
               <button
                 type="button"
                 onClick={addPostProdDetail}
-                className="text-xs font-bold text-purple-400 hover:text-white transition-colors pt-2 pl-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="text-xs font-bold text-purple-400 hover:text-foreground transition-colors pt-2 pl-1 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={isPostProdDetailsDisabled}
               >
                 + Ajouter une étape de post-production
@@ -585,14 +566,14 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
 
           {/* INFO CLIENT & DATE */}
           <div className="space-y-4 border-t border-zinc-800 pt-6">
-            <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-2">Informations Client</p>
+            <p className="text-[10px] font-black text-foreground/50 uppercase tracking-widest ml-2">Informations Client</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-[9px] font-bold text-zinc-600 uppercase ml-1 flex items-center gap-1"><User size={10} /> Client</label>
+                <label className="text-[9px] font-bold text-foreground/40 uppercase ml-1 flex items-center gap-1"><User size={10} /> Client</label>
                 <input type="text" name="client_name" className="w-full bg-background border border-zinc-800 p-3 rounded-dynamic text-sm focus:border-zinc-500" value={formData.client_name || ""} onChange={handleChange} placeholder="Nom du client" />
               </div>
               <div className="space-y-1">
-                <label className="text-[9px] font-bold text-zinc-600 uppercase ml-1 flex items-center gap-1"><Globe size={10} /> Site Web</label>
+                <label className="text-[9px] font-bold text-foreground/40 uppercase ml-1 flex items-center gap-1"><Globe size={10} /> Site Web</label>
                 <input type="text" name="client_website" className="w-full bg-background border border-zinc-800 p-3 rounded-dynamic text-sm focus:border-zinc-500" value={formData.client_website || ""} onChange={handleChange} placeholder="https://..." />
               </div>
             </div>
@@ -616,7 +597,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
 
           {/* BOUTONS D'ACTION */}
           <div className="flex justify-end items-center gap-4 border-t border-zinc-800 pt-6">
-            <button type="button" onClick={onClose} className="text-zinc-400 hover:text-white font-bold uppercase text-[10px] tracking-widest px-6 py-3 rounded-dynamic transition-colors">
+            <button type="button" onClick={onClose} className="text-foreground/70 hover:text-foreground font-bold uppercase text-[10px] tracking-widest px-6 py-3 rounded-dynamic transition-colors">
               Annuler
             </button>
             <button type="submit" disabled={isSubmitting} className="bg-primary hover:bg-white hover:text-black text-black font-black py-4 px-8 rounded-dynamic uppercase text-xs tracking-[0.2em] transition-all flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(34,197,94,0.2)] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed">

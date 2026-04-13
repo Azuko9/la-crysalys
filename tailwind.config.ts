@@ -9,6 +9,7 @@ const config: Config = {
         background: "var(--bg-color)",
         primary: "var(--primary-color)",
         card: "var(--card-bg)",
+        foreground: "var(--text-color)",
       },
     },
   },

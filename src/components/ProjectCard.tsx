@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { getYouTubeID } from "@/lib/utils";
@@ -53,7 +52,7 @@ export function ProjectCard({ projet, user, onEdit, onDeleteSuccess, isVertical 
             />)}
         
         <div className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
-          {videoId && <iframe src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&showinfo=0&loop=1&playlist=${videoId}`} title={projet.title} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" className="w-full h-full" style={{ border: 0 }} />}
+          {videoId && <iframe src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&showinfo=0&loop=1&playlist=${videoId}`} title={projet.title} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" loading="lazy" className="w-full h-full" style={{ border: 0 }} />}
         </div>
       </div>
       </Link>
@@ -67,7 +66,7 @@ export function ProjectCard({ projet, user, onEdit, onDeleteSuccess, isVertical 
           />
         )}
       <div className="p-4 bg-card flex-1 flex flex-col justify-between">
-        <h3 className="font-black uppercase text-xs line-clamp-1 tracking-wider text-white group-hover:text-primary transition-colors">{projet.title}</h3>
+        <h3 className="font-black uppercase text-xs line-clamp-1 tracking-wider text-foreground group-hover:text-primary transition-colors">{projet.title}</h3>
         <div className="flex flex-wrap gap-1 mt-3">
           {categoriesList.map((cat, i) => (
             <span key={i} className="text-[8px] bg-transparent border border-primary text-primary px-2 py-0.5 rounded uppercase font-bold tracking-wide">{cat}</span>

@@ -31,7 +31,7 @@ export default async function RealisationsPage() {
   ]);
 
   return (
-    <main className="min-h-screen bg-background text-white px-4 md:px-8 pb-20 pt-28">
+    <main className="min-h-screen bg-background text-foreground px-4 md:px-8 pb-20 pt-28">
       <RealisationsClientPage initialProjects={initialProjects} initialCategories={initialCategories} />
     </main>
   );
