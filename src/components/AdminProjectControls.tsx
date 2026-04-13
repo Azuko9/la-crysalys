@@ -8,18 +8,17 @@ interface AdminProjectControlsProps {
   project: Project;
   onEdit: (project: Project) => void;
   onDeleteSuccess: () => void;
-  imagesToDelete: { bucket: string; path: string }[]; // Liste des chemins d'images à supprimer
   className?: string;
 }
 
-export const AdminProjectControls: React.FC<AdminProjectControlsProps> = ({ project, onEdit, onDeleteSuccess, imagesToDelete, className }) => {
+export const AdminProjectControls: React.FC<AdminProjectControlsProps> = ({ project, onEdit, onDeleteSuccess, className }) => {
 
   // La fonction getFileUrlsFromProject n'est plus nécessaire ici car les chemins sont passés directement
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (confirm(`Êtes-vous sûr de vouloir supprimer le projet "${project.title}" ? Cette action est irréversible.`)) {      
-      const result = await deleteProjectAction(project.id, imagesToDelete);
+      const result = await deleteProjectAction(project.id);
 
       if (result.success) {
         onDeleteSuccess();

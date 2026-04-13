@@ -127,8 +127,8 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, re
                     <Loader2 size={14} className="animate-spin text-primary"/>
                   ) : (
                     <>
-                      <button onClick={() => handleUpdate(cat.id)} className="text-primary hover:text-foreground"><Check size={14}/></button>
-                      <button onClick={() => setEditingId(null)} className="text-foreground/50 hover:text-foreground"><X size={14}/></button>
+                      <button onClick={() => handleUpdate(cat.id)} aria-label="Valider la modification" className="text-primary hover:text-foreground"><Check size={14}/></button>
+                      <button onClick={() => setEditingId(null)} aria-label="Annuler la modification" className="text-foreground/50 hover:text-foreground"><X size={14}/></button>
                     </>
                   )}
                 </div>
@@ -142,6 +142,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, re
                       onClick={() => { setEditingId(cat.id); setEditValue(cat.name); }}
                       className="text-foreground/40 hover:text-blue-500 transition-colors"
                       title="Modifier le nom"
+                      aria-label={`Modifier la catégorie ${cat.name}`}
                       disabled={!!loading}
                     >
                       <Pencil size={12}/>
@@ -153,6 +154,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, re
                         onClick={() => handleDelete(cat)}
                         className="text-foreground/40 hover:text-red-500 transition-colors"
                         title="Supprimer"
+                        aria-label={`Supprimer la catégorie ${cat.name}`}
                         disabled={!!loading}
                       >
                         <Trash2 size={12}/>
@@ -174,7 +176,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, re
             placeholder="Nouveau métier..."
             disabled={!!loading}
           />
-          <button onClick={handleAdd} className="bg-primary hover:bg-green-500 px-6 rounded-xl font-bold text-black transition-all flex items-center justify-center disabled:opacity-50" disabled={!!loading}>
+          <button onClick={handleAdd} aria-label="Ajouter le métier" className="bg-primary hover:bg-green-500 px-6 rounded-xl font-bold text-black transition-all flex items-center justify-center disabled:opacity-50" disabled={!!loading}>
             {loading?.type === 'add' ? <Loader2 size={24} className="animate-spin"/> : <Plus size={24}/>}
           </button>
         </div>

@@ -5,11 +5,21 @@ import "./globals.css";
 import { SpeedInsights } from "@vercel/speed-insights/next"; 
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import type { Metadata } from "next";
 
 // Note: `revalidate = 0` force le rendu dynamique à chaque requête, désactivant le cache de page.
 // Si vous souhaitez un rendu statique (pour de meilleures performances), supprimez cette ligne
 // ou donnez-lui une valeur en secondes (ex: `revalidate = 60;` pour revalider toutes les 60 secondes).
 export const revalidate = 3600; // Cache les pages pendant 1h. Les Server Actions les forceront à se rafraîchir instantanément via revalidatePath de toute façon.
+
+export const metadata: Metadata = {
+  metadataBase: new URL('https://la-crysalys.vercel.app'),
+  title: {
+    default: 'La Crysalys - Production Audiovisuelle',
+    template: '%s | La Crysalys',
+  },
+  description: 'Production audiovisuelle, expertise drone et post-production de haut niveau. Nous transformons vos idées en expériences visuelles.',
+};
 
 export default async function RootLayout({
   children,

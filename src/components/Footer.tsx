@@ -95,13 +95,13 @@ export default function Footer() {
             </div>
             <div className="hidden md:block w-[1px] h-8 bg-primary"></div>
             <div className="flex gap-3">
-              <a href="tel:+33600000000" className="w-9 h-9 rounded-dynamic bg-card border border-zinc-800 flex items-center justify-center text-foreground/70 hover:text-primary hover:border-primary transition-all group">
+              <a href="tel:+33600000000" aria-label="Nous appeler par téléphone" className="w-9 h-9 rounded-dynamic bg-card border border-zinc-800 flex items-center justify-center text-foreground/70 hover:text-primary hover:border-primary transition-all group">
                 <Phone size={14} className="group-hover:scale-110 transition-transform"/>
               </a>
-              <a href="mailto:contact@crysalys.fr" className="w-9 h-9 rounded-dynamic bg-card border border-zinc-800 flex items-center justify-center text-foreground/70 hover:text-primary hover:border-primary transition-all group">
+              <a href="mailto:contact@crysalys.fr" aria-label="Nous envoyer un email" className="w-9 h-9 rounded-dynamic bg-card border border-zinc-800 flex items-center justify-center text-foreground/70 hover:text-primary hover:border-primary transition-all group">
                 <Mail size={14} className="group-hover:scale-110 transition-transform"/>
               </a>
-              <a href="https://maps.google.com" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-dynamic bg-card border border-zinc-800 flex items-center justify-center text-foreground/70 hover:text-primary hover:border-primary transition-all group">
+              <a href="https://maps.google.com" aria-label="Voir notre agence sur la carte" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-dynamic bg-card border border-zinc-800 flex items-center justify-center text-foreground/70 hover:text-primary hover:border-primary transition-all group">
                 <MapPin size={14} className="group-hover:scale-110 transition-transform"/>
               </a>
             </div>
@@ -118,6 +118,7 @@ export default function Footer() {
                   onClick={handleResetTheme}
                   className="w-9 h-9 rounded-dynamic bg-card border border-zinc-800 flex items-center justify-center text-foreground/70 hover:text-primary hover:border-primary transition-all group"
                   title="Retour au thème original"
+                  aria-label="Retour au thème original"
               >
                   <RotateCcw size={12} className="text-foreground group-hover:text-primary transition-colors"/>
               </button>
@@ -130,6 +131,7 @@ export default function Footer() {
                       onClick={() => handleThemeClick(p.config)}
                       className="group relative w-8 h-8 rounded-dynamic border border-white/10 hover:border-white hover:scale-110 transition-all shadow-lg overflow-hidden"
                       title={p.label}
+                      aria-label={`Appliquer le ${p.label}`}
                       style={{ backgroundColor: p.config.bg_color || '#000000' }}
                     >
                       <div 

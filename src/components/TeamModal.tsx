@@ -21,7 +21,6 @@ const TeamModal: React.FC<TeamModalProps> = ({ isOpen, member, onClose, onSucces
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null); // Fichier sélectionné pour upload
-  const [initialPhotoPath, setInitialPhotoPath] = useState<string | null>(null); // Chemin initial pour suppression
   const [isUploading, setIsUploading] = useState(false); // État d'upload
   
   const [formData, setFormData] = useState<TeamMemberFormDataType>({
@@ -54,7 +53,6 @@ const TeamModal: React.FC<TeamModalProps> = ({ isOpen, member, onClose, onSucces
     if (isOpen) {
       setError(null);
       setPhotoFile(null); // Réinitialise le fichier sélectionné
-      setInitialPhotoPath(null); // Réinitialise le chemin initial
       if (member) {
         setFormData({
           name: member.name || "",
@@ -68,7 +66,6 @@ const TeamModal: React.FC<TeamModalProps> = ({ isOpen, member, onClose, onSucces
           website: member.website || null,
           member_type: member.member_type || 'team'
         });
-        setInitialPhotoPath(member.photo_path || null); // Stocke le chemin initial
       } else {
         setFormData({ ...emptyFormData, member_type: defaultType });
       }
@@ -84,9 +81,6 @@ const TeamModal: React.FC<TeamModalProps> = ({ isOpen, member, onClose, onSucces
   }, []);
 
   const handleRemoveImage = () => {
-    if (formData.photo_path) {
-      // No need to set initialPhotoPath here, the logic in handleSubmit handles it
-    }
     setFormData({ ...formData, photo_path: null });
     setPhotoFile(null); // Efface le fichier sélectionné
   };
@@ -98,7 +92,6 @@ const TeamModal: React.FC<TeamModalProps> = ({ isOpen, member, onClose, onSucces
     setIsUploading(false); // S'assurer que l'état d'upload est faux avant de commencer la sauvegarde
 
     let finalPhotoPath = formData.photo_path;
-    let imageToDeleteFromStorage: { bucket: string; path: string } | null = null;
 
     // 1. Upload de la nouvelle image si un fichier est sélectionné
     if (photoFile) {
@@ -111,20 +104,13 @@ const TeamModal: React.FC<TeamModalProps> = ({ isOpen, member, onClose, onSucces
         return;
       }
       finalPhotoPath = path;
-      // Si une ancienne photo existait et qu'une nouvelle a été uploadée, l'ancienne est à supprimer
-      if (initialPhotoPath && initialPhotoPath !== finalPhotoPath) {
-        imageToDeleteFromStorage = { bucket: 'team_images', path: initialPhotoPath };
-      }
-    } else if (initialPhotoPath && !formData.photo_path) {
-      // Si l'utilisateur a supprimé une photo existante sans en uploader une nouvelle
-      imageToDeleteFromStorage = { bucket: 'team_images', path: initialPhotoPath };
     }
 
     // 2. Préparer le payload avec le chemin final de la photo
     const payload = { ...formData, photo_path: finalPhotoPath }; // Utilise le chemin final
 
     // 3. Appeler la Server Action
-    const result = await saveTeamMemberAction(payload, member ? member.id : null, imageToDeleteFromStorage);
+    const result = await saveTeamMemberAction(payload, member ? member.id : null);
 
     setLoading(false);
     if (result.success) {

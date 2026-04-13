@@ -151,7 +151,6 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
   const [serverError, setServerError] = useState<string | null>(null);
   const [formErrors, setFormErrors] = useState<z.ZodIssue[]>([]); // Pour les erreurs de validation Zod côté client
 
-  const [initialImagePaths, setInitialImagePaths] = useState<Set<{ bucket: string; path: string }>>(new Set());
 
   const [formData, setFormData] = useState<ProjectFormDataType>(emptyFormData);
 
@@ -197,25 +196,11 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
           category: project.category || "",
         });
 
-        // Collecter les chemins initiaux pour la suppression
-        const paths = new Set<{ bucket: string; path: string }>();
-        if (project.client_logo_path) paths.add({ bucket: PROJECT_BUCKET_NAME, path: project.client_logo_path });
-        if (project.postprod_before_path) paths.add({ bucket: PROJECT_BUCKET_NAME, path: project.postprod_before_path });
-        if (project.postprod_after_path) paths.add({ bucket: PROJECT_BUCKET_NAME, path: project.postprod_after_path });
-        if (project.description_postprod && Array.isArray(project.description_postprod)) {
-          project.description_postprod.forEach(d => {
-            if (d.before_path) paths.add({ bucket: PROJECT_BUCKET_NAME, path: d.before_path });
-            if (d.after_path) paths.add({ bucket: PROJECT_BUCKET_NAME, path: d.after_path });
-          });
-        }
-        setInitialImagePaths(paths);
-
         const tags = project.category ? project.category.split(',').map(t => t.trim()) : [];
         setSelectedCats(tags.filter(t => !["Drone", "Post-Prod", "Short"].includes(t)));
       } else {
         // Mode création : on réinitialise le formulaire
         setFormData(emptyFormData);
-        setInitialImagePaths(new Set());
         setSelectedCats([]);
       }
     }
@@ -271,28 +256,24 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
       return;
     }
 
-    const imagesToDelete: { bucket: string; path: string }[] = [];
 
     try {
       // --- 1. Upload des images principales et collecte des chemins ---
       if (clientLogoFile) {
         const path = await uploadFileAndGetPath(clientLogoFile, PROJECT_BUCKET_NAME, 'projects/logos/');
         if (!path) throw new Error("Échec de l'upload du logo client.");
-        if (formData.client_logo_path) imagesToDelete.push({ bucket: PROJECT_BUCKET_NAME, path: formData.client_logo_path });
         dataToSave.client_logo_path = path;
       }
 
       if (postprodBeforeFile) {
         const path = await uploadFileAndGetPath(postprodBeforeFile, PROJECT_BUCKET_NAME, 'projects/postprod/');
         if (!path) throw new Error("Échec de l'upload de l'image 'avant'.");
-        if (formData.postprod_before_path) imagesToDelete.push({ bucket: PROJECT_BUCKET_NAME, path: formData.postprod_before_path });
         dataToSave.postprod_before_path = path;
       }
 
       if (postprodAfterFile) {
         const path = await uploadFileAndGetPath(postprodAfterFile, PROJECT_BUCKET_NAME, 'projects/postprod/');
         if (!path) throw new Error("Échec de l'upload de l'image 'après'.");
-        if (formData.postprod_after_path) imagesToDelete.push({ bucket: PROJECT_BUCKET_NAME, path: formData.postprod_after_path });
         dataToSave.postprod_after_path = path;
       }
 
@@ -306,40 +287,18 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
           if (beforeFile) {
             const path = await uploadFileAndGetPath(beforeFile, PROJECT_BUCKET_NAME, 'projects/postprod_details/');
             if (!path) throw new Error(`Échec de l'upload de l'image 'avant' pour le détail ${i + 1}.`);
-            if (detail.before_path) imagesToDelete.push({ bucket: PROJECT_BUCKET_NAME, path: detail.before_path });
             detail.before_path = path;
           }
           if (afterFile) {
             const path = await uploadFileAndGetPath(afterFile, PROJECT_BUCKET_NAME, 'projects/postprod_details/');
             if (!path) throw new Error(`Échec de l'upload de l'image 'après' pour le détail ${i + 1}.`);
-            if (detail.after_path) imagesToDelete.push({ bucket: PROJECT_BUCKET_NAME, path: detail.after_path });
             detail.after_path = path;
           }
         }
       }
 
-      // --- 3. Déterminer les images à supprimer (anciennes images remplacées ou supprimées) ---
-      const currentPathsInForm = new Set<string>();
-      if (dataToSave.client_logo_path) currentPathsInForm.add(dataToSave.client_logo_path);
-      if (dataToSave.postprod_before_path) currentPathsInForm.add(dataToSave.postprod_before_path);
-      if (dataToSave.postprod_after_path) currentPathsInForm.add(dataToSave.postprod_after_path);
-      if (dataToSave.description_postprod) {
-        dataToSave.description_postprod.forEach(d => {
-          if (d.before_path) currentPathsInForm.add(d.before_path);
-          if (d.after_path) currentPathsInForm.add(d.after_path);
-        });
-      }
-
-      // Filtrer les chemins initiaux qui ne sont plus présents dans le formulaire final
-      const pathsToDeleteFromStorage: { bucket: string; path: string }[] = Array.from(initialImagePaths).filter(
-        img => !currentPathsInForm.has(img.path)
-      );
-
-      // Ajouter les images marquées pour suppression par un nouvel upload
-      imagesToDelete.forEach(img => pathsToDeleteFromStorage.push(img));
-
       // --- 4. Appeler la Server Action ---
-      const result = await saveProjectAction(dataToSave, project ? project.id : null, pathsToDeleteFromStorage);
+      const result = await saveProjectAction(dataToSave, project ? project.id : null);
 
       setIsSubmitting(false);
       if (result.success) {
@@ -371,7 +330,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
     } finally {
       setIsSubmitting(false);
     }
-  }, [formData, selectedCats, project, onSuccess, initialImagePaths, clientLogoFile, postprodBeforeFile, postprodAfterFile, postprodDetailFiles]);
+  }, [formData, selectedCats, project, onSuccess, clientLogoFile, postprodBeforeFile, postprodAfterFile, postprodDetailFiles]);
 
   if (!isOpen) return null;
 

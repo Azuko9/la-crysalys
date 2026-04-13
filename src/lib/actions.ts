@@ -122,8 +122,7 @@ const deleteImagesFromStorage = async (images: { bucket: string; path: string }[
 // --- ACTIONS PROJETS ---
 export async function saveProjectAction(
   payload: Omit<Project, 'id' | 'created_at'>,
-  projectId: string | null,
-  imagesToDelete: { bucket: string; path: string }[]
+  projectId: string | null
 ) {
   // SÉCURITÉ : Vérifier la session utilisateur et les droits admin
   const authResult = await authenticateAdmin();
@@ -161,14 +160,40 @@ export async function saveProjectAction(
 
   const dataToSave = { ...validatedPayload.data };
 
+  // Fonction utilitaire pour extraire tous les chemins d'images d'un projet
+  const getPathsFromProject = (proj: any) => {
+    const paths = new Set<string>();
+    if (proj.client_logo_path) paths.add(proj.client_logo_path);
+    if (proj.postprod_before_path) paths.add(proj.postprod_before_path);
+    if (proj.postprod_after_path) paths.add(proj.postprod_after_path);
+    if (proj.description_postprod && Array.isArray(proj.description_postprod)) {
+      proj.description_postprod.forEach((d: any) => {
+        if (d.before_path) paths.add(d.before_path);
+        if (d.after_path) paths.add(d.after_path);
+      });
+    }
+    return paths;
+  };
+
   try {
     let result;
+    let serverComputedImagesToDelete: { bucket: string; path: string }[] = [];
+    
     if (projectId) {
+      // SÉCURITÉ (IDOR) : Le serveur déduit lui-même les anciennes images à supprimer
+      const { data: oldProject } = await supabaseAdmin.from('portfolio_items').select('*').eq('id', projectId).single();
+      
       result = await supabaseAdmin.from('portfolio_items').update(dataToSave).eq('id', projectId).select().single();
       
-      // On supprime les anciennes images si la mise à jour a réussi
-      if (!result.error && imagesToDelete.length > 0) {
-        await deleteImagesFromStorage(imagesToDelete);
+      if (oldProject && !result.error) {
+         const oldPaths = getPathsFromProject(oldProject);
+         const newPaths = getPathsFromProject(dataToSave);
+         for (const path of oldPaths) {
+           if (!newPaths.has(path)) serverComputedImagesToDelete.push({ bucket: 'portfolio_images', path });
+         }
+      }
+      if (serverComputedImagesToDelete.length > 0) {
+        await deleteImagesFromStorage(serverComputedImagesToDelete);
       }
     } else {
       result = await supabaseAdmin.from('portfolio_items').insert(dataToSave).select().single();
@@ -195,7 +220,7 @@ export async function saveProjectAction(
   }
 }
 
-export async function deleteProjectAction(projectId: string, imagesToDelete: { bucket: string; path: string }[]) {
+export async function deleteProjectAction(projectId: string) {
   try {
     // SÉCURITÉ : Vérifier la session utilisateur et les droits admin
     const authResult = await authenticateAdmin();
@@ -204,15 +229,25 @@ export async function deleteProjectAction(projectId: string, imagesToDelete: { b
     }
     if (!projectId) throw new Error('ID de projet manquant.');
 
-    // Supprimer les images associées au projet
-    if (imagesToDelete.length > 0) {
-      await deleteImagesFromStorage(imagesToDelete);
-    }
+    // SÉCURITÉ (IDOR) : Récupérer le projet pour isoler ses images
+    const { data: oldProject } = await supabaseAdmin.from('portfolio_items').select('*').eq('id', projectId).single();
 
     const { error: dbError } = await supabaseAdmin.from('portfolio_items').delete().eq('id', projectId);
-    if (dbError) {
-      console.error("Erreur Supabase lors de la suppression du projet:", dbError.message);
-      throw new Error("Une erreur est survenue lors de la suppression du projet.");
+    if (dbError) throw new Error("Une erreur est survenue lors de la suppression du projet.");
+
+    if (oldProject) {
+      const pathsToDelete = new Set<string>();
+      if (oldProject.client_logo_path) pathsToDelete.add(oldProject.client_logo_path);
+      if (oldProject.postprod_before_path) pathsToDelete.add(oldProject.postprod_before_path);
+      if (oldProject.postprod_after_path) pathsToDelete.add(oldProject.postprod_after_path);
+      if (oldProject.description_postprod && Array.isArray(oldProject.description_postprod)) {
+        oldProject.description_postprod.forEach((d: any) => {
+          if (d.before_path) pathsToDelete.add(d.before_path);
+          if (d.after_path) pathsToDelete.add(d.after_path);
+        });
+      }
+      const imagesToDelete = Array.from(pathsToDelete).map(path => ({ bucket: 'portfolio_images', path }));
+      if (imagesToDelete.length > 0) await deleteImagesFromStorage(imagesToDelete);
     }
 
     revalidatePath('/realisations');
@@ -411,8 +446,7 @@ export async function deleteFeatureAction(featureId: string) {
 // --- ACTIONS ÉQUIPE ---
 export async function saveTeamMemberAction(
     payload: Omit<TeamMember, 'id' | 'created_at'>, 
-    memberId: string | null,
-    imageToDelete: { bucket: string; path: string } | null
+    memberId: string | null
 ) {
     const TeamMemberSchema = z.object({
       name: z.string().trim().min(1, "Le nom du membre est requis."),
@@ -439,12 +473,16 @@ export async function saveTeamMemberAction(
     }
 
     try {
+        // On mémorise l'ancien membre pour voir si la photo change
+        const { data: oldMember } = memberId ? await supabaseAdmin.from('team_members').select('photo_path').eq('id', memberId).single() : { data: null };
+
         const { data, error } = memberId 
             ? await supabaseAdmin.from('team_members').update(validatedPayload.data).eq('id', memberId).select().single()
             : await supabaseAdmin.from('team_members').insert(validatedPayload.data).select().single();
         
-        if (!error && imageToDelete) {
-            await deleteImagesFromStorage([imageToDelete]);
+        // SÉCURITÉ (IDOR) : Si la photo a été remplacée ou supprimée, on l'efface du stockage
+        if (!error && oldMember?.photo_path && oldMember.photo_path !== payload.photo_path) {
+            await deleteImagesFromStorage([{ bucket: 'team_images', path: oldMember.photo_path }]);
         }
         if (error) {
           console.error("Erreur Supabase lors de la sauvegarde du membre de l'équipe:", error.message);
