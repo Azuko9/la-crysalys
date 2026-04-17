@@ -65,9 +65,9 @@ export default async function RootLayout({
   const theme = {
     bg_color: sanitizeCSS(settings?.find(s => s.key === "bg_color")?.value, "#000000"),
     primary_color: sanitizeCSS(settings?.find(s => s.key === "primary_color")?.value, "#22c55e"),
-    accent_color: sanitizeCSS(settings?.find(s => s.key === "accent_color")?.value, "#3b82f6"),
     card_bg: sanitizeCSS(settings?.find(s => s.key === "card_bg")?.value, "#18181b"),
     border_radius: sanitizeCSS(settings?.find(s => s.key === "border_radius")?.value, "0px"),
+    text_color: sanitizeCSS(settings?.find(s => s.key === "text_color")?.value, "#ffffff"),
   };
 
   return (
@@ -79,9 +79,13 @@ export default async function RootLayout({
             --primary-color: ${theme.primary_color};
             --radius: ${theme.border_radius};
             --card-bg: ${theme.card_bg};
+            --text-color: ${theme.text_color};
           }
 
-          body { background-color: var(--bg-color) !important; }
+          body { 
+            background-color: var(--bg-color) !important; 
+            color: var(--text-color) !important;
+          }
 
           /* On force le changement de couleur sur tous tes blocs zinc-900/zinc-950 */
           .bg-zinc-900, .bg-zinc-900\/20, .bg-zinc-900\/40, .bg-card-dynamic {
