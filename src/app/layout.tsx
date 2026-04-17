@@ -19,6 +19,28 @@ export const metadata: Metadata = {
     template: '%s | La Crysalys',
   },
   description: 'Production audiovisuelle, expertise drone et post-production de haut niveau. Nous transformons vos idées en expériences visuelles.',
+  openGraph: {
+    title: 'La Crysalys - Production Audiovisuelle',
+    description: 'Production audiovisuelle, expertise drone et post-production de haut niveau. Nous transformons vos idées en expériences visuelles.',
+    url: 'https://la-crysalys.vercel.app',
+    siteName: 'La Crysalys',
+    images: [
+      {
+        url: '/og-image.jpg', // Assurez-vous d'ajouter une image og-image.jpg dans le dossier public
+        width: 1200,
+        height: 630,
+        alt: 'La Crysalys - Production Audiovisuelle',
+      },
+    ],
+    locale: 'fr_FR',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'La Crysalys - Production Audiovisuelle',
+    description: 'Production audiovisuelle, expertise drone et post-production de haut niveau.',
+    images: ['/og-image.jpg'],
+  },
 };
 
 export default async function RootLayout({
@@ -33,13 +55,19 @@ export default async function RootLayout({
     .from("site_settings")
     .select("key, value");
 
+  // SÉCURITÉ : Fonction de nettoyage pour prévenir les injections CSS (Stored XSS)
+  // N'autorise que les caractères alphanumériques, #, %, ., ,, (, ), et les espaces
+  const sanitizeCSS = (value: string | undefined, fallback: string) => {
+    if (!value) return fallback;
+    return /^[a-zA-Z0-9#(),.% \-]+$/.test(value) ? value : fallback;
+  };
+
   const theme = {
-    bg_color: settings?.find(s => s.key === "bg_color")?.value || "#000000",
-    primary_color: settings?.find(s => s.key === "primary_color")?.value || "#22c55e",
-    accent_color: settings?.find(s => s.key === "accent_color")?.value || "#3b82f6",
-    card_bg: settings?.find(s => s.key === "card_bg")?.value || "#18181b",
-    border_radius: settings?.find(s => s.key === "border_radius")?.value || "0px",
-   
+    bg_color: sanitizeCSS(settings?.find(s => s.key === "bg_color")?.value, "#000000"),
+    primary_color: sanitizeCSS(settings?.find(s => s.key === "primary_color")?.value, "#22c55e"),
+    accent_color: sanitizeCSS(settings?.find(s => s.key === "accent_color")?.value, "#3b82f6"),
+    card_bg: sanitizeCSS(settings?.find(s => s.key === "card_bg")?.value, "#18181b"),
+    border_radius: sanitizeCSS(settings?.find(s => s.key === "border_radius")?.value, "0px"),
   };
 
   return (

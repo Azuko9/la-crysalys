@@ -10,6 +10,17 @@ import { Wind, ArrowRight } from "lucide-react"; // Import des icônes
 export const metadata: Metadata = {
   title: 'Expertise Drone - La Crysalys',
   description: 'Découvrez notre savoir-faire en prises de vues par drone. Des services professionnels pour des images aériennes cinématographiques et percutantes.',
+  openGraph: {
+    title: 'Expertise Drone - La Crysalys',
+    description: 'Découvrez notre savoir-faire en prises de vues par drone. Des services professionnels pour des images aériennes cinématographiques et percutantes.',
+    url: 'https://la-crysalys.vercel.app/expertise',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Expertise Drone - La Crysalys',
+    description: 'Découvrez notre savoir-faire en prises de vues par drone.',
+  },
 };
 
 export default async function ExpertiseDronePage() {

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { sendContactMessageAction } from "@/lib/actions";
+import Script from "next/script";
 import { Mail, Phone, MapPin, Send, CheckCircle, AlertCircle } from "lucide-react";
 import type { ContactMessage } from "@/types";
 
@@ -107,8 +108,27 @@ export default function Contact() {
     }
   };
 
+  // --- JSON-LD LocalBusiness SEO ---
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "name": "La Crysalys",
+    "image": "https://la-crysalys.vercel.app/Logo/logoAfficheBlanc.png",
+    "telephone": "0676130827",
+    "email": "Crysalys_production@outlook.fr",
+    "url": "https://la-crysalys.vercel.app",
+    "areaServed": "Nouvelle-Aquitaine, National & International",
+    "priceRange": "$$"
+  };
+
   return (
     <main className="min-h-screen bg-background text-foreground px-8 pb-8 pt-8">
+      
+      <Script
+        id="local-business-jsonld"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       
       <div className="max-w-6xl mx-auto mb-16 pt-20">
         <h1 className="text-4xl md:text-5xl font-bold text-primary mb-4 ">

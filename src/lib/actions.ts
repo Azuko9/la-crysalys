@@ -162,14 +162,18 @@ export async function saveProjectAction(
 
   // Fonction utilitaire pour extraire tous les chemins d'images d'un projet
   const getPathsFromProject = (proj: any) => {
-    const paths = new Set<string>();
-    if (proj.client_logo_path) paths.add(proj.client_logo_path);
-    if (proj.postprod_before_path) paths.add(proj.postprod_before_path);
-    if (proj.postprod_after_path) paths.add(proj.postprod_after_path);
+    const paths: string[] = [];
+    const addPath = (p: string | null | undefined) => {
+      if (p && !paths.includes(p)) paths.push(p);
+    };
+
+    addPath(proj.client_logo_path);
+    addPath(proj.postprod_before_path);
+    addPath(proj.postprod_after_path);
     if (proj.description_postprod && Array.isArray(proj.description_postprod)) {
       proj.description_postprod.forEach((d: any) => {
-        if (d.before_path) paths.add(d.before_path);
-        if (d.after_path) paths.add(d.after_path);
+        addPath(d.before_path);
+        addPath(d.after_path);
       });
     }
     return paths;
@@ -189,7 +193,7 @@ export async function saveProjectAction(
          const oldPaths = getPathsFromProject(oldProject);
          const newPaths = getPathsFromProject(dataToSave);
          for (const path of oldPaths) {
-           if (!newPaths.has(path)) serverComputedImagesToDelete.push({ bucket: 'portfolio_images', path });
+           if (!newPaths.includes(path)) serverComputedImagesToDelete.push({ bucket: 'portfolio_images', path });
          }
       }
       if (serverComputedImagesToDelete.length > 0) {
@@ -236,17 +240,21 @@ export async function deleteProjectAction(projectId: string) {
     if (dbError) throw new Error("Une erreur est survenue lors de la suppression du projet.");
 
     if (oldProject) {
-      const pathsToDelete = new Set<string>();
-      if (oldProject.client_logo_path) pathsToDelete.add(oldProject.client_logo_path);
-      if (oldProject.postprod_before_path) pathsToDelete.add(oldProject.postprod_before_path);
-      if (oldProject.postprod_after_path) pathsToDelete.add(oldProject.postprod_after_path);
+      const pathsToDelete: string[] = [];
+      const addPath = (p: string | null | undefined) => {
+        if (p && !pathsToDelete.includes(p)) pathsToDelete.push(p);
+      };
+      
+      addPath(oldProject.client_logo_path);
+      addPath(oldProject.postprod_before_path);
+      addPath(oldProject.postprod_after_path);
       if (oldProject.description_postprod && Array.isArray(oldProject.description_postprod)) {
         oldProject.description_postprod.forEach((d: any) => {
-          if (d.before_path) pathsToDelete.add(d.before_path);
-          if (d.after_path) pathsToDelete.add(d.after_path);
+          addPath(d.before_path);
+          addPath(d.after_path);
         });
       }
-      const imagesToDelete = Array.from(pathsToDelete).map(path => ({ bucket: 'portfolio_images', path }));
+      const imagesToDelete = pathsToDelete.map(path => ({ bucket: 'portfolio_images', path }));
       if (imagesToDelete.length > 0) await deleteImagesFromStorage(imagesToDelete);
     }
 
@@ -573,6 +581,23 @@ export async function sendContactMessageAction(formData: { nom: string; email: s
     if (!validatedFields.success) {
         return { success: false, errors: validatedFields.error.flatten().fieldErrors };
     }
+
+    // --- 3. SÉCURITÉ : RATE LIMITING PERSISTANT VIA SUPABASE (Basé sur l'email) ---
+    // Prévient les abus distribués ou après un cold-start de la fonction Serverless Vercel
+    try {
+        const fifteenMinutesAgo = new Date(Date.now() - RATE_LIMIT_WINDOW).toISOString();
+        const { data: recentMessages, error: countError } = await supabaseAdmin
+            .from('messages')
+            .select('id')
+            .eq('email', validatedFields.data.email)
+            .gte('created_at', fifteenMinutesAgo);
+
+        if (!countError && recentMessages && recentMessages.length >= MAX_REQUESTS) {
+            console.warn(`Rate limit persistant dépassé pour l'email : ${validatedFields.data.email}`);
+            return { success: false, error: "Vous avez envoyé trop de messages. Veuillez patienter quelques minutes." };
+        }
+    } catch (e) {} // On ignore silencieusement si le champ created_at n'existe pas encore
+
     try {
         const cookieStore = cookies();
         const publicSupabase = createServerClient(supabaseUrl!, supabaseAnonKey!, { // Assertion non-nulle
@@ -614,6 +639,19 @@ export async function saveSiteSettingsAction(updates: { key: string; value: stri
     const authResult = await authenticateAdmin();
     if (!authResult.success) {
       return authResult;
+    }
+
+    // SÉCURITÉ : Validation stricte côté serveur pour empêcher la soumission de code CSS malveillant
+    const SettingSchema = z.object({
+      key: z.string().min(1),
+      value: z.string().regex(/^[a-zA-Z0-9#(),.% \-]+$/, "Format de valeur invalide pour prévenir les injections.")
+    });
+
+    for (const update of updates) {
+       const parsed = SettingSchema.safeParse(update);
+       if (!parsed.success) {
+           throw new Error(`Valeur potentiellement dangereuse bloquée pour le paramètre: ${update.key}`);
+       }
     }
 
     const { error } = await supabaseAdmin.from("site_settings").upsert(updates, { onConflict: "key" });

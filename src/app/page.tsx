@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import type { Metadata } from 'next';
 
@@ -12,45 +13,34 @@ export default function Home() {
     // 1. CONTENEUR PRINCIPAL : relative, h-screen pour prendre tout l'écran, overflow-hidden
     <main className="relative min-h-screen flex items-center justify-center overflow-hidden">
       
-      {/* --- 2. LA VIDÉO DE FOND --- */}
-      <video
-        aria-hidden="true"
-        autoPlay
-        loop
-        poster="/background-poster.jpg" // AMÉLIORATION : Ajoute une image de chargement. Créez une image nommée 'background-poster.jpg' dans votre dossier /public.
-        muted
-        playsInline // Très important pour que ça marche sur iPhone/Safari
-        className="absolute top-0 left-0 w-full h-full object-cover -z-20"
-      >
-        {/* Le chemin commence par / car le fichier est dans le dossier 'public' */}
-        <source src="/votre-video-background.mp4" type="video/mp4" />
-        Votre navigateur ne supporte pas la lecture de vidéos.
-      </video>
+      {/* --- 2. L'IMAGE DE FOND --- */}
+      <Image
+        src="/DSC_7249_.jpg"
+        alt="La Crysalys - Production Audiovisuelle"
+        fill
+        priority
+        className="object-cover object-[50%_-100px] -z-20"
+      />
 
       {/* --- 3. L'OVERLAY (COUCHÉ NOIRE SEMI-TRANSPARENTE) --- */}
       {/* Ajuste bg-background/50 (50% d'opacité) selon tes besoins : /30, /70... */}
       <div className="absolute top-0 left-0 w-full h-full bg-background/50 -z-10"></div>
 
       {/* --- 4. TON CONTENU (Texte, boutons...) --- */}
-      {/* Important : relative et z-10 pour passer devant la vidéo et l'overlay */}
+      {/* Important : relative et z-10 pour passer devant la photo et l'overlay */}
       <div className="relative z-10 max-w-5xl h-screen flex flex-col justify-between mx-auto text-center p-10 text-foreground">
         
 
         
 <h1 className="text-5xl md:text-7xl font-extrabold mb-8 leading-tight tracking-tighter">
-  Capturez l'instant.<br />
-  <span 
-    className="text-primary text-transparent bg-clip-text bg-gradient-to-r" // OPTIMISATION ACCESSIBILITÉ: Ajout d'une couleur de base au cas où le dégradé ne s'afficherait pas.
-    style={{ 
-      backgroundImage: `linear-gradient(to right, var(--primary-color), #ffffffdd)` 
-    }}
-  >
+  Capturez l&apos;instant.<br />
+  <span className="text-primary">
     Sublimez votre histoire.
   </span>
 </h1>
 
         <div>
-          <p className="text-xl text-foreground/80 mb-12 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-xl text-foreground mb-12 max-w-3xl mx-auto leading-relaxed [text-shadow:_0_0_15px_rgb(255_255_255_/_40%)]">
           Nous transformons vos idées en expériences visuelles cinématographiques. Expertise drone, publicité et contenu corporate de haut vol.
         </p>
 

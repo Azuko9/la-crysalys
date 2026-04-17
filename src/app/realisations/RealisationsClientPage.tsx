@@ -72,7 +72,7 @@ export default function RealisationsClientPage({ initialProjects, initialCategor
     <>
       <div className="max-w-7xl mx-auto mb-12 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div>
-          <h1 className="text-5xl md:text-6xl font-black italic uppercase tracking-tighter text-outline-black">Portfolio</h1>
+          <h1 className="text-5xl md:text-6xl font-black italic uppercase tracking-tighter">Portfolio</h1>
           <p className="text-primary font-bold uppercase text-xs tracking-widest mt-2">Réalisations & Productions</p>
         </div>
         {user && (

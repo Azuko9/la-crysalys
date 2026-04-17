@@ -50,7 +50,7 @@ export default function TeamClientView({ initialMembers, user }: TeamClientViewP
                 <div className="h-[1px] w-12 bg-primary"></div>
                 <span className="text-primary font-black uppercase text-[10px] tracking-[0.4em]">Nos Talents</span>
               </div>
-              <h1 className="text-7xl md:text-[10rem] font-black italic uppercase tracking-tighter leading-[0.75] mb-12 text-outline-black">
+              <h1 className="text-7xl md:text-[10rem] font-black italic uppercase tracking-tighter leading-[0.75] mb-12">
                 Creative<br/><span className="text-primary">Minds.</span>
               </h1>
               <div className="bg-card border border-zinc-800 p-6 rounded-dynamic inline-flex items-center gap-4">

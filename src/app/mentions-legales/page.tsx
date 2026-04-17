@@ -4,6 +4,11 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Mentions Légales - La Crysalys',
   description: 'Consultez les mentions légales de La Crysalys, incluant les informations sur l\'éditeur du site, l\'hébergement et la propriété intellectuelle.',
+  openGraph: {
+    title: 'Mentions Légales - La Crysalys',
+    description: 'Consultez les mentions légales de La Crysalys, incluant les informations sur l\'éditeur du site, l\'hébergement et la propriété intellectuelle.',
+    url: 'https://la-crysalys.vercel.app/mentions-legales',
+  },
 };
 
 export default function MentionsLegales() {
