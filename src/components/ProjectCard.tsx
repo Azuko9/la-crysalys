@@ -15,9 +15,6 @@ interface ProjectCardProps {
   isVertical?: boolean;
 }
 
-// Définir le nom du bucket pour les images de projets
-const PROJECT_BUCKET_NAME = 'portfolio_images';
-
 export function ProjectCard({ projet, user, onEdit, onDeleteSuccess, isVertical = false }: ProjectCardProps) {
   const videoId = getYouTubeID(projet.youtube_url);
   
@@ -32,6 +29,7 @@ export function ProjectCard({ projet, user, onEdit, onDeleteSuccess, isVertical 
               src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`}
               alt={projet.title}
               fill
+              priority
               className="object-cover opacity-90 group-hover:opacity-0 transition-opacity duration-300"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />)}

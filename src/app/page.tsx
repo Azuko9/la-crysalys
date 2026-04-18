@@ -12,14 +12,14 @@ export default function Home() {
   return (
     // 1. CONTENEUR PRINCIPAL : relative, h-screen pour prendre tout l'écran, overflow-hidden
     <main className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      
+
       {/* --- 2. L'IMAGE DE FOND --- */}
       <Image
         src="/DSC_7249_.jpg"
         alt="La Crysalys - Production Audiovisuelle"
         fill
         priority
-        className="object-cover object-[50%_-100px] -z-20"
+        className="object-cover object-center md:object-[50%_-100px] -z-20"
       />
 
       {/* --- 3. L'OVERLAY (COUCHÉ NOIRE SEMI-TRANSPARENTE) --- */}
@@ -28,38 +28,38 @@ export default function Home() {
 
       {/* --- 4. TON CONTENU (Texte, boutons...) --- */}
       {/* Important : relative et z-10 pour passer devant la photo et l'overlay */}
-      <div className="relative z-10 max-w-5xl h-screen flex flex-col justify-between mx-auto text-center p-10 text-foreground">
-        
+      <div className="relative z-10 max-w-5xl h-screen flex flex-col justify-between mx-auto text-center p-10 text-foreground [text-shadow:0_2px_10px_rgba(0,0,0,0.8)]">
 
-        
-<h1 className="text-5xl md:text-7xl font-extrabold mb-8 leading-tight tracking-tighter">
-  Capturez l&apos;instant.<br />
-  <span className="text-primary">
-    Sublimez votre histoire.
-  </span>
-</h1>
+
+
+        <h1 className=" text-3xl md:text-7xl font-extrabold mb-8 leading-tight tracking-tighter">
+          Capturez l&apos;instant.<br />
+          <span className="text-primary">
+            Sublimez votre histoire.
+          </span>
+        </h1>
 
         <div>
-          <p className="text-xl text-foreground mb-12 max-w-3xl mx-auto leading-relaxed [text-shadow:_0_0_15px_rgb(255_255_255_/_40%)]">
-          Nous transformons vos idées en expériences visuelles cinématographiques. Expertise drone, publicité et contenu corporate de haut vol.
-        </p>
+          <p className="text-xl text-foreground mb-12 max-w-3xl mx-auto leading-relaxed">
+            Nous transformons vos idées en expériences visuelles cinématographiques. Expertise drone, publicité et contenu corporate de haut vol.
+          </p>
 
-        <div className="flex flex-col sm:flex-row justify-center gap-6">
-          <Link 
-            href="/realisations" 
-            className="bg-primary hover:bg-white/50 text-foreground font-bold py-4 px-8 rounded-dynamic flex items-center justify-center gap-3 transition transform hover:scale-105 text-lg shadow-lg"
-          >
-            Voir nos réalisations <ArrowRight />
-          </Link>
-          <Link 
-            href="/contact" 
-            className="bg-transparent hover:bg-white/10 text-foreground border-2 border-white font-bold py-4 px-8 rounded-dynamic transition transform hover:scale-105 text-lg flex items-center justify-center"
-          >
-            Demander un devis
-          </Link>
+          <div className="flex flex-col sm:flex-row justify-center gap-6">
+            <Link
+              href="/realisations"
+              className="bg-primary hover:bg-white/50 text-foreground font-bold py-4 px-8 rounded-dynamic flex items-center justify-center gap-3 transition transform hover:scale-105 text-lg shadow-lg"
+            >
+              Voir nos réalisations <ArrowRight />
+            </Link>
+            <Link
+              href="/contact"
+              className="bg-transparent hover:bg-white/10 text-foreground border-2 border-white font-bold py-4 px-8 rounded-dynamic transition transform hover:scale-105 text-lg flex items-center justify-center"
+            >
+              Demander un devis
+            </Link>
+          </div>
         </div>
-        </div>
-        
+
 
       </div>
 

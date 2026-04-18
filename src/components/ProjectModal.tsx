@@ -21,8 +21,6 @@ interface ProjectModalProps {
   onSuccess: () => void;
 }
 
-const PROJECT_BUCKET_NAME = 'portfolio_images';
-
 // Type pour les données du formulaire, basé sur Project mais avec des valeurs par défaut
 // Schéma Zod pour la validation côté client (doit correspondre à celui de actions.ts)
 const PostProdDetailSchema = z.object({
@@ -174,7 +172,6 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
       setPostprodBeforeFile(null);
       setPostprodAfterFile(null);
       setPostprodDetailFiles([]);
-      setInitialImagePaths(new Set());
 
       if (project) {
         // Mode édition : on charge les données du projet
@@ -260,19 +257,19 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
     try {
       // --- 1. Upload des images principales et collecte des chemins ---
       if (clientLogoFile) {
-        const path = await uploadFileAndGetPath(clientLogoFile, PROJECT_BUCKET_NAME, 'projects/logos/');
+        const path = await uploadFileAndGetPath(clientLogoFile, 'logos', 'projects/logos/');
         if (!path) throw new Error("Échec de l'upload du logo client.");
         dataToSave.client_logo_path = path;
       }
 
       if (postprodBeforeFile) {
-        const path = await uploadFileAndGetPath(postprodBeforeFile, PROJECT_BUCKET_NAME, 'projects/postprod/');
+        const path = await uploadFileAndGetPath(postprodBeforeFile, 'postprod-images', 'projects/postprod/');
         if (!path) throw new Error("Échec de l'upload de l'image 'avant'.");
         dataToSave.postprod_before_path = path;
       }
 
       if (postprodAfterFile) {
-        const path = await uploadFileAndGetPath(postprodAfterFile, PROJECT_BUCKET_NAME, 'projects/postprod/');
+        const path = await uploadFileAndGetPath(postprodAfterFile, 'postprod-images', 'projects/postprod/');
         if (!path) throw new Error("Échec de l'upload de l'image 'après'.");
         dataToSave.postprod_after_path = path;
       }
@@ -285,12 +282,12 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
           const afterFile = postprodDetailFiles.find(item => item.index === i && item.type === 'after')?.file;
 
           if (beforeFile) {
-            const path = await uploadFileAndGetPath(beforeFile, PROJECT_BUCKET_NAME, 'projects/postprod_details/');
+            const path = await uploadFileAndGetPath(beforeFile, 'postprod-images', 'projects/postprod_details/');
             if (!path) throw new Error(`Échec de l'upload de l'image 'avant' pour le détail ${i + 1}.`);
             detail.before_path = path;
           }
           if (afterFile) {
-            const path = await uploadFileAndGetPath(afterFile, PROJECT_BUCKET_NAME, 'projects/postprod_details/');
+            const path = await uploadFileAndGetPath(afterFile, 'postprod-images', 'projects/postprod_details/');
             if (!path) throw new Error(`Échec de l'upload de l'image 'après' pour le détail ${i + 1}.`);
             detail.after_path = path;
           }
@@ -443,7 +440,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
                   label="Image Principale AVANT Post-Prod"
                   currentPath={formData.postprod_before_path}
                   onPathChange={(path) => setFormData(prev => ({ ...prev, postprod_before_path: path }))}
-                  storageBucket={PROJECT_BUCKET_NAME}
+                  storageBucket="postprod-images"
                   colorClass="text-purple-400"
                   folderPath="projects/postprod/"
                 />
@@ -451,7 +448,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
                   label="Image Principale APRÈS Post-Prod"
                   currentPath={formData.postprod_after_path}
                   onPathChange={(path) => setFormData(prev => ({ ...prev, postprod_after_path: path }))}
-                  storageBucket={PROJECT_BUCKET_NAME}
+                  storageBucket="postprod-images"
                   colorClass="text-purple-400"
                   folderPath="projects/postprod/"
                 />
@@ -464,7 +461,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
                 label="Logo Client"
                 currentPath={formData.client_logo_path}
                 onPathChange={(path) => setFormData(prev => ({ ...prev, client_logo_path: path }))}
-                storageBucket={PROJECT_BUCKET_NAME}
+                storageBucket="logos"
                 colorClass="text-foreground/70"
                 folderPath="projects/logos/"
               />
@@ -493,7 +490,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
                     <ImageUploader
                       label="Avant" currentPath={item.before_path || null}
                       onPathChange={(path) => handlePostprodChange(index, 'before_path', path)}
-                      storageBucket={PROJECT_BUCKET_NAME}
+                      storageBucket="postprod-images"
                       folderPath="projects/postprod_details/"
                       disabled={isPostProdDetailsDisabled}
                       colorClass="text-purple-400"
@@ -501,7 +498,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
                     <ImageUploader
                       label="Après" currentPath={item.after_path || null}
                       onPathChange={(path) => handlePostprodChange(index, 'after_path', path)}
-                      storageBucket={PROJECT_BUCKET_NAME}
+                      storageBucket="postprod-images"
                       folderPath="projects/postprod_details/"
                       disabled={isPostProdDetailsDisabled}
                       colorClass="text-purple-400"

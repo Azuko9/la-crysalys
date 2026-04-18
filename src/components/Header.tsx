@@ -94,7 +94,7 @@ export default function Header() {
       <div className={`md:hidden absolute top-20 left-0 w-full bg-card/95 backdrop-blur-xl border-b border-zinc-800 transition-all duration-300 ease-in-out ${
         isOpen ? "opacity-100 visible h-auto pb-8" : "opacity-0 invisible h-0"
       }`}>
-        <nav className="flex flex-col px-6 pt-4 space-y-4">
+        <nav className="flex flex-col px-6 p-4 space-y-4 bg-card-dynamic rounded-dynamic">
           {NAV_LINKS.map((link) => (
             <Link
               key={link.name}
@@ -110,7 +110,7 @@ export default function Header() {
           {isLoggedIn && (
             <Link 
               href="/admin" 
-              className="mt-4 p-4 border border-primary bg-primary/10 text-primary rounded-dynamic text-center font-black uppercase italic"
+              className="m-2 p-2 border border-primary bg-primary/10 text-primary rounded-dynamic text-center font-black uppercase italic"
             >
                 Espace Admin
             </Link>

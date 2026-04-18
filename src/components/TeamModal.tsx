@@ -96,7 +96,7 @@ const TeamModal: React.FC<TeamModalProps> = ({ isOpen, member, onClose, onSucces
     // 1. Upload de la nouvelle image si un fichier est sélectionné
     if (photoFile) {
       setIsUploading(true);
-      const path = await uploadFileAndGetPath(photoFile, 'team_images', 'team_members/'); // Assurez-vous que 'team_images' est le bon bucket
+      const path = await uploadFileAndGetPath(photoFile, 'team-photos', 'team_members/');
       setIsUploading(false);
       if (!path) {
         setError("Échec de l'upload de la photo.");
@@ -124,9 +124,11 @@ const TeamModal: React.FC<TeamModalProps> = ({ isOpen, member, onClose, onSucces
   const isPartner = formData.member_type === 'partner';
 
   // Générer l'URL publique pour l'affichage de la photo actuelle
-  const currentPhotoPublicUrl = formData.photo_path
-    ? supabase.storage.from('team_images').getPublicUrl(formData.photo_path).data.publicUrl
-    : "";
+  const currentPhotoPublicUrl = photoFile 
+    ? URL.createObjectURL(photoFile) 
+    : formData.photo_path
+      ? supabase.storage.from('team-photos').getPublicUrl(formData.photo_path).data.publicUrl
+      : "";
 
   return (
     <div className="fixed inset-0 z-[100] flex items-start justify-center bg-background/95 p-4 backdrop-blur-xl animate-in fade-in duration-300 overflow-y-auto">

@@ -1,6 +1,6 @@
 "use client"; // Indique que ce fichier est un module client
 
-import { supabase } from '@/lib/supabaseClient'; // Votre client Supabase pour le navigateur
+import { createBrowserClient } from '@supabase/ssr';
 
 /**
  * Uploade un fichier vers un bucket Supabase Storage et retourne son chemin.
@@ -15,11 +15,17 @@ export async function uploadFileAndGetPath(file: File, bucketName: string, folde
     return null;
   }
 
+  // Utilisation de createBrowserClient pour garantir que les cookies de session (auth) sont envoyés
+  const supabaseBrowser = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
   const fileExt = file.name.split('.').pop();
   const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
   const filePath = `${folderPath}${fileName}`; // Chemin complet dans le bucket
 
-  const { data, error } = await supabase.storage
+  const { data, error } = await supabaseBrowser.storage
     .from(bucketName)
     .upload(filePath, file, {
       cacheControl: '3600',

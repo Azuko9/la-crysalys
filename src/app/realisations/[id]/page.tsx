@@ -8,6 +8,8 @@ import { ImageCompareSlider } from "@/components/ImageCompareSlider";
 import Link from "next/link";
 import { ArrowLeft, User, Globe } from "lucide-react";
 
+
+
 type Props = {
   params: { id: string }
 }
@@ -50,6 +52,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 // --- 2. COMPOSANT SERVEUR (Performances Maximales) ---
 export default async function RealisationDetailPage({ params }: { params: { id: string } }) {
+
+
   const supabase = createSupabaseServerClient();
 
   const { data: projectData, error } = await supabase.from('portfolio_items').select('*').eq('id', params.id).single();
@@ -86,7 +90,7 @@ export default async function RealisationDetailPage({ params }: { params: { id: 
     }
   };
 
-  const getImageUrl = (path: string | null) => path ? supabase.storage.from('portfolio_images').getPublicUrl(path).data.publicUrl : '';
+  const getImageUrl = (path: string | null) => path ? supabase.storage.from('postprod-images').getPublicUrl(path).data.publicUrl : '';
 
   return (
     <main className="min-h-screen bg-background text-foreground pt-32 pb-20 px-4 md:px-8">
@@ -137,7 +141,9 @@ export default async function RealisationDetailPage({ params }: { params: { id: 
             {projectData.postprod_before_path && projectData.postprod_after_path && (
               <div className="mb-12">
                 <h3 className="text-xl font-bold mb-6">Aperçu Global</h3>
-                <ImageCompareSlider beforeImage={getImageUrl(projectData.postprod_before_path)} afterImage={getImageUrl(projectData.postprod_after_path)} />
+                <div className="max-w-xl mx-auto rounded-dynamic overflow-hidden shadow-xl">
+                  <ImageCompareSlider beforeImage={getImageUrl(projectData.postprod_before_path)} afterImage={getImageUrl(projectData.postprod_after_path)} />
+                </div>
               </div>
             )}
 
@@ -145,7 +151,9 @@ export default async function RealisationDetailPage({ params }: { params: { id: 
               <div key={index} className="mb-12">
                 <h3 className="text-lg font-bold mb-4 text-purple-300">Étape {index + 1} : {detail.detail}</h3>
                 {detail.before_path && detail.after_path && (
-                  <ImageCompareSlider beforeImage={getImageUrl(detail.before_path)} afterImage={getImageUrl(detail.after_path)} />
+                  <div className="max-w-xl mx-auto rounded-dynamic overflow-hidden shadow-xl">
+                    <ImageCompareSlider beforeImage={getImageUrl(detail.before_path)} afterImage={getImageUrl(detail.after_path)} />
+                  </div>
                 )}
               </div>
             ))}

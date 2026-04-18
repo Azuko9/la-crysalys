@@ -193,7 +193,10 @@ export async function saveProjectAction(
          const oldPaths = getPathsFromProject(oldProject);
          const newPaths = getPathsFromProject(dataToSave);
          for (const path of oldPaths) {
-           if (!newPaths.includes(path)) serverComputedImagesToDelete.push({ bucket: 'portfolio_images', path });
+           if (!newPaths.includes(path)) {
+             const bucket = path.includes('logos') ? 'logos' : 'postprod-images';
+             serverComputedImagesToDelete.push({ bucket, path });
+           }
          }
       }
       if (serverComputedImagesToDelete.length > 0) {
@@ -254,7 +257,10 @@ export async function deleteProjectAction(projectId: string) {
           addPath(d.after_path);
         });
       }
-      const imagesToDelete = pathsToDelete.map(path => ({ bucket: 'portfolio_images', path }));
+      const imagesToDelete = pathsToDelete.map(path => {
+        const bucket = path.includes('logos') ? 'logos' : 'postprod-images';
+        return { bucket, path };
+      });
       if (imagesToDelete.length > 0) await deleteImagesFromStorage(imagesToDelete);
     }
 
@@ -490,7 +496,7 @@ export async function saveTeamMemberAction(
         
         // SÉCURITÉ (IDOR) : Si la photo a été remplacée ou supprimée, on l'efface du stockage
         if (!error && oldMember?.photo_path && oldMember.photo_path !== payload.photo_path) {
-            await deleteImagesFromStorage([{ bucket: 'team_images', path: oldMember.photo_path }]);
+            await deleteImagesFromStorage([{ bucket: 'team-photos', path: oldMember.photo_path }]);
         }
         if (error) {
           console.error("Erreur Supabase lors de la sauvegarde du membre de l'équipe:", error.message);
