@@ -313,16 +313,15 @@ export async function saveCategoryAction(
       const { data: projectsToUpdate, error: fetchProjectsError } = await supabaseAdmin
         .from('portfolio_items')
         .select('id, category')
-        .like('category', `%${oldName}%`);
+        .contains('category', [oldName]);
 
       if (fetchProjectsError) { // Log détaillé, message générique
         console.warn(`Avertissement: La catégorie a été renommée, mais une erreur est survenue lors de la recherche des projets à mettre à jour: ${fetchProjectsError.message}`);
       } else if (projectsToUpdate && projectsToUpdate.length > 0) {
         const updates = projectsToUpdate
-          .filter(p => p.category?.split(',').map((t: string) => t.trim()).includes(oldName))
           .map(project => {
-            const newTags = project.category.split(',').map((t: string) => t.trim() === oldName ? newName : t.trim());
-            return supabaseAdmin.from('portfolio_items').update({ category: newTags.join(', ') }).eq('id', project.id);
+            const newTags = (project.category as string[] || []).map((t: string) => t === oldName ? newName : t);
+            return supabaseAdmin.from('portfolio_items').update({ category: newTags }).eq('id', project.id);
           });
         await Promise.all(updates);
       }
@@ -353,22 +352,16 @@ export async function deleteCategoryAction(categoryId: string, categoryName: str
     if (!categoryId) {
       return { success: false, error: 'ID de catégorie manquant.' };
     }
-    // Étape 1: Récupérer les projets qui pourraient utiliser cette catégorie via une recherche approximative.
-    const { data: potentialProjects, error: checkError } = await supabaseAdmin
+    // Étape 1: Récupérer les projets qui utilisent cette catégorie via une recherche stricte.
+    const { data: projectsUsingCategory, error: checkError } = await supabaseAdmin
       .from('portfolio_items')
       .select('id, category')
-      .like('category', `%${categoryName}%`);
+      .contains('category', [categoryName]);
 
     if (checkError) { // Log détaillé, message générique
       console.error("Erreur Supabase lors de la vérification des projets liés à la catégorie:", checkError.message);
       throw new Error("Une erreur est survenue lors de la vérification des projets liés.");
     }
-
-    // Étape 2: Filtrer avec précision pour trouver les projets qui utilisent réellement le tag.
-    // Cela évite les faux positifs (ex: supprimer "Prod" alors qu'un projet a "Post-Prod").
-    const projectsUsingCategory = potentialProjects?.filter(p => 
-      p.category?.split(',').map((t: string) => t.trim()).includes(categoryName)
-    );
 
     if (projectsUsingCategory && projectsUsingCategory.length > 0) {
       return { success: false, error: `Action impossible : ${projectsUsingCategory.length} projet(s) sont encore liés à la catégorie "${categoryName}".` }; // Message spécifique pour l'utilisateur

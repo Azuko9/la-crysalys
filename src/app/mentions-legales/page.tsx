@@ -9,6 +9,9 @@ export const metadata: Metadata = {
     description: 'Consultez les mentions légales de La Crysalys, incluant les informations sur l\'éditeur du site, l\'hébergement et la propriété intellectuelle.',
     url: 'https://la-crysalys.vercel.app/mentions-legales',
   },
+  alternates: {
+    canonical: '/mentions-legales',
+  },
 };
 
 export default function MentionsLegales() {

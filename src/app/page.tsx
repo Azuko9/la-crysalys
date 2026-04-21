@@ -6,13 +6,33 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'La Crysalys - Production Audiovisuelle & Création de Contenu Drone',
   description: 'La Crysalys transforme vos idées en expériences visuelles cinématographiques. Spécialistes en production vidéo, post-production et prises de vues par drone.',
+  alternates: {
+    canonical: '/',
+  },
 };
 
 export default function Home() {
+  // Définition des données structurées de ton agence pour Google (JSON-LD)
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'VideoGallery',
+    name: 'La Crysalys',
+    url: 'https://la-crysalys.vercel.app/',
+    logo: 'https://la-crysalys.vercel.app/Logo/logo_v_blanc.png',
+    description: 'Production audiovisuelle, expertise drone et post-production de haut niveau.',
+    telephone: '+33676130827',
+    address: {
+      '@type': 'PostalAddress',
+      addressCountry: 'FR',
+    }
+  };
+
   return (
     // 1. CONTENEUR PRINCIPAL : relative, h-screen pour prendre tout l'écran, overflow-hidden
     <main className="relative min-h-screen flex items-center justify-center overflow-hidden">
-
+      {/* INJECTION DU JSON-LD POUR LE SEO (Invisible pour les utilisateurs) */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      
       {/* --- 2. L'IMAGE DE FOND --- */}
       <Image
         src="/DSC_7249_.jpg"

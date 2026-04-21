@@ -1,17 +1,13 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React from "react";
 import {
   AlignLeft, Calendar, Globe, Layers, Loader2, Trash2, UploadCloud, User, Wind, XCircle, Save
 } from "lucide-react";
-import { z } from 'zod'; // Import de Zod pour la validation côté client
 import toast from 'react-hot-toast';
-
-import { saveProjectAction, rollbackUploadsAction } from "@/lib/actions";
-import { ProjectSchema } from "@/lib/schemas";
 import { supabase } from "@/lib/supabaseClient";
 import type { Project, Category, PostProdDetail } from "@/types";
-import { uploadFileAndGetPath } from "@/lib/clientUploadHelpers"; // Import de la fonction d'upload
+import { useProjectForm } from "@/hooks/useProjectForm";
 
 
 
@@ -22,24 +18,6 @@ interface ProjectModalProps {
   onClose: () => void;
   onSuccess: () => void;
 }
-
-type ProjectFormDataType = Omit<Project, 'id' | 'created_at'>;
-
-const emptyFormData: ProjectFormDataType = {
-  title: "",
-  youtube_url: "",
-  description: null,
-  description_drone: null,
-  postprod_main_description: null,
-  description_postprod: [],
-  client_name: null,
-  client_website: null,
-  project_date: new Date().toISOString().split('T')[0],
-  client_logo_path: null,
-  postprod_before_path: null,
-  postprod_after_path: null,
-  category: "",
-};
 
 // --- SOUS-COMPOSANT POUR L'UPLOAD D'IMAGE ---
 interface ImageUploaderProps {
@@ -105,243 +83,13 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ label, currentPath, curre
   );
 };
 
-const getFinalCategories = (
-  selectedCats: string[],
-  formData: ProjectFormDataType
-): string[] => {
-  const finalLabels = new Set(selectedCats);
-
-  if (formData.youtube_url.includes('/shorts/')) {
-    finalLabels.add('Short');
-  }
-  if (formData.description_drone && formData.description_drone.trim().length > 0) {
-    finalLabels.add('Drone');
-  }
-  if (formData.postprod_main_description && formData.postprod_main_description.trim().length > 0) {
-    finalLabels.add('Post-Prod');
-  }
-  return Array.from(finalLabels);
-};
-
 const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories, onClose, onSuccess }) => {
-  const [selectedCats, setSelectedCats] = useState<string[]>([]);
-  const [serverError, setServerError] = useState<string | null>(null);
-  const [formErrors, setFormErrors] = useState<z.ZodIssue[]>([]); // Pour les erreurs de validation Zod côté client
-
-
-  const [formData, setFormData] = useState<ProjectFormDataType>(emptyFormData);
-
-  // États pour les fichiers à uploader
-  const [clientLogoFile, setClientLogoFile] = useState<File | null>(null);
-  const [postprodBeforeFile, setPostprodBeforeFile] = useState<File | null>(null);
-  const [postprodAfterFile, setPostprodAfterFile] = useState<File | null>(null);
-  // Pour les images des détails de post-production, on garde une trace des fichiers par index et type
-  const [postprodDetailFiles, setPostprodDetailFiles] = useState<Array<{ index: number; type: 'before' | 'after'; file: File | null }>>([]);
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Logique de verrouillage de la section "étapes individuelles"
-  const isPostProdDetailsDisabled = !formData.postprod_main_description?.trim();
-
-  useEffect(() => {
-    if (isOpen) {
-      setServerError(null); // Réinitialise l'erreur serveur
-      setFormErrors([]);
-      setClientLogoFile(null);
-      setPostprodBeforeFile(null);
-      setPostprodAfterFile(null);
-      setPostprodDetailFiles([]);
-
-      if (project) {
-        // Mode édition : on charge les données du projet
-        setFormData({
-          title: project.title || "",
-          youtube_url: project.youtube_url || "",
-          description: project.description || null, // Gérer null
-          description_drone: project.description_drone || null, // Gérer null
-          postprod_main_description: project.postprod_main_description || null, // Gérer null
-          description_postprod: (project.description_postprod && Array.isArray(project.description_postprod))
-            ? project.description_postprod
-            : [],
-          client_name: project.client_name || null, // Gérer null
-          client_website: project.client_website || null, // Gérer null
-          project_date: project.project_date || new Date().toISOString().split('T')[0],
-          client_logo_path: project.client_logo_path || null,
-          postprod_before_path: project.postprod_before_path || null,
-          postprod_after_path: project.postprod_after_path || null,
-          category: project.category || "",
-        });
-
-        const tags = project.category ? project.category.split(',').map(t => t.trim()) : [];
-        setSelectedCats(tags.filter(t => !["Drone", "Post-Prod", "Short"].includes(t)));
-      } else {
-        // Mode création : on réinitialise le formulaire
-        setFormData(emptyFormData);
-        setSelectedCats([]);
-      }
-    }
-  }, [project, isOpen]);
-
-  const toggleCat = useCallback((name: string) => {
-    setSelectedCats(prev => prev.includes(name) ? prev.filter(t => t !== name) : [...prev, name]);
-  }, []);
-
-  // Handler générique pour les champs de texte/sélection
-  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value === "" ? null : value, // Convertir les chaînes vides en null pour les champs optionnels
-    }));
-  }, []);
-
-  // Ajouter/Supprimer des détails de post-production
-  const addPostProdDetail = () => {
-    setFormData(prev => ({
-      ...prev,
-      description_postprod: [...(prev.description_postprod || []), { detail: '', before_path: null, after_path: null }]
-    }));
-  };
-
-  const handleDetailFileChange = (index: number, type: 'before' | 'after', file: File | null) => {
-    setPostprodDetailFiles(prev => {
-      const existing = prev.filter(f => !(f.index === index && f.type === type));
-      if (file) return [...existing, { index, type, file }];
-      return existing;
-    });
-  };
-
-  const handlePostprodChange = useCallback((index: number, field: keyof PostProdDetail, value: string | null) => {
-    setFormData(prev => {
-      const newDetails = [...(prev.description_postprod || [])];
-      if (newDetails[index]) { // S'assurer que l'élément existe
-        newDetails[index] = { ...newDetails[index], [field]: value };
-      }
-      return { ...prev, description_postprod: newDetails };
-    });
-  }, []);
-
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Guard Clause Synchrone : Prévient les attaques par "Double Clic"
-    if (isSubmitting) return;
-    
-    setIsSubmitting(true);
-    setFormErrors([]);
-    setServerError(null);
-
-    const dataToSave = {
-      ...formData,
-      category: getFinalCategories(selectedCats, formData).join(', '),
-    };
-
-    // Validation côté client avec Zod
-    const clientValidation = ProjectSchema.safeParse(dataToSave);
-    if (!clientValidation.success) {
-      setFormErrors(clientValidation.error.issues);
-      setIsSubmitting(false);
-      return;
-    }
-
-    const newlyUploadedImages: { bucket: string; path: string }[] = [];
-
-    try {
-      // --- 1. PRÉPARATION DU GESTIONNAIRE DE TÂCHES D'UPLOAD ---
-      const uploadJobs: { file: File; bucket: string; folder: string; setter: (p: string) => void }[] = [];
-
-      if (clientLogoFile) {
-        uploadJobs.push({ file: clientLogoFile, bucket: 'logos', folder: 'projects/logos/', setter: p => dataToSave.client_logo_path = p });
-      }
-
-      if (postprodBeforeFile) {
-        uploadJobs.push({ file: postprodBeforeFile, bucket: 'postprod-images', folder: 'projects/postprod/', setter: p => dataToSave.postprod_before_path = p });
-      }
-
-      if (postprodAfterFile) {
-        uploadJobs.push({ file: postprodAfterFile, bucket: 'postprod-images', folder: 'projects/postprod/', setter: p => dataToSave.postprod_after_path = p });
-      }
-
-      if (dataToSave.description_postprod) {
-        dataToSave.description_postprod.forEach((detail, i) => {
-          const beforeFile = postprodDetailFiles.find(item => item.index === i && item.type === 'before')?.file;
-          const afterFile = postprodDetailFiles.find(item => item.index === i && item.type === 'after')?.file;
-
-          if (beforeFile) {
-            uploadJobs.push({ file: beforeFile, bucket: 'postprod-images', folder: 'projects/postprod_details/', setter: p => detail.before_path = p });
-          }
-          if (afterFile) {
-            uploadJobs.push({ file: afterFile, bucket: 'postprod-images', folder: 'projects/postprod_details/', setter: p => detail.after_path = p });
-          }
-        });
-      }
-
-      // --- 2. EXÉCUTION PARALLÈLE ET SÉCURISÉE ---
-      // On attend que TOUS les envois soient terminés (succès ou null) sans throw d'erreur pour éviter la Race Condition
-      const uploadResults = await Promise.all(uploadJobs.map(async job => {
-        const path = await uploadFileAndGetPath(job.file, job.bucket, job.folder);
-        return { ...job, path };
-      }));
-
-      // --- 3. SÉCURITÉ : ENREGISTREMENT SYSTÉMATIQUE DES SUCCÈS POUR LE ROLLBACK ---
-      uploadResults.forEach(res => {
-        if (res.path) newlyUploadedImages.push({ bucket: res.bucket, path: res.path });
-      });
-
-      // --- 4. VÉRIFICATION D'INTÉGRITÉ ---
-      if (uploadResults.some(res => !res.path)) {
-        throw new Error("Échec de l'upload d'une ou plusieurs images. L'opération a été annulée.");
-      }
-
-      // --- 5. APPLICATION DES CHEMINS ---
-      uploadResults.forEach(res => {
-        if (res.path) res.setter(res.path);
-      });
-
-      // --- 4. Appeler la Server Action ---
-      const result = await saveProjectAction(dataToSave, project ? project.id : null);
-
-      setIsSubmitting(false);
-      if (result.success) {
-        toast.success("Projet sauvegardé avec succès !");
-        // Réinitialiser les fichiers après un succès
-        setClientLogoFile(null);
-        setPostprodBeforeFile(null);
-        setPostprodAfterFile(null);
-        setPostprodDetailFiles([]);
-        onSuccess(); // Ferme la modal et rafraîchit la liste
-      } else {
-        // ROLLBACK : On supprime les images fraîchement envoyées car l'enregistrement BDD a échoué
-        if (newlyUploadedImages.length > 0) {
-          await rollbackUploadsAction(newlyUploadedImages);
-        }
-        setServerError('error' in result ? String(result.error) : "Une erreur inconnue est survenue côté serveur.");
-        // Gérer les erreurs de validation Zod du serveur si elles sont retournées
-        if ('details' in result && result.details) {
-          const flattened = result.details as { fieldErrors: Record<string, string[]> };
-          const issuesFromServer: z.ZodIssue[] = [];
-          if (flattened.fieldErrors) {
-            Object.entries(flattened.fieldErrors).forEach(([field, msgs]) => {
-              msgs.forEach(msg => issuesFromServer.push({ path: [field], message: msg, code: 'custom' } as z.ZodIssue));
-            });
-          }
-          setFormErrors(issuesFromServer);
-        }
-        toast.error("Erreur lors de la sauvegarde. Veuillez vérifier le formulaire.");
-      }
-    } catch (error: unknown) {
-      console.error("Erreur lors de la soumission du formulaire:", error);
-      // ROLLBACK en cas de crash réseau (Catch)
-      if (newlyUploadedImages.length > 0) {
-        await rollbackUploadsAction(newlyUploadedImages);
-      }
-      const errorMessage = error instanceof Error ? error.message : "Une erreur inattendue est survenue.";
-      setServerError(errorMessage);
-      toast.error(errorMessage);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [formData, selectedCats, project, onSuccess, clientLogoFile, postprodBeforeFile, postprodAfterFile, postprodDetailFiles, isSubmitting]);
+  const {
+    formData, setFormData, selectedCats, toggleCat, handleChange, addPostProdDetail, removePostProdDetail,
+    handleDetailFileChange, handlePostprodChange, handleSubmit, clientLogoFile, setClientLogoFile,
+    postprodBeforeFile, setPostprodBeforeFile, postprodAfterFile, setPostprodAfterFile,
+    postprodDetailFiles, isSubmitting, formErrors, serverError, isPostProdDetailsDisabled
+  } = useProjectForm(project, isOpen, onSuccess);
 
   if (!isOpen) return null;
 
@@ -525,10 +273,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
                       colorClass="text-purple-400"
                     />
                   </div>
-                  <button type="button" onClick={() => { 
-                    setFormData(prev => ({ ...prev, description_postprod: (prev.description_postprod || []).filter((_, i) => i !== index) })); 
-                    setPostprodDetailFiles(prev => prev.filter(f => f.index !== index).map(f => f.index > index ? { ...f, index: f.index - 1 } : f));
-                  }} className="absolute -top-2 -right-2 p-1.5 bg-red-800/70 hover:bg-red-700 rounded-full text-red-300 transition-all opacity-0 group-hover:opacity-100 disabled:opacity-0" title="Supprimer ce détail" disabled={isPostProdDetailsDisabled}>
+                  <button type="button" onClick={() => removePostProdDetail(index)} className="absolute -top-2 -right-2 p-1.5 bg-red-800/70 hover:bg-red-700 rounded-full text-red-300 transition-all opacity-0 group-hover:opacity-100 disabled:opacity-0" title="Supprimer ce détail" disabled={isPostProdDetailsDisabled}>
                     <Trash2 size={14} />
                   </button>
                 </div>

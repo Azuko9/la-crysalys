@@ -7,7 +7,17 @@ import { getYouTubeID } from "@/lib/utils";
 import { ImageCompareSlider } from "@/components/ImageCompareSlider";
 import Link from "next/link";
 import { ArrowLeft, User, Globe, Calendar, Tag, Wind } from "lucide-react";
+import dynamic from "next/dynamic";
 
+// Chargement différé du lecteur YouTube (Uniquement côté client)
+const YouTubePlayer = dynamic(() => import('@/components/YouTubePlayer'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full flex items-center justify-center bg-zinc-900/50">
+      <span className="animate-pulse text-foreground/50 text-sm font-bold uppercase tracking-widest">Chargement du lecteur...</span>
+    </div>
+  ),
+});
 
 
 type Props = {
@@ -46,7 +56,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: `${project.title} | La Crysalys`,
       description: project.description || '',
       images: [thumbnailUrl],
-    }
+    },
+    alternates: {
+      canonical: `/realisations/${project.id}`,
+    },
   }
 }
 
@@ -136,7 +149,7 @@ export default async function RealisationDetailPage({ params }: { params: { id: 
               <div className="flex items-center gap-2">
                 <Tag size={14}/> 
                 <div className="flex flex-wrap gap-2">
-                  {projectData.category.split(',').map((c: string) => c.trim()).filter(Boolean).map((cat: string) => (
+              {(Array.isArray(projectData.category) ? projectData.category : []).map((cat: string) => (
                     <span key={cat} className="bg-primary/10 text-primary px-2 py-0.5 rounded border border-primary/20">{cat}</span>
                   ))}
                 </div>
@@ -166,13 +179,7 @@ export default async function RealisationDetailPage({ params }: { params: { id: 
 
         {videoId && (
           <div className="aspect-video w-full rounded-dynamic overflow-hidden border border-zinc-800 shadow-2xl bg-black mb-16">
-            <iframe
-              src={`https://www.youtube.com/embed/${videoId}?autoplay=0&controls=1&modestbranding=1&rel=0`}
-              title={projectData.title}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              className="w-full h-full border-0"
-            ></iframe>
+            <YouTubePlayer videoId={videoId} title={projectData.title} />
           </div>
         )}
 

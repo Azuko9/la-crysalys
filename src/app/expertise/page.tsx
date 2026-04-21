@@ -5,6 +5,17 @@ import type { Metadata } from 'next';
 import FeaturesSection from '@/components/FeaturesSection';
 import { getYouTubeID } from "@/lib/utils"; // Import de la fonction pour obtenir l'ID YouTube
 import { Wind, ArrowRight } from "lucide-react"; // Import des icônes
+import dynamic from "next/dynamic";
+
+// Chargement différé du lecteur YouTube (Uniquement côté client)
+const YouTubePlayer = dynamic(() => import('@/components/YouTubePlayer'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full flex items-center justify-center bg-zinc-900/50">
+      <span className="animate-pulse text-foreground/50 text-sm font-bold uppercase tracking-widest">Chargement du lecteur...</span>
+    </div>
+  ),
+});
 
 // Metadata for SEO
 export const metadata: Metadata = {
@@ -21,6 +32,9 @@ export const metadata: Metadata = {
     title: 'Expertise Drone - La Crysalys',
     description: 'Découvrez notre savoir-faire en prises de vues par drone.',
   },
+  alternates: {
+    canonical: '/expertise',
+  },
 };
 
 export default async function ExpertiseDronePage() {
@@ -31,9 +45,8 @@ export default async function ExpertiseDronePage() {
     .from('portfolio_items')
     // OPTIMISATION: Ne sélectionnez que les colonnes nécessaires pour cette page.
     .select('id, title, youtube_url, description_drone') // Ces colonnes définissent le type réel des projets récupérés
-    // CORRECTION : .contains() ne fonctionne que si la colonne 'category' est de type tableau (text[]).
-    // Rétablissement de .like() pour une compatibilité immédiate. La meilleure solution reste de migrer la colonne.
-    .like('category', '%Drone%')
+    // REQUÊTE OPTIMISÉE SUR TABLEAU
+    .contains('category', ['Drone'])
     .order('project_date', { ascending: false });
 
   if (projectsError) {
@@ -83,14 +96,7 @@ export default async function ExpertiseDronePage() {
 
                     {/* Colonne de droite : Vidéo */}
                     <div className="aspect-video rounded-dynamic overflow-hidden border border-zinc-700 shadow-lg bg-black">
-                      <iframe
-                        src={`https://www.youtube.com/embed/${getYouTubeID(project.youtube_url)}?autoplay=0&controls=1&modestbranding=1&rel=0`}
-                        title={project.title}
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                        loading="lazy"
-                        className="border-0 w-full h-full"
-                      ></iframe>
+                      <YouTubePlayer videoId={getYouTubeID(project.youtube_url) || ''} title={project.title} />
                     </div>
                   </div>
                   <div className="mt-8 border-t border-zinc-700 pt-6">
