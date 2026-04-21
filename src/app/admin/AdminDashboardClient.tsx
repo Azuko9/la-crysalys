@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import Link from "next/link";
 import { 
   LogOut, LayoutDashboard, Mail, Trash2, 
-  Calendar, User, Palette, MessageSquare, ExternalLink, Copy, Key
+  Calendar, User, Palette, MessageSquare, ExternalLink, Copy, Key, Youtube
 } from "lucide-react";
 import toast from "react-hot-toast";
 import ThemeManager from "@/components/ThemeManager";
@@ -67,6 +67,9 @@ export default function AdminDashboardClient({ initialMessages, userEmail }: Adm
           </nav>
 
           <div className="flex items-center gap-2">
+            <a href="https://youtu.be/70nOLSeO-4w" target="_blank" rel="noopener noreferrer" className="p-4 text-foreground/40 hover:text-red-500 transition-colors bg-card/50 rounded-dynamic border border-zinc-800" title="Voir le tutoriel vidéo">
+              <Youtube size={20} />
+            </a>
             <Link href="/admin/nouveau-mot-de-passe" className="p-4 text-foreground/40 hover:text-primary transition-colors bg-card/50 rounded-dynamic border border-zinc-800" title="Modifier mon mot de passe">
               <Key size={20} />
             </Link>

@@ -612,7 +612,7 @@ export async function deleteMessageAction(messageId: string) {
 // --- ACTIONS PARAMÈTRES DU SITE (THEME) ---
 const SettingSchema = z.object({
   key: z.string().min(1),
-  value: z.string().regex(/^[a-zA-Z0-9#(),.% \-]+$/, "Format de valeur invalide pour prévenir les injections.")
+  value: z.string().regex(/^[a-zA-Z0-9#(),.% \-_{}":]+$/, "Format de valeur invalide pour prévenir les injections.")
 });
 
 export async function saveSiteSettingsAction(updates: { key: string; value: string }[]) {

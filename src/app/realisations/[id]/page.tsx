@@ -6,7 +6,7 @@ import Script from "next/script";
 import { getYouTubeID } from "@/lib/utils";
 import { ImageCompareSlider } from "@/components/ImageCompareSlider";
 import Link from "next/link";
-import { ArrowLeft, User, Globe } from "lucide-react";
+import { ArrowLeft, User, Globe, Calendar, Tag, Wind } from "lucide-react";
 
 
 
@@ -91,6 +91,7 @@ export default async function RealisationDetailPage({ params }: { params: { id: 
   };
 
   const getImageUrl = (path: string | null) => path ? supabase.storage.from('postprod-images').getPublicUrl(path).data.publicUrl : '';
+  const getLogoUrl = (path: string | null) => path ? supabase.storage.from('logos').getPublicUrl(path).data.publicUrl : '';
 
   return (
     <main className="min-h-screen bg-background text-foreground pt-32 pb-20 px-4 md:px-8">
@@ -102,22 +103,65 @@ export default async function RealisationDetailPage({ params }: { params: { id: 
           <ArrowLeft size={16} /> Retour au portfolio
         </Link>
 
-        <h1 className="text-4xl md:text-6xl font-black italic uppercase tracking-tighter mb-4 text-primary">
-          {projectData.title}
-        </h1>
-
-        {/* Infos Client */}
-        {(projectData.client_name || projectData.client_website) && (
-           <div className="flex flex-wrap gap-4 mb-8 text-xs font-bold uppercase tracking-widest text-foreground/60">
-              {projectData.client_name && <span className="flex items-center gap-2"><User size={14}/> {projectData.client_name}</span>}
-              {projectData.client_website && <a href={projectData.client_website} target="_blank" rel="noreferrer" className="flex items-center gap-2 hover:text-primary transition-colors"><Globe size={14}/> Site Web</a>}
-           </div>
-        )}
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8 mb-8">
+          <h1 className="text-4xl md:text-6xl font-black italic uppercase tracking-tighter text-primary">
+            {projectData.title}
+          </h1>
+          
+          {projectData.client_logo_path && (
+            <div className="shrink-0 relative w-32 h-32 bg-card border border-zinc-800 rounded-dynamic p-4 flex items-center justify-center shadow-xl">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img 
+                src={getLogoUrl(projectData.client_logo_path)} 
+                alt={`Logo ${projectData.client_name || 'Client'}`}
+                className="w-full h-full object-contain"
+              />
+            </div>
+          )}
+        </div>
         
+        {/* Meta Infos: Client, Date, Catégories */}
+        {(projectData.client_name || projectData.client_website || projectData.project_date || projectData.category) && (
+          <div className="flex flex-wrap items-center gap-6 mb-12 text-xs font-bold uppercase tracking-widest text-foreground/60 border-b border-zinc-800 pb-8">
+            {projectData.client_name && (
+              <span className="flex items-center gap-2"><User size={14}/> {projectData.client_name}</span>
+            )}
+            {projectData.client_website && (
+              <a href={projectData.client_website} target="_blank" rel="noreferrer" className="flex items-center gap-2 hover:text-primary transition-colors"><Globe size={14}/> Site Web</a>
+            )}
+            {projectData.project_date && (
+              <span className="flex items-center gap-2"><Calendar size={14}/> {new Date(projectData.project_date).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}</span>
+            )}
+            {projectData.category && (
+              <div className="flex items-center gap-2">
+                <Tag size={14}/> 
+                <div className="flex flex-wrap gap-2">
+                  {projectData.category.split(',').map((c: string) => c.trim()).filter(Boolean).map((cat: string) => (
+                    <span key={cat} className="bg-primary/10 text-primary px-2 py-0.5 rounded border border-primary/20">{cat}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Description Générale */}
         {projectData.description && (
-          <p className="text-foreground/80 text-lg mb-12 leading-relaxed">
+          <p className="text-foreground/80 text-lg mb-12 leading-relaxed whitespace-pre-wrap">
             {projectData.description}
           </p>
+        )}
+
+        {/* Spécificités Drone */}
+        {projectData.description_drone && (
+          <div className="bg-blue-950/20 border border-blue-900/40 p-6 md:p-8 rounded-dynamic mb-12 shadow-xl">
+            <h3 className="text-xl font-black uppercase italic tracking-tighter text-blue-400 mb-4 flex items-center gap-3">
+              <Wind size={24} /> Spécificités Drone
+            </h3>
+            <p className="text-blue-200/80 leading-relaxed whitespace-pre-wrap">
+              {projectData.description_drone}
+            </p>
+          </div>
         )}
 
         {videoId && (
