@@ -18,7 +18,7 @@ interface ProjectCardProps {
 export function ProjectCard({ projet, user, onEdit, onDeleteSuccess, isVertical = false }: ProjectCardProps) {
   const videoId = getYouTubeID(projet.youtube_url);
   
-  const categoriesList = projet.category ? projet.category.split(',').map((c) => c.trim()).filter(c => c) : [];
+  const categoriesList = Array.isArray(projet.category) ? projet.category : [];
 
   return (
     <div className="bg-card border border-zinc-800 rounded-dynamic overflow-hidden group transition-all relative flex flex-col h-full">

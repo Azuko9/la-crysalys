@@ -29,10 +29,12 @@ interface ImageUploaderProps {
   storageBucket: string;
   colorClass: string;
   disabled?: boolean;
+  inputId?: string;
 }
 
-const ImageUploader: React.FC<ImageUploaderProps> = ({ label, currentPath, currentFile, onFileSelect, onClearPath, storageBucket, colorClass, disabled = false }) => {
+const ImageUploader: React.FC<ImageUploaderProps> = ({ label, currentPath, currentFile, onFileSelect, onClearPath, storageBucket, colorClass, disabled = false, inputId }) => {
   
+  const uniqueId = inputId || label.replace(/\s+/g, '-').toLowerCase();
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
@@ -61,7 +63,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ label, currentPath, curre
 
   return (
     <div className="space-y-2">
-      <label className={`text-[10px] font-bold uppercase ml-1 ${colorClass}`}>{label}</label>
+      <label htmlFor={uniqueId} className={`text-[10px] font-bold uppercase ml-1 ${colorClass}`}>{label}</label>
       {previewUrl ? ( 
         <div className="relative w-full h-32 rounded-dynamic overflow-hidden border border-zinc-700 group">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -72,7 +74,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ label, currentPath, curre
         </div>
       ) : (
         <div className={`relative w-full h-32 border-2 border-dashed border-zinc-700 hover:border-primary rounded-dynamic transition-colors bg-zinc-900/30 group`}>
-          <input type="file" accept="image/*" onChange={handleImageSelect} disabled={disabled} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+          <input id={uniqueId} type="file" accept="image/*" onChange={handleImageSelect} disabled={disabled} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
           <div className="absolute inset-0 flex flex-col items-center justify-center text-foreground/50 pointer-events-none">
             <UploadCloud size={28} className="mb-2 group-hover:text-primary transition-colors" />
             <span className="text-[9px] font-bold uppercase tracking-widest">Glisser une image</span>
@@ -114,23 +116,23 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
             <p className="text-[10px] font-black text-foreground/50 uppercase tracking-widest ml-2">Informations Générales</p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="md:col-span-2">
-                <input
-                  type="text" name="title" placeholder="Titre du projet" required
+            <input aria-label="Titre du projet"
+              id="title" type="text" name="title" placeholder="Titre du projet" required
                   className="w-full bg-background border border-zinc-800 p-4 rounded-dynamic outline-none focus:border-primary font-bold text-lg h-full"
                   value={formData.title} onChange={handleChange}
                 />
               </div>
               <div>
-                <label className="text-[9px] font-bold text-foreground/40 uppercase ml-1 flex items-center gap-1 mb-1"><Calendar size={10} /> Date de sortie</label>
+            <label htmlFor="project_date" className="text-[9px] font-bold text-foreground/40 uppercase ml-1 flex items-center gap-1 mb-1"><Calendar size={10} /> Date de sortie</label>
                 <input
-                  type="date" name="project_date" required
+              id="project_date" type="date" name="project_date" required
                   className="w-full bg-background border border-zinc-800 p-3 rounded-dynamic text-sm focus:border-zinc-500 text-foreground"
                   value={formData.project_date} onChange={handleChange}
                 />
               </div>
             </div>
             <input
-              type="url" name="youtube_url" placeholder="Lien YouTube (ou Shorts)" required
+          id="youtube_url" aria-label="Lien YouTube (ou Shorts)" type="url" name="youtube_url" placeholder="Lien YouTube (ou Shorts)" required
               className="w-full bg-background border border-zinc-800 p-4 rounded-dynamic outline-none focus:border-primary text-blue-400"
               value={formData.youtube_url} onChange={handleChange}
             />
@@ -158,11 +160,11 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
 
             {/* DESCRIPTION GÉNÉRALE */}
             <div className="space-y-2">
-              <div className="flex items-center gap-2 text-foreground/70 ml-2">
+          <label htmlFor="description" className="flex items-center gap-2 text-foreground/70 ml-2">
                 <AlignLeft size={14} /> <span className="text-[10px] font-bold uppercase tracking-widest">Contexte Général</span>
-              </div>
+          </label>
               <textarea
-                name="description"
+            id="description" name="description"
                 placeholder="Description globale du projet, objectifs..."
                 rows={4}
                 className="w-full bg-background border border-zinc-800 p-4 rounded-dynamic outline-none focus:border-white text-foreground/80"
@@ -172,11 +174,11 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
 
             {/* ZONE DRONE */}
             <div className="space-y-2">
-              <div className="flex items-center gap-2 text-blue-400 ml-2">
+          <label htmlFor="description_drone" className="flex items-center gap-2 text-blue-400 ml-2">
                 <Wind size={14} /> <span className="text-[10px] font-bold uppercase tracking-widest">Spécificités Drone</span>
-              </div>
+          </label>
               <textarea
-                name="description_drone"
+            id="description_drone" name="description_drone"
                 placeholder="Détails du vol, altitude, autorisations, matériel utilisé..."
                 rows={3}
                 className="w-full bg-blue-950/20 border border-blue-900/40 p-4 rounded-dynamic outline-none focus:border-blue-500 text-sm text-blue-200 placeholder-blue-900/60"
@@ -186,11 +188,11 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
 
             {/* ZONE POST-PROD */}
             <div className="space-y-4 bg-purple-950/20 border border-purple-900/40 p-4 rounded-dynamic">
-              <div className="flex items-center gap-2 text-purple-400 ml-2">
+          <label htmlFor="postprod_main_description" className="flex items-center gap-2 text-purple-400 ml-2">
                 <Layers size={14} /> <span className="text-[10px] font-bold uppercase tracking-widest">Détails Post-Production</span>
-              </div>
+          </label>
               <textarea
-                name="postprod_main_description"
+            id="postprod_main_description" name="postprod_main_description"
                 placeholder="Description générale de la post-production (logiciels, techniques...)"
                 rows={3}
                 className="w-full bg-purple-950/50 border border-purple-900/50 p-3 rounded-lg outline-none focus:border-purple-500 text-sm text-purple-200 placeholder-purple-900/60"
@@ -204,6 +206,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
                   currentFile={postprodBeforeFile}
                   onFileSelect={setPostprodBeforeFile}
                   onClearPath={() => setFormData(prev => ({ ...prev, postprod_before_path: null }))}
+              inputId="postprod_before_path"
                   storageBucket="postprod-images"
                   colorClass="text-purple-400"
                 />
@@ -213,6 +216,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
                   currentFile={postprodAfterFile}
                   onFileSelect={setPostprodAfterFile}
                   onClearPath={() => setFormData(prev => ({ ...prev, postprod_after_path: null }))}
+              inputId="postprod_after_path"
                   storageBucket="postprod-images"
                   colorClass="text-purple-400"
                 />
@@ -227,6 +231,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
                 currentFile={clientLogoFile}
                 onFileSelect={setClientLogoFile}
                 onClearPath={() => setFormData(prev => ({ ...prev, client_logo_path: null }))}
+            inputId="client_logo_path"
                 storageBucket="logos"
                 colorClass="text-foreground/70"
               />
@@ -241,7 +246,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
                   <div className="flex items-center gap-2">
                     <span className="text-purple-400 font-bold text-xs">#{index + 1}</span>
                     <input
-                      type="text"
+                  id={`detail-desc-${index}`} type="text" aria-label={`Description étape ${index + 1}`}
                       placeholder={`Description (ex: Étalonnage colorimétrique)`}
                       value={item.detail}
                       onChange={e => {
@@ -258,6 +263,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
                       currentFile={postprodDetailFiles.find(f => f.index === index && f.type === 'before')?.file || null}
                       onFileSelect={(file) => handleDetailFileChange(index, 'before', file)}
                       onClearPath={() => handlePostprodChange(index, 'before_path', null)}
+                  inputId={`detail-before-${index}`}
                       storageBucket="postprod-images"
                       disabled={isPostProdDetailsDisabled}
                       colorClass="text-purple-400"
@@ -268,6 +274,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
                       currentFile={postprodDetailFiles.find(f => f.index === index && f.type === 'after')?.file || null}
                       onFileSelect={(file) => handleDetailFileChange(index, 'after', file)}
                       onClearPath={() => handlePostprodChange(index, 'after_path', null)}
+                  inputId={`detail-after-${index}`}
                       storageBucket="postprod-images"
                       disabled={isPostProdDetailsDisabled}
                       colorClass="text-purple-400"
@@ -294,12 +301,12 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
             <p className="text-[10px] font-black text-foreground/50 uppercase tracking-widest ml-2">Informations Client</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-[9px] font-bold text-foreground/40 uppercase ml-1 flex items-center gap-1"><User size={10} /> Client</label>
-                <input type="text" name="client_name" className="w-full bg-background border border-zinc-800 p-3 rounded-dynamic text-sm focus:border-zinc-500" value={formData.client_name || ""} onChange={handleChange} placeholder="Nom du client" />
+            <label htmlFor="client_name" className="text-[9px] font-bold text-foreground/40 uppercase ml-1 flex items-center gap-1"><User size={10} /> Client</label>
+            <input id="client_name" type="text" name="client_name" className="w-full bg-background border border-zinc-800 p-3 rounded-dynamic text-sm focus:border-zinc-500" value={formData.client_name || ""} onChange={handleChange} placeholder="Nom du client" />
               </div>
               <div className="space-y-1">
-                <label className="text-[9px] font-bold text-foreground/40 uppercase ml-1 flex items-center gap-1"><Globe size={10} /> Site Web</label>
-                <input type="text" name="client_website" className="w-full bg-background border border-zinc-800 p-3 rounded-dynamic text-sm focus:border-zinc-500" value={formData.client_website || ""} onChange={handleChange} placeholder="https://..." />
+            <label htmlFor="client_website" className="text-[9px] font-bold text-foreground/40 uppercase ml-1 flex items-center gap-1"><Globe size={10} /> Site Web</label>
+            <input id="client_website" type="text" name="client_website" className="w-full bg-background border border-zinc-800 p-3 rounded-dynamic text-sm focus:border-zinc-500" value={formData.client_website || ""} onChange={handleChange} placeholder="https://..." />
               </div>
             </div>
           </div>

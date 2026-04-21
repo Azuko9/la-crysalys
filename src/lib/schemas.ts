@@ -11,7 +11,7 @@ export const ProjectSchema = z.object({
   description: z.string().nullable(),
   youtube_url: z.string().min(1, "L'URL YouTube est requise.").url("L'URL YouTube est invalide."),
   project_date: z.string().refine((val) => !isNaN(Date.parse(val)), "Date de projet invalide."),
-  category: z.string(),
+  category: z.array(z.string()),
   client_name: z.string().nullable(),
   client_website: z.string().nullable(),
   description_drone: z.string().nullable(),

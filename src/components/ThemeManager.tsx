@@ -111,10 +111,10 @@ export default function ThemeManager() {
 
   const ColorField = ({ label, value, id }: { label: string, value: string, id: keyof ThemeSettings }) => (
     <div className="flex justify-between items-center group bg-black/20 p-2 rounded-dynamic border border-transparent hover:border-zinc-700 transition-all">
-      <label className="text-[10px] font-bold text-foreground/70 uppercase group-hover:text-foreground transition-colors">{label}</label>
+      <label htmlFor={id} className="text-[10px] font-bold text-foreground/70 uppercase group-hover:text-foreground transition-colors">{label}</label>
       <div className="flex items-center gap-2">
         <span className="text-[9px] font-mono text-foreground/40 uppercase">{value}</span>
-        <input type="color" value={value} 
+        <input id={id} type="color" value={value} 
           onChange={(e) => setSettings({...settings, [id]: e.target.value})}
           className="w-8 h-8 bg-transparent cursor-pointer rounded overflow-hidden border-none" />
       </div>
@@ -154,10 +154,10 @@ export default function ThemeManager() {
           <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-500 flex items-center gap-2"><Box size={14}/> Structure</h3>
           <div className="bg-black/20 p-4 rounded-dynamic border border-transparent hover:border-zinc-700 transition-all">
             <div className="flex justify-between text-[10px] text-foreground/70 font-bold uppercase mb-4">
-              <span>niveau des arrondis</span>
+          <label htmlFor="border_radius">niveau des arrondis</label>
               <span className="text-foreground bg-card px-2 py-0.5 rounded">{settings.border_radius}</span>
             </div>
-            <input type="range" min="0" max="30" step="1" value={parseInt(settings.border_radius)}
+        <input id="border_radius" type="range" min="0" max="30" step="1" value={parseInt(settings.border_radius)}
               onChange={(e) => setSettings({...settings, border_radius: `${e.target.value}px`})}
               className="w-full accent-primary bg-card h-1 cursor-pointer appearance-none rounded-full" />
           </div>

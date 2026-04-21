@@ -116,6 +116,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, re
               {editingId === cat.id ? (
                 <div className="flex items-center gap-2">
                   <input 
+                    aria-label="Modifier le nom de la catégorie"
                     ref={editInputRef}
                     value={editValue}
                     onChange={(e) => setEditValue(e.target.value)}
@@ -169,6 +170,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, re
 
         <div className="flex gap-2">
           <input 
+            aria-label="Nouvelle catégorie"
             value={newCatName} 
             onChange={e => setNewCatName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleAdd()}

@@ -173,24 +173,24 @@ const TeamModal: React.FC<TeamModalProps> = ({ isOpen, member, onClose, onSucces
           {/* LIGNE 1 : NOM & RÔLE */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-                <label className="text-[10px] font-bold text-foreground/50 uppercase ml-1">Nom Complet</label>
-                <input type="text" name="name" required placeholder="ex: Jean Dupont" className="w-full bg-background border border-zinc-800 p-4 rounded-dynamic outline-none focus:border-primary font-bold text-lg" value={formData.name} onChange={handleChange} />
+                <label htmlFor="name" className="text-[10px] font-bold text-foreground/50 uppercase ml-1">Nom Complet</label>
+                <input id="name" type="text" name="name" required placeholder="ex: Jean Dupont" className="w-full bg-background border border-zinc-800 p-4 rounded-dynamic outline-none focus:border-primary font-bold text-lg" value={formData.name} onChange={handleChange} />
             </div>
             <div className="space-y-2">
-                <label className="text-[10px] font-bold text-foreground/50 uppercase ml-1">{isPartner ? 'Service / Spécialité' : 'Rôle'}</label>
-                <input type="text" name="role" required placeholder="ex: Location Caméra" className="w-full bg-background border border-zinc-800 p-4 rounded-dynamic outline-none focus:border-primary text-primary" value={formData.role} onChange={handleChange} />
+                <label htmlFor="role" className="text-[10px] font-bold text-foreground/50 uppercase ml-1">{isPartner ? 'Service / Spécialité' : 'Rôle'}</label>
+                <input id="role" type="text" name="role" required placeholder="ex: Location Caméra" className="w-full bg-background border border-zinc-800 p-4 rounded-dynamic outline-none focus:border-primary text-primary" value={formData.role} onChange={handleChange} />
             </div>
           </div>
 
           {/* NOUVEAU : NOM SOCIÉTÉ (Visible surtout pour les partenaires) */}
           <div className="space-y-2">
-             <label className="text-[10px] font-bold text-foreground/50 uppercase ml-1 flex items-center gap-2"><Building2 size={14}/> Nom de la Société (Optionnel)</label>
-             <input type="text" name="company" placeholder="ex: Studio Alpha" className="w-full bg-background border border-zinc-800 p-4 rounded-dynamic outline-none focus:border-primary text-foreground" value={formData.company || ""} onChange={handleChange} />
+             <label htmlFor="company" className="text-[10px] font-bold text-foreground/50 uppercase ml-1 flex items-center gap-2"><Building2 size={14}/> Nom de la Société (Optionnel)</label>
+             <input id="company" type="text" name="company" placeholder="ex: Studio Alpha" className="w-full bg-background border border-zinc-800 p-4 rounded-dynamic outline-none focus:border-primary text-foreground" value={formData.company || ""} onChange={handleChange} />
           </div>
 
           {/* UPLOAD IMAGE */}
           <div className="space-y-2">
-             <label className="text-[10px] font-bold text-foreground/50 uppercase ml-1">Photo Portrait (Format Image)</label>
+             <label htmlFor="photoFile" className="text-[10px] font-bold text-foreground/50 uppercase ml-1">Photo Portrait (Format Image)</label>
              {currentPhotoPublicUrl ? (
                 <div className="relative w-full h-64 rounded-dynamic overflow-hidden border border-zinc-700 group">
                    {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -201,7 +201,7 @@ const TeamModal: React.FC<TeamModalProps> = ({ isOpen, member, onClose, onSucces
                 </div>
              ) : (
                 <div className="relative w-full h-40 border-2 border-dashed border-zinc-700 hover:border-primary rounded-dynamic transition-colors bg-zinc-900/30">
-                   <input type="file" accept="image/*" onChange={(e) => {
+                   <input id="photoFile" type="file" accept="image/*" onChange={(e) => {
                      const file = e.target.files ? e.target.files[0] : null;
                      if (file && file.size > 5 * 1024 * 1024) {
                        toast.error("La photo est trop lourde (Maximum 5 Mo).");
@@ -219,8 +219,8 @@ const TeamModal: React.FC<TeamModalProps> = ({ isOpen, member, onClose, onSucces
 
           {/* BIO */}
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-foreground/50 uppercase ml-1 flex items-center gap-2"><AlignLeft size={14}/> Biographie / Description</label>
-            <textarea name="bio" rows={4} className="w-full bg-background border border-zinc-800 p-5 rounded-dynamic outline-none focus:border-white text-foreground/80 resize-none" value={formData.bio || ""} onChange={handleChange} />
+            <label htmlFor="bio" className="text-[10px] font-bold text-foreground/50 uppercase ml-1 flex items-center gap-2"><AlignLeft size={14}/> Biographie / Description</label>
+            <textarea id="bio" name="bio" rows={4} className="w-full bg-background border border-zinc-800 p-5 rounded-dynamic outline-none focus:border-white text-foreground/80 resize-none" value={formData.bio || ""} onChange={handleChange} />
           </div>
 
           {error && (
@@ -232,20 +232,20 @@ const TeamModal: React.FC<TeamModalProps> = ({ isOpen, member, onClose, onSucces
           {/* CONTACTS & RÉSEAUX */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-zinc-800 pt-6">
               <div className="space-y-1">
-                 <label className="text-[9px] font-bold text-foreground/40 uppercase ml-1 flex items-center gap-1"><Mail size={10}/> Email Pro</label>
-                 <input type="email" name="email" className="w-full bg-background border border-zinc-800 p-3 rounded-dynamic text-xs focus:border-primary outline-none" value={formData.email || ""} onChange={handleChange} />
+                 <label htmlFor="email" className="text-[9px] font-bold text-foreground/40 uppercase ml-1 flex items-center gap-1"><Mail size={10}/> Email Pro</label>
+                 <input id="email" type="email" name="email" className="w-full bg-background border border-zinc-800 p-3 rounded-dynamic text-xs focus:border-primary outline-none" value={formData.email || ""} onChange={handleChange} />
               </div>
               <div className="space-y-1">
-                 <label className="text-[9px] font-bold text-foreground/40 uppercase ml-1 flex items-center gap-1"><Globe size={10}/> Site Web</label>
-                 <input type="url" name="website" className="w-full bg-background border border-zinc-800 p-3 rounded-dynamic text-xs focus:border-primary outline-none" value={formData.website || ""} onChange={handleChange} />
+                 <label htmlFor="website" className="text-[9px] font-bold text-foreground/40 uppercase ml-1 flex items-center gap-1"><Globe size={10}/> Site Web</label>
+                 <input id="website" type="url" name="website" className="w-full bg-background border border-zinc-800 p-3 rounded-dynamic text-xs focus:border-primary outline-none" value={formData.website || ""} onChange={handleChange} />
               </div>
               <div className="space-y-1">
-                 <label className="text-[9px] font-bold text-foreground/40 uppercase ml-1 flex items-center gap-1"><Instagram size={10}/> Instagram</label>
-                 <input type="url" name="instagram" className="w-full bg-background border border-zinc-800 p-3 rounded-dynamic text-xs focus:border-primary outline-none" value={formData.instagram || ""} onChange={handleChange} />
+                 <label htmlFor="instagram" className="text-[9px] font-bold text-foreground/40 uppercase ml-1 flex items-center gap-1"><Instagram size={10}/> Instagram</label>
+                 <input id="instagram" type="url" name="instagram" className="w-full bg-background border border-zinc-800 p-3 rounded-dynamic text-xs focus:border-primary outline-none" value={formData.instagram || ""} onChange={handleChange} />
               </div>
               <div className="space-y-1">
-                 <label className="text-[9px] font-bold text-foreground/40 uppercase ml-1 flex items-center gap-1"><Linkedin size={10}/> LinkedIn</label>
-                 <input type="url" name="linkedin" className="w-full bg-background border border-zinc-800 p-3 rounded-dynamic text-xs focus:border-primary outline-none" value={formData.linkedin || ""} onChange={handleChange} />
+                 <label htmlFor="linkedin" className="text-[9px] font-bold text-foreground/40 uppercase ml-1 flex items-center gap-1"><Linkedin size={10}/> LinkedIn</label>
+                 <input id="linkedin" type="url" name="linkedin" className="w-full bg-background border border-zinc-800 p-3 rounded-dynamic text-xs focus:border-primary outline-none" value={formData.linkedin || ""} onChange={handleChange} />
               </div>
           </div>
 

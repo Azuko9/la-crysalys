@@ -173,12 +173,12 @@ function FeatureModal({ isOpen, feature, pageContext, onClose, onSuccess }: { is
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-[10px] font-black uppercase tracking-widest text-foreground/50">Titre</label>
-            <input type="text" required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full bg-black border border-zinc-800 p-3 rounded text-sm text-foreground focus:border-primary outline-none mt-1"/>
+            <label htmlFor="title" className="text-[10px] font-black uppercase tracking-widest text-foreground/50">Titre</label>
+            <input id="title" type="text" required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full bg-black border border-zinc-800 p-3 rounded text-sm text-foreground focus:border-primary outline-none mt-1"/>
           </div>
           <div>
-            <label className="text-[10px] font-black uppercase tracking-widest text-foreground/50">Description</label>
-            <textarea value={formData.description || ""} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full bg-black border border-zinc-800 p-3 rounded text-sm text-foreground focus:border-primary outline-none mt-1 h-24"/>
+            <label htmlFor="description" className="text-[10px] font-black uppercase tracking-widest text-foreground/50">Description</label>
+            <textarea id="description" value={formData.description || ""} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full bg-black border border-zinc-800 p-3 rounded text-sm text-foreground focus:border-primary outline-none mt-1 h-24"/>
           </div>
           <div>
             <label className="text-[10px] font-black uppercase tracking-widest text-foreground/50 mb-2 block">Icône</label>
