@@ -36,10 +36,11 @@ export default function MentionsLegales() {
             </p>
             {/* IMPORTANT: Vous devez remplacer les informations ci-dessous par les vôtres. */}
             <ul className="space-y-2 list-disc pl-5">
-              <li><strong>Propriétaire :</strong> [À COMPLÉTER : Nom de votre société ou votre nom complet]</li>
+              <li><strong>Propriétaire :</strong> CRYSALYS PRODUCTION</li>
               <li><strong>Adresse :</strong> [À COMPLÉTER : Votre adresse postale complète]</li>
-              <li><strong>Contact :</strong> [À COMPLÉTER : Votre email] - [À COMPLÉTER : Votre téléphone]</li>
+              <li><strong>Contact :</strong> Crysalys_production@outlook.fr- 06 76 13 08 27</li>
               <li><strong>Identification :</strong> SIRET : [À COMPLÉTER : Votre numéro de SIRET si applicable]</li>
+              <li><strong>Site créé par :</strong>  Jean-Luc CAZALAA-ARRIBES</li>
             </ul>
           </section>
 
@@ -51,6 +52,7 @@ export default function MentionsLegales() {
               Le site est hébergé par la société <strong>Vercel Inc.</strong><br />
               Adresse : 340 S Lemon Ave #4133 Walnut, CA 91789, USA<br />
               <span className="text-xs italic opacity-70">Les données sont stockées sur des serveurs sécurisés.</span>
+            
             </p>
           </section>
 

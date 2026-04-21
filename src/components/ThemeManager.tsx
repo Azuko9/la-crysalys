@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Palette, Save, Box, Droplets, RotateCcw, Bookmark, Download, CheckCircle } from "lucide-react";
 import { saveSiteSettingsAction } from "@/lib/actions";
+import toast from "react-hot-toast";
 
 type ThemeSettings = {
   bg_color: string;
@@ -40,7 +41,7 @@ export default function ThemeManager() {
         window.location.reload();
       }
     } else {
-      alert('error' in result ? String(result.error) : "Erreur lors de la sauvegarde du thème.");
+      toast.error('error' in result ? String(result.error) : "Erreur lors de la sauvegarde du thème.");
     }
   };
 
@@ -53,9 +54,11 @@ export default function ThemeManager() {
     
     if (result.success) {
       setProfilesPreview((prev) => ({ ...prev, [profileKey]: settings }));
-      alert(`Preset 0${slot} sauvegardé avec succès !`);
+      toast.success(`Preset 0${slot} sauvegardé avec succès !`);
+      // On prévient le Footer (et le reste du site) de se mettre à jour !
+      window.dispatchEvent(new Event("theme-presets-updated"));
     } else {
-      alert('error' in result ? String(result.error) : "Erreur lors de la sauvegarde du preset.");
+      toast.error('error' in result ? String(result.error) : "Erreur lors de la sauvegarde du preset.");
     }
   };
 

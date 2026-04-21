@@ -45,6 +45,9 @@ export default function Footer() {
       } catch (e) { console.error(e); }
     }
 
+    // Écoute de l'événement local pour une mise à jour instantanée des boutons de preset
+    window.addEventListener("theme-presets-updated", fetchProfiles);
+
     const channel = supabase
       .channel('footer-theme-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'site_settings' }, 
@@ -55,7 +58,10 @@ export default function Footer() {
       })
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => { 
+      supabase.removeChannel(channel); 
+      window.removeEventListener("theme-presets-updated", fetchProfiles);
+    };
   }, [fetchProfiles]);
 
   const applyVisualTheme = (config: Record<string, string>) => {
