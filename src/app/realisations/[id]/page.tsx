@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { createSupabaseServerClient } from "@/app/server";
 import type { Metadata } from 'next';
-import type { Project } from "@/types";
+import type { PostProdDetail } from "@/types";
 import Script from "next/script";
 import { getYouTubeID } from "@/lib/utils";
 import { ImageCompareSlider } from "@/components/ImageCompareSlider";
@@ -63,10 +63,10 @@ export default async function RealisationDetailPage({ params }: { params: { id: 
   }
 
   // Nettoyage des données JSON
-  let postprodDetails: any[] = [];
+  let postprodDetails: PostProdDetail[] = [];
   if (projectData.description_postprod) {
     if (typeof projectData.description_postprod === 'string') {
-      try { postprodDetails = JSON.parse(projectData.description_postprod); } catch (e) {}
+      try { postprodDetails = JSON.parse(projectData.description_postprod); } catch {}
     } else if (Array.isArray(projectData.description_postprod)) {
       postprodDetails = projectData.description_postprod;
     }

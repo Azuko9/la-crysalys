@@ -341,7 +341,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
     } finally {
       setIsSubmitting(false);
     }
-  }, [formData, selectedCats, project, onSuccess, clientLogoFile, postprodBeforeFile, postprodAfterFile, postprodDetailFiles]);
+  }, [formData, selectedCats, project, onSuccess, clientLogoFile, postprodBeforeFile, postprodAfterFile, postprodDetailFiles, isSubmitting]);
 
   if (!isOpen) return null;
 

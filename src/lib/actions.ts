@@ -7,7 +7,7 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 import type { Project, TeamMember, Feature, Category, PostProdDetail } from '@/types';
 import { z } from 'zod';
-import { PostProdDetailSchema, ProjectSchema, ContactFormSchema } from './schemas';
+import { ProjectSchema, ContactFormSchema } from './schemas';
 
 // Vérification des variables d'environnement pour le client admin Supabase
 const supabaseUrl: string = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
@@ -171,7 +171,7 @@ export async function saveProjectAction(
 
   try {
     let result;
-    let serverComputedImagesToDelete: { bucket: string; path: string }[] = [];
+    const serverComputedImagesToDelete: { bucket: string; path: string }[] = [];
     
     if (projectId) {
       // SÉCURITÉ (IDOR) : Le serveur déduit lui-même les anciennes images à supprimer
@@ -572,7 +572,7 @@ export async function sendContactMessageAction(formData: { nom: string; email: s
             console.warn(`Rate limit persistant dépassé pour l'email : ${validatedFields.data.email}`);
             return { success: false, error: "Vous avez envoyé trop de messages. Veuillez patienter quelques minutes." };
         }
-    } catch (e) {} // On ignore silencieusement si le champ created_at n'existe pas encore
+    } catch {} // On ignore silencieusement si le champ created_at n'existe pas encore
 
     try {
         // Utilisation de supabaseAdmin pour outrepasser les règles de sécurité RLS de Supabase.

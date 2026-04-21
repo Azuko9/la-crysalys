@@ -47,7 +47,7 @@ function LoginCore() {
           Connexion <span className="text-primary">Admin</span>
         </h1>
         <p className="text-center text-foreground/50 text-sm mb-8">
-          Veuillez vous identifier pour accéder à l'administration.
+          Veuillez vous identifier pour accéder à l&apos;administration.
         </p>
 
         {notification && (

@@ -4,7 +4,7 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 export async function middleware(request: NextRequest) {
   // Créer une réponse par défaut que le client Supabase pourra modifier si les cookies doivent être rafraîchis
   // (Sans modifier l'objet request pour ne pas détruire les formulaires POST)
-  let response = NextResponse.next();
+  const response = NextResponse.next();
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

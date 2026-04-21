@@ -1,4 +1,4 @@
-import type { Project, PostProdDetail } from '@/types';
+import type { Project } from '@/types';
 import { createSupabaseServerClient } from '@/app/server';
 import Link from 'next/link';
 import type { Metadata } from 'next';
