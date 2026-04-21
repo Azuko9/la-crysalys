@@ -95,7 +95,7 @@ export default function Footer() {
               <span className="text-xl font-black italic uppercase tracking-tighter text-foreground">
                 Crysalys<span className="text-primary">.</span>
               </span>
-              <p className="text-[10px] text-foreground/50 font-bold uppercase tracking-widest mt-1">
+              <p className="text-xs text-foreground/50 font-bold uppercase tracking-widest mt-1">
                 Production Audiovisuelle
               </p>
             </div>
@@ -107,15 +107,13 @@ export default function Footer() {
               <a href="mailto:contact@crysalys.fr" aria-label="Nous envoyer un email" className="w-9 h-9 rounded-dynamic bg-card border border-zinc-800 flex items-center justify-center text-foreground/70 hover:text-primary hover:border-primary transition-all group">
                 <Mail size={14} className="group-hover:scale-110 transition-transform"/>
               </a>
-              <a href="https://maps.google.com" aria-label="Voir notre agence sur la carte" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-dynamic bg-card border border-zinc-800 flex items-center justify-center text-foreground/70 hover:text-primary hover:border-primary transition-all group">
-                <MapPin size={14} className="group-hover:scale-110 transition-transform"/>
-              </a>
+
             </div>
           </div>
 
           {/* DROITE : SÉLECTEUR DE THÈMES */}
           <div className="flex flex-col items-center md:items-end gap-3">
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground/50 flex items-center gap-2">
+            <span className="text-xs font-black uppercase tracking-[0.3em] text-foreground/50 flex items-center gap-2">
               <Paintbrush size={12} /> Choix du thème
             </span>
             
@@ -151,7 +149,7 @@ export default function Footer() {
                     </button>
                   ))
                 ) : (
-                  <span className="text-[9px] text-foreground/30 italic px-2">...</span>
+                  <span className="text-xs text-foreground/30 italic px-2">...</span>
                 )}
               </div>
             </div>
@@ -160,16 +158,16 @@ export default function Footer() {
 
         {/* SECTION LÉGALE + BOUTON SECRET */}
         <div className="max-w-7xl mx-auto px-8 mt-12 pt-8 border-t border-zinc-800 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-[10px] text-foreground/40 font-medium uppercase tracking-widest">
+          <p className="text-xs text-foreground/40 font-medium uppercase tracking-widest">
              © {new Date().getFullYear()} La Crysalys. Tous droits réservés.
           </p>
           
           <nav className="flex items-center gap-6">
-            <Link href="/mentions-legales" className="text-[10px] text-foreground/50 font-bold uppercase tracking-widest hover:text-primary transition-colors">
+            <Link href="/mentions-legales" className="text-xs text-foreground/50 font-bold uppercase tracking-widest hover:text-primary transition-colors">
                 Mentions Légales
             </Link>
             <span className="text-foreground/20">•</span>
-            <Link href="/contact" className="text-[10px] text-foreground/50 font-bold uppercase tracking-widest hover:text-primary transition-colors">
+            <Link href="/contact" className="text-xs text-foreground/50 font-bold uppercase tracking-widest hover:text-primary transition-colors">
                 Contact
             </Link>
             <Link href="/login" className="opacity-20 hover:opacity-100 transition-opacity text-foreground/50"

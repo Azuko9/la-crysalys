@@ -7,6 +7,14 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import type { Metadata } from "next";
 import { Toaster } from "react-hot-toast";
+import { Inter } from "next/font/google";
+
+// Configuration de la police optimisée
+const inter = Inter({ 
+  subsets: ["latin"],
+  display: "swap", // Évite le texte invisible pendant le chargement
+  variable: "--font-inter",
+});
 
 // Note: `revalidate = 0` force le rendu dynamique à chaque requête, désactivant le cache de page.
 // Si vous souhaitez un rendu statique (pour de meilleures performances), supprimez cette ligne
@@ -96,7 +104,7 @@ export default async function RootLayout({
           .rounded-dynamic { border-radius: var(--radius) !important; }
         `}} />
       </head>
-      <body className="bg-background text-foreground antialiased">
+      <body className={`${inter.className} bg-background text-foreground antialiased`}>
         <Header/>
         {/* Configuration globale des toasts (notifications) adaptées au thème sombre */}
         <Toaster 

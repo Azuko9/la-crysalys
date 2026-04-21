@@ -18,10 +18,23 @@ interface ProjectCardProps {
 export function ProjectCard({ projet, user, onEdit, onDeleteSuccess, isVertical = false }: ProjectCardProps) {
   const videoId = getYouTubeID(projet.youtube_url);
   
-  const categoriesList = Array.isArray(projet.category) ? projet.category : [];
+  // Gère la transition entre l'ancien tableau texte et la nouvelle relation Many-to-Many
+  const rawCategories = (projet as any).portfolio_item_categories;
+  const mappedCategories = Array.isArray(rawCategories) 
+    ? rawCategories.map((c: any) => c.categories?.name).filter(Boolean) 
+    : [];
+
+  const rawOldCategory = projet.category as any;
+  let oldCategories: string[] = [];
+  if (Array.isArray(rawOldCategory)) {
+    oldCategories = rawOldCategory;
+  } else if (typeof rawOldCategory === 'string' && rawOldCategory.length > 0) {
+    oldCategories = rawOldCategory.replace(/^\{|\}$/g, '').split(',').map((s: string) => s.replace(/^"|"$/g, '').trim());
+  }
+  const categoriesList = oldCategories.length > 0 ? oldCategories : mappedCategories;
 
   return (
-    <div className="bg-card border border-zinc-800 rounded-dynamic overflow-hidden group transition-all relative flex flex-col h-full">
+    <div className="bg-card border border-zinc-800 rounded-dynamic overflow-hidden group transition-all relative flex flex-col h-full hover:-translate-y-1 hover:shadow-2xl hover:shadow-primary/20 duration-300 ease-out">
       <Link href={`/realisations/${projet.id}`} className="block focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background rounded-t-dynamic">
       <div className={`relative ${isVertical ? 'aspect-[9/16]' : 'aspect-video'} bg-black overflow-hidden w-full`}>
           {videoId && (
@@ -48,10 +61,10 @@ export function ProjectCard({ projet, user, onEdit, onDeleteSuccess, isVertical 
           />
         )}
       <div className="p-4 bg-card flex-1 flex flex-col justify-between">
-        <h3 className="font-black uppercase text-xs line-clamp-1 tracking-wider text-foreground group-hover:text-primary transition-colors">{projet.title}</h3>
+        <h3 className="font-black uppercase text-sm line-clamp-1 tracking-wider text-foreground group-hover:text-primary transition-colors">{projet.title}</h3>
         <div className="flex flex-wrap gap-1 mt-3">
           {categoriesList.map((cat, i) => (
-            <span key={i} className="text-[8px] bg-transparent border border-primary text-primary px-2 py-0.5 rounded uppercase font-bold tracking-wide">{cat}</span>
+            <span key={i} className="text-xs bg-transparent border border-primary text-primary px-2 py-0.5 rounded uppercase font-bold tracking-wide">{cat}</span>
           ))}
         </div>
       </div>

@@ -15,16 +15,24 @@ export default function Home() {
   // Définition des données structurées de ton agence pour Google (JSON-LD)
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'VideoGallery',
-    name: 'La Crysalys',
-    url: 'https://la-crysalys.vercel.app/',
-    logo: 'https://la-crysalys.vercel.app/Logo/logo_v_blanc.png',
-    description: 'Production audiovisuelle, expertise drone et post-production de haut niveau.',
-    telephone: '+33676130827',
-    address: {
+    '@type': 'ProfessionalService', // Type plus général pour les services
+    'name': 'La Crysalys',
+    'image': 'https://la-crysalys.vercel.app/og-image.jpg',
+    '@id': 'https://la-crysalys.vercel.app/',
+    'url': 'https://la-crysalys.vercel.app/',
+    'telephone': '+33676130827',
+    'priceRange': '€€', // Indique une gamme de prix moyenne
+    'address': {
       '@type': 'PostalAddress',
-      addressCountry: 'FR',
-    }
+      'addressCountry': 'FR'
+    },
+    'description': 'Agence de production audiovisuelle spécialisée dans la création de contenu cinématographique, la post-production et les prises de vues par drone.',
+    name: 'La Crysalys',
+    'makesOffer': [ // Liste tes services principaux
+      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Production Vidéo' } },
+      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Prises de vues par Drone' } },
+      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Post-Production & VFX' } }
+    ]
   };
 
   return (

@@ -40,9 +40,9 @@ export default function MentionsLegales() {
             {/* IMPORTANT: Vous devez remplacer les informations ci-dessous par les vôtres. */}
             <ul className="space-y-2 list-disc pl-5">
               <li><strong>Propriétaire :</strong> CRYSALYS PRODUCTION</li>
-              <li><strong>Adresse :</strong> [À COMPLÉTER : Votre adresse postale complète]</li>
+              <li><strong>Adresse :</strong> 1 LOT OLASOGARAIA , 64240 HASPARREN</li>
               <li><strong>Contact :</strong> Crysalys_production@outlook.fr- 06 76 13 08 27</li>
-              <li><strong>Identification :</strong> SIRET : [À COMPLÉTER : Votre numéro de SIRET si applicable]</li>
+              <li><strong>Identification :</strong> SIRET : 95314312000012</li>
               <li><strong>Site créé par :</strong>  Jean-Luc CAZALAA-ARRIBES</li>
             </ul>
           </section>

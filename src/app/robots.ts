@@ -1,14 +1,14 @@
 import { MetadataRoute } from 'next';
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = 'https://la-crysalys.vercel.app';
-
   return {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: ['/admin/', '/api/admin/'], // Interdit aux robots d'indexer ton interface d'administration
+      // On interdit aux robots d'indexer l'interface d'administration
+      disallow: ['/admin/', '/api/'], 
     },
-    sitemap: `${baseUrl}/sitemap.xml`,
+    // Indique l'URL du sitemap généré automatiquement
+    sitemap: 'https://la-crysalys.vercel.app/sitemap.xml',
   };
 }

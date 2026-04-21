@@ -25,7 +25,7 @@ export interface Project {
   postprod_before_url: string | null;
   postprod_after_url: string | null;
   postprod_main_description: string | null;
-  category: string;
+  category: string[];
 }
 
 export interface TeamMember {

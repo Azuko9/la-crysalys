@@ -25,7 +25,7 @@ export interface Project {
   client_logo_path: string | null;
   postprod_before_path: string | null;
   postprod_after_path: string | null;
-  category: string;
+  category: string[];
 }
 
 export interface TeamMember {
@@ -64,4 +64,3 @@ export interface ContactMessage {
 }
 
 // ... vos autres types existants (Project, TeamMember, etc.)
-

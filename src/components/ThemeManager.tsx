@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { Palette, Save, Box, Droplets, RotateCcw, Bookmark, Download, CheckCircle } from "lucide-react";
+import { Palette, Save, Box, Droplets, RotateCcw, Bookmark, Download, CheckCircle, AlertTriangle } from "lucide-react";
 import { saveSiteSettingsAction } from "@/lib/actions";
 import toast from "react-hot-toast";
 
@@ -12,6 +12,25 @@ type ThemeSettings = {
   card_bg: string;
   text_color: string;
 };
+
+// Utilitaires pour calculer le contraste (Accessibilité WCAG)
+function getLuminance(hex: string) {
+  if (!hex) return 0;
+  const rgb = hex.replace('#', '').padEnd(6, '0');
+  const r = parseInt(rgb.substring(0, 2), 16) / 255;
+  const g = parseInt(rgb.substring(2, 4), 16) / 255;
+  const b = parseInt(rgb.substring(4, 6), 16) / 255;
+  const a = [r, g, b].map(v => v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4));
+  return a[0] * 0.2126 + a[1] * 0.7152 + a[2] * 0.0722;
+}
+
+function getContrastRatio(c1: string, c2: string) {
+  const lum1 = getLuminance(c1);
+  const lum2 = getLuminance(c2);
+  const brightest = Math.max(lum1, lum2);
+  const darkest = Math.min(lum1, lum2);
+  return (brightest + 0.05) / (darkest + 0.05);
+}
 
 export default function ThemeManager() {
   const [settings, setSettings] = useState<ThemeSettings>({
@@ -109,11 +128,15 @@ export default function ThemeManager() {
     });
   };
 
+  // Vérification de l'accessibilité
+  const contrastRatio = getContrastRatio(settings.bg_color, settings.text_color);
+  const isLowContrast = contrastRatio < 4.5;
+
   const ColorField = ({ label, value, id }: { label: string, value: string, id: keyof ThemeSettings }) => (
     <div className="flex justify-between items-center group bg-black/20 p-2 rounded-dynamic border border-transparent hover:border-zinc-700 transition-all">
-      <label htmlFor={id} className="text-[10px] font-bold text-foreground/70 uppercase group-hover:text-foreground transition-colors">{label}</label>
+      <label htmlFor={id} className="text-xs font-bold text-foreground/70 uppercase group-hover:text-foreground transition-colors">{label}</label>
       <div className="flex items-center gap-2">
-        <span className="text-[9px] font-mono text-foreground/40 uppercase">{value}</span>
+        <span className="text-xs font-mono text-foreground/40 uppercase">{value}</span>
         <input id={id} type="color" value={value} 
           onChange={(e) => setSettings({...settings, [id]: e.target.value})}
           className="w-8 h-8 bg-transparent cursor-pointer rounded overflow-hidden border-none" />
@@ -130,10 +153,10 @@ export default function ThemeManager() {
           <Palette className="text-primary" size={24} />
           <div>
              <h2 className="text-xl font-black uppercase italic tracking-tighter text-foreground">Theme_Lab</h2>
-             <p className="text-[9px] text-foreground/50 font-bold uppercase tracking-widest">Constructeur d&apos;identité visuelle</p>
+             <p className="text-xs text-foreground/50 font-bold uppercase tracking-widest">Constructeur d&apos;identité visuelle</p>
           </div>
         </div>
-        <button onClick={handleReset} className="flex items-center gap-2 text-[10px] font-bold uppercase text-foreground/40 hover:text-foreground transition-colors">
+        <button onClick={handleReset} className="flex items-center gap-2 text-xs font-bold uppercase text-foreground/40 hover:text-foreground transition-colors">
           <RotateCcw size={12} /> Reset Editor
         </button>
       </div>
@@ -141,7 +164,15 @@ export default function ThemeManager() {
       {/* CONTROLS */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-12">
         <div className="space-y-6">
-          <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary flex items-center gap-2"><Droplets size={14}/> Colorimétrie</h3>
+          <h3 className="text-xs font-black uppercase tracking-[0.3em] text-primary flex items-center gap-2"><Droplets size={14}/> Colorimétrie</h3>
+          
+          {isLowContrast && (
+            <div className="flex items-start gap-2 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg text-amber-500 text-xs font-bold">
+              <AlertTriangle size={16} className="shrink-0" />
+              Le contraste entre le texte et le fond est trop faible ({contrastRatio.toFixed(1)}:1). Cela peut rendre le site illisible.
+            </div>
+          )}
+
           <div className="space-y-2">
              <ColorField label="Couleur de fond" value={settings.bg_color} id="bg_color" />
              <ColorField label="Couleur des fenêtres" value={settings.card_bg} id="card_bg" />
@@ -151,9 +182,9 @@ export default function ThemeManager() {
         </div>
 
         <div className="space-y-6">
-          <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-500 flex items-center gap-2"><Box size={14}/> Structure</h3>
+          <h3 className="text-xs font-black uppercase tracking-[0.3em] text-blue-500 flex items-center gap-2"><Box size={14}/> Structure</h3>
           <div className="bg-black/20 p-4 rounded-dynamic border border-transparent hover:border-zinc-700 transition-all">
-            <div className="flex justify-between text-[10px] text-foreground/70 font-bold uppercase mb-4">
+            <div className="flex justify-between text-xs text-foreground/70 font-bold uppercase mb-4">
           <label htmlFor="border_radius">niveau des arrondis</label>
               <span className="text-foreground bg-card px-2 py-0.5 rounded">{settings.border_radius}</span>
             </div>
@@ -166,7 +197,7 @@ export default function ThemeManager() {
 
       {/* ACTION PRINCIPALE */}
       <div className="bg-card/30 p-6 rounded-dynamic border border-zinc-800 mb-12 text-center">
-         <p className="text-[10px] text-foreground/50 uppercase tracking-widest mb-4">Cette action modifie l&apos;apparence par défaut pour tous les visiteurs</p>
+         <p className="text-xs text-foreground/50 uppercase tracking-widest mb-4">Cette action modifie l&apos;apparence par défaut pour tous les visiteurs</p>
          <button onClick={() => saveToDatabase(settings)} className="w-full bg-primary hover:bg-white text-black font-black py-4 rounded-dynamic uppercase text-xs tracking-[0.3em] transition-all flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(34,197,94,0.2)] hover:shadow-[0_0_30px_rgba(255,255,255,0.3)]">
             <CheckCircle size={18}/> Appliquer au Site (Global)
          </button>
@@ -174,7 +205,7 @@ export default function ThemeManager() {
 
       {/* SECTION PROFILS / PRESETS */}
       <div className="pt-8 border-t border-zinc-800">
-        <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground/50 mb-8 flex items-center gap-2">
+        <h3 className="text-xs font-black uppercase tracking-[0.3em] text-foreground/50 mb-8 flex items-center gap-2">
           <Bookmark size={14}/> Presets (Mémoire Footer)
         </h3>
         
@@ -184,7 +215,7 @@ export default function ThemeManager() {
             return (
               <div key={num} className="flex flex-col gap-4 p-5 bg-black/40 border border-zinc-800 rounded-dynamic relative group overflow-hidden hover:border-zinc-600 transition-all">
                 <div className="flex justify-between items-center">
-                  <span className="text-[10px] font-black text-foreground/50 group-hover:text-foreground uppercase tracking-widest transition-colors">Preset 0{num}</span>
+                  <span className="text-xs font-black text-foreground/50 group-hover:text-foreground uppercase tracking-widest transition-colors">Preset 0{num}</span>
                 </div>
 
                 {/* APERÇU VISUEL */}
@@ -194,18 +225,18 @@ export default function ThemeManager() {
                       <div className="w-1/4" style={{ backgroundColor: p.bg_color }} title="Fond" />
                       <div className="w-1/4" style={{ backgroundColor: p.card_bg }} title="Cartes" />
                       <div className="w-1/4" style={{ backgroundColor: p.primary_color }} title="Accent" />
-                      <div className="w-1/4 flex items-center justify-center font-serif text-[10px]" style={{ backgroundColor: p.bg_color, color: p.text_color || '#ffffff' }} title="Texte">Aa</div>
+                      <div className="w-1/4 flex items-center justify-center font-serif text-xs" style={{ backgroundColor: p.bg_color, color: p.text_color || '#ffffff' }} title="Texte">Aa</div>
                     </>
                   ) : (
-                    <div className="w-full bg-cardflex items-center justify-center text-[8px] text-foreground/30 uppercase italic">Vide</div>
+                    <div className="w-full bg-card flex items-center justify-center text-xs text-foreground/30 uppercase italic">Vide</div>
                   )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 mt-2">
-                  <button onClick={() => handleLoadProfile(num)} className="bg-card hover:bg-white hover:text-black py-2 text-[8px] font-black uppercase rounded transition flex items-center justify-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed" disabled={!p}>
+                  <button onClick={() => handleLoadProfile(num)} className="bg-card hover:bg-white hover:text-black py-2 text-xs font-black uppercase rounded transition flex items-center justify-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed" disabled={!p}>
                     <Download size={10}/> Charger
                   </button>
-                  <button onClick={() => handleSaveProfile(num)} className="bg-card hover:bg-primary hover:text-black py-2 text-[8px] font-black uppercase rounded transition flex items-center justify-center gap-1" title="Écraser ce preset avec les réglages actuels">
+                  <button onClick={() => handleSaveProfile(num)} className="bg-card hover:bg-primary hover:text-black py-2 text-xs font-black uppercase rounded transition flex items-center justify-center gap-1" title="Écraser ce preset avec les réglages actuels">
                     <Save size={10}/> Sauver
                   </button>
                 </div>

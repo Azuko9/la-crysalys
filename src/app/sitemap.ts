@@ -1,41 +1,39 @@
 import { MetadataRoute } from 'next';
-import { createClient } from '@supabase/supabase-js';
-
-// On utilise le client anonyme juste pour lire les IDs publics
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+import { createSupabaseServerClient } from "@/app/server";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://la-crysalys.vercel.app';
+  
+  // URLs statiques de base
+  const staticRoutes: MetadataRoute.Sitemap = [
+    { url: baseUrl, lastModified: new Date(), changeFrequency: 'weekly', priority: 1 },
+    { url: `${baseUrl}/expertise`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${baseUrl}/postprod`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${baseUrl}/realisations`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.9 },
+    { url: `${baseUrl}/equipe`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${baseUrl}/contact`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.8 },
+  ];
 
-  // 1. Les pages statiques de ton site
-  const staticRoutes = [
-    '',
-    '/expertise',
-    '/realisations',
-    '/equipe',
-    '/postprod',
-    '/contact',
-    '/mentions-legales',
-  ].map((route) => ({
-    url: `${baseUrl}${route}`,
-    lastModified: new Date(),
-    changeFrequency: 'monthly' as const,
-    priority: route === '' ? 1 : 0.8, // La page d'accueil est la priorité absolue (1.0)
-  }));
+  try {
+    const supabase = createSupabaseServerClient();
+    // On récupère seulement l'ID et la date de mise à jour de tous les projets
+    const { data: projects } = await supabase
+      .from('portfolio_items')
+      .select('id, project_date')
+      .order('project_date', { ascending: false });
 
-  // 2. Les pages dynamiques (Tes réalisations/projets)
-  const { data: projects } = await supabase
-    .from('portfolio_items')
-    .select('id, created_at');
+    if (!projects) return staticRoutes;
 
-  const dynamicRoutes = (projects || []).map((project) => ({
-    url: `${baseUrl}/realisations/${project.id}`,
-    lastModified: new Date(project.created_at || new Date()),
-    changeFrequency: 'yearly' as const,
-    priority: 0.6,
-  }));
+    // On génère une URL pour chaque projet dynamique
+    const projectRoutes: MetadataRoute.Sitemap = projects.map((project) => ({
+      url: `${baseUrl}/realisations/${project.id}`,
+      lastModified: new Date(project.project_date),
+      changeFrequency: 'monthly',
+      priority: 0.7,
+    }));
 
-  return [...staticRoutes, ...dynamicRoutes];
+    return [...staticRoutes, ...projectRoutes];
+  } catch (e) {
+    return staticRoutes;
+  }
 }

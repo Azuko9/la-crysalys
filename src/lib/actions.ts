@@ -8,6 +8,7 @@ import { createClient } from '@supabase/supabase-js';
 import type { Project, TeamMember, Feature, Category, PostProdDetail } from '@/types';
 import { z } from 'zod';
 import { ProjectSchema, ContactFormSchema } from './schemas';
+import { BUCKETS } from './constants';
 
 // Vérification des variables d'environnement pour le client admin Supabase
 const supabaseUrl: string = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
@@ -167,7 +168,22 @@ export async function saveProjectAction(
     return { success: false, error: "Les données du projet sont invalides.", details: validatedPayload.error.flatten() };
   }
 
+  // SÉCURITÉ ABSOLUE : On garde l'insertion dans l'ancienne colonne 'category' 
+  // Elle sert de cache de secours si la table Many-to-Many échoue
   const dataToSave = { ...validatedPayload.data };
+  let categoryNames = validatedPayload.data.category || [];
+
+  // --- AUTO-CATÉGORISATION INTELLIGENTE ---
+  // Si l'utilisateur a rempli des détails Drone, on assigne la catégorie automatiquement
+  if (dataToSave.description_drone && dataToSave.description_drone.trim() !== "") {
+    if (!categoryNames.some((c: string) => c.toLowerCase() === 'drone')) categoryNames.push("Drone");
+  }
+  // Si l'utilisateur a rempli des détails Post-Prod, on assigne la catégorie automatiquement
+  if (dataToSave.postprod_main_description && dataToSave.postprod_main_description.trim() !== "") {
+    if (!categoryNames.some((c: string) => c.toLowerCase() === 'post-prod')) categoryNames.push("Post-Prod");
+  }
+  
+  dataToSave.category = categoryNames;
 
   try {
     let result;
@@ -185,7 +201,7 @@ export async function saveProjectAction(
          for (const path of oldPaths) {
            if (!newPaths.includes(path)) {
              // Sécurité: Utiliser startsWith sur le dossier racine pour éviter les faux positifs dans le nom du fichier
-             const bucket = path.startsWith('projects/logos/') ? 'logos' : 'postprod-images';
+             const bucket = path.startsWith('projects/logos/') ? BUCKETS.LOGOS : BUCKETS.POSTPROD_IMAGES;
              serverComputedImagesToDelete.push({ bucket, path });
            }
          }
@@ -202,6 +218,26 @@ export async function saveProjectAction(
       return { success: false, error: "Une erreur est survenue lors de la sauvegarde du projet." };
     }
 
+    // --- LOGIQUE MANY-TO-MANY (CATÉGORIES) ---
+    if (result.data?.id) {
+       // 1. On vide les anciennes relations de ce projet
+       await supabaseAdmin.from('portfolio_item_categories').delete().eq('project_id', result.data.id);
+       
+       // 2. S'il y a de nouvelles catégories, on les recrée
+       if (categoryNames && categoryNames.length > 0) {
+          const { data: cats } = await supabaseAdmin.from('categories').select('id').in('name', categoryNames);
+          if (cats && cats.length > 0) {
+             const relations = cats.map(cat => ({
+                project_id: result.data.id,
+                category_id: cat.id
+             }));
+             const { error: relError } = await supabaseAdmin.from('portfolio_item_categories').insert(relations);
+             if (relError) {
+                 console.error("Erreur lors de l'insertion des relations de catégories:", relError.message);
+             }
+          }
+       }
+    }
 
     revalidatePath('/realisations');
     revalidatePath('/admin');
@@ -236,7 +272,7 @@ export async function deleteProjectAction(projectId: string) {
     if (oldProject) {
       const pathsToDelete = extractProjectImagePaths(oldProject);
       const imagesToDelete = pathsToDelete.map(path => {
-        const bucket = path.startsWith('projects/logos/') ? 'logos' : 'postprod-images';
+        const bucket = path.startsWith('projects/logos/') ? BUCKETS.LOGOS : BUCKETS.POSTPROD_IMAGES;
         return { bucket, path };
       });
       if (imagesToDelete.length > 0) await deleteImagesFromStorage(imagesToDelete);
@@ -309,22 +345,8 @@ export async function saveCategoryAction(
         throw new Error("Une erreur est survenue lors de la mise à jour de la catégorie.");
       }
 
-      // 3. Mettre à jour tous les projets qui utilisent l'ancien nom de catégorie
-      const { data: projectsToUpdate, error: fetchProjectsError } = await supabaseAdmin
-        .from('portfolio_items')
-        .select('id, category')
-        .contains('category', [oldName]);
-
-      if (fetchProjectsError) { // Log détaillé, message générique
-        console.warn(`Avertissement: La catégorie a été renommée, mais une erreur est survenue lors de la recherche des projets à mettre à jour: ${fetchProjectsError.message}`);
-      } else if (projectsToUpdate && projectsToUpdate.length > 0) {
-        const updates = projectsToUpdate
-          .map(project => {
-            const newTags = (project.category as string[] || []).map((t: string) => t === oldName ? newName : t);
-            return supabaseAdmin.from('portfolio_items').update({ category: newTags }).eq('id', project.id);
-          });
-        await Promise.all(updates);
-      }
+      // PLUS BESOIN de cascade ! Grâce à la relation M2M par ID, la mise à jour de la table `categories` 
+      // se répercute instantanément sur tous les projets liés.
       
       revalidatePath('/admin');
       revalidatePath('/realisations');
@@ -352,11 +374,11 @@ export async function deleteCategoryAction(categoryId: string, categoryName: str
     if (!categoryId) {
       return { success: false, error: 'ID de catégorie manquant.' };
     }
-    // Étape 1: Récupérer les projets qui utilisent cette catégorie via une recherche stricte.
+    // Étape 1: Vérifier si des projets utilisent cette catégorie via la table de jonction
     const { data: projectsUsingCategory, error: checkError } = await supabaseAdmin
-      .from('portfolio_items')
-      .select('id, category')
-      .contains('category', [categoryName]);
+      .from('portfolio_item_categories')
+      .select('project_id')
+      .eq('category_id', categoryId);
 
     if (checkError) { // Log détaillé, message générique
       console.error("Erreur Supabase lors de la vérification des projets liés à la catégorie:", checkError.message);
@@ -467,7 +489,7 @@ export async function saveTeamMemberAction(
         
         // SÉCURITÉ (IDOR) : Si la photo a été remplacée ou supprimée, on l'efface du stockage
         if (!error && oldMember?.photo_path && oldMember.photo_path !== payload.photo_path) {
-            await deleteImagesFromStorage([{ bucket: 'team-photos', path: oldMember.photo_path }]);
+            await deleteImagesFromStorage([{ bucket: BUCKETS.TEAM_PHOTOS, path: oldMember.photo_path }]);
         }
         if (error) {
           console.error("Erreur Supabase lors de la sauvegarde du membre de l'équipe:", error.message);
@@ -499,7 +521,7 @@ export async function deleteTeamMemberAction(memberId: string) {
           throw new Error(`Impossible de récupérer le membre à supprimer.`);
         }
         if (member?.photo_path) {
-            await deleteImagesFromStorage([{ bucket: 'team-photos', path: member.photo_path }]);
+            await deleteImagesFromStorage([{ bucket: BUCKETS.TEAM_PHOTOS, path: member.photo_path }]);
         }
         const { error: dbError } = await supabaseAdmin.from('team_members').delete().eq('id', memberId);
         if (dbError) {
@@ -532,8 +554,8 @@ export async function sendContactMessageAction(formData: { nom: string; email: s
     // --- 2. SÉCURITÉ : RATE LIMITING BASÉ SUR L'IP ---
     const ip = headers().get('x-forwarded-for') || 'unknown';
     const now = Date.now();
-    const limitInfo = rateLimitMap.get(ip) || { count: 0, lastReset: now };
 
+    const limitInfo = rateLimitMap.get(ip) || { count: 0, lastReset: now };
     if (now - limitInfo.lastReset > RATE_LIMIT_WINDOW) {
         limitInfo.count = 1;
         limitInfo.lastReset = now;

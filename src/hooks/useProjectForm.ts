@@ -21,7 +21,7 @@ const emptyFormData: ProjectFormDataType = {
   client_logo_path: null,
   postprod_before_path: null,
   postprod_after_path: null,
-  category: [] as any, // "any" temporaire le temps de la mise à jour manuelle de types.ts
+  category: [],
 };
 
 const getFinalCategories = (
@@ -82,7 +82,7 @@ export function useProjectForm(project: Project | null, isOpen: boolean, onSucce
           client_logo_path: project.client_logo_path || null,
           postprod_before_path: project.postprod_before_path || null,
           postprod_after_path: project.postprod_after_path || null,
-          category: project.category || ([] as any),
+          category: project.category || [],
         });
 
         const tags = Array.isArray(project.category) ? project.category : [];
@@ -144,7 +144,7 @@ export function useProjectForm(project: Project | null, isOpen: boolean, onSucce
     setFormErrors([]);
     setServerError(null);
 
-    const dataToSave = { ...formData, category: getFinalCategories(selectedCats, formData) as any };
+    const dataToSave = { ...formData, category: getFinalCategories(selectedCats, formData) };
     const clientValidation = ProjectSchema.safeParse(dataToSave);
     
     if (!clientValidation.success) {

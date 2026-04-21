@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { XCircle, Instagram, Linkedin, AlignLeft, Users, Handshake, UploadCloud, Loader2, Trash2, Save, Building2, Globe, Mail } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { saveTeamMemberAction, rollbackUploadsAction } from "@/lib/actions";
 import type { TeamMember } from "@/types";
 import { uploadFileAndGetPath } from "@/lib/clientUploadHelpers"; // Import de la fonction d'upload
+import { BUCKETS } from "@/lib/constants";
 import toast from "react-hot-toast";
 
 interface TeamModalProps {
@@ -23,6 +24,7 @@ const TeamModal: React.FC<TeamModalProps> = ({ isOpen, member, onClose, onSucces
   const [error, setError] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null); // Fichier sélectionné pour upload
   const [isUploading, setIsUploading] = useState(false); // État d'upload
+  const modalRef = useRef<HTMLDivElement>(null);
   
   const [formData, setFormData] = useState<TeamMemberFormDataType>({
     name: "",
@@ -73,6 +75,32 @@ const TeamModal: React.FC<TeamModalProps> = ({ isOpen, member, onClose, onSucces
     }
   }, [member, isOpen, defaultType]);
 
+  // --- GESTION DU FOCUS (ACCESSIBILITÉ) ---
+  useEffect(() => {
+    if (isOpen && modalRef.current) {
+      const focusableElements = modalRef.current.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      const handleTabKeyPress = (e: KeyboardEvent) => {
+        if (e.key === 'Tab') {
+          if (e.shiftKey && document.activeElement === firstElement) {
+            e.preventDefault();
+            lastElement.focus();
+          } else if (!e.shiftKey && document.activeElement === lastElement) {
+            e.preventDefault();
+            firstElement.focus();
+          }
+        }
+      };
+
+      document.addEventListener('keydown', handleTabKeyPress);
+      return () => document.removeEventListener('keydown', handleTabKeyPress);
+    }
+  }, [isOpen]);
+
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -102,7 +130,7 @@ const TeamModal: React.FC<TeamModalProps> = ({ isOpen, member, onClose, onSucces
     // 1. Upload de la nouvelle image si un fichier est sélectionné
     if (photoFile) {
       setIsUploading(true);
-      const path = await uploadFileAndGetPath(photoFile, 'team-photos', 'team_members/');
+      const path = await uploadFileAndGetPath(photoFile, BUCKETS.TEAM_PHOTOS, 'team_members/');
       setIsUploading(false);
       if (!path) {
         setError("Échec de l'upload de la photo.");
@@ -126,7 +154,7 @@ const TeamModal: React.FC<TeamModalProps> = ({ isOpen, member, onClose, onSucces
       } else {
         // ROLLBACK : On supprime la photo du bucket si la BDD la refuse
         if (isNewUpload && finalPhotoPath) {
-          await rollbackUploadsAction([{ bucket: 'team-photos', path: finalPhotoPath }]);
+          await rollbackUploadsAction([{ bucket: BUCKETS.TEAM_PHOTOS, path: finalPhotoPath }]);
         }
         setError('error' in result ? String(result.error) : "Une erreur est survenue lors de la sauvegarde.");
       }
@@ -134,7 +162,7 @@ const TeamModal: React.FC<TeamModalProps> = ({ isOpen, member, onClose, onSucces
       console.error("Erreur réseau lors de la sauvegarde du membre:", err);
       // ROLLBACK : En cas de crash réseau (WiFi perdu au moment du clic)
       if (isNewUpload && finalPhotoPath) {
-         await rollbackUploadsAction([{ bucket: 'team-photos', path: finalPhotoPath }]);
+         await rollbackUploadsAction([{ bucket: BUCKETS.TEAM_PHOTOS, path: finalPhotoPath }]);
       }
       setError("Une erreur réseau inattendue est survenue.");
       setLoading(false);
@@ -148,12 +176,12 @@ const TeamModal: React.FC<TeamModalProps> = ({ isOpen, member, onClose, onSucces
   const currentPhotoPublicUrl = photoFile 
     ? URL.createObjectURL(photoFile) 
     : formData.photo_path
-      ? supabase.storage.from('team-photos').getPublicUrl(formData.photo_path).data.publicUrl
+      ? supabase.storage.from(BUCKETS.TEAM_PHOTOS).getPublicUrl(formData.photo_path).data.publicUrl
       : "";
 
   return (
     <div className="fixed inset-0 z-[100] flex items-start justify-center bg-background/95 p-4 backdrop-blur-xl animate-in fade-in duration-300 overflow-y-auto">
-      <div className="bg-card border border-zinc-800 p-8 rounded-[2.5rem] w-full max-w-2xl shadow-2xl my-8 text-foreground relative">
+      <div ref={modalRef} className="bg-card border border-zinc-800 p-8 rounded-[2.5rem] w-full max-w-2xl shadow-2xl my-8 text-foreground relative">
         
         <div className="flex justify-between items-center mb-8 border-b border-zinc-800 pb-6">
           <h3 className="text-3xl font-black italic uppercase tracking-tighter text-primary">
@@ -173,24 +201,24 @@ const TeamModal: React.FC<TeamModalProps> = ({ isOpen, member, onClose, onSucces
           {/* LIGNE 1 : NOM & RÔLE */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-                <label htmlFor="name" className="text-[10px] font-bold text-foreground/50 uppercase ml-1">Nom Complet</label>
+                <label htmlFor="name" className="text-xs font-bold text-foreground/50 uppercase ml-1">Nom Complet</label>
                 <input id="name" type="text" name="name" required placeholder="ex: Jean Dupont" className="w-full bg-background border border-zinc-800 p-4 rounded-dynamic outline-none focus:border-primary font-bold text-lg" value={formData.name} onChange={handleChange} />
             </div>
             <div className="space-y-2">
-                <label htmlFor="role" className="text-[10px] font-bold text-foreground/50 uppercase ml-1">{isPartner ? 'Service / Spécialité' : 'Rôle'}</label>
+                <label htmlFor="role" className="text-xs font-bold text-foreground/50 uppercase ml-1">{isPartner ? 'Service / Spécialité' : 'Rôle'}</label>
                 <input id="role" type="text" name="role" required placeholder="ex: Location Caméra" className="w-full bg-background border border-zinc-800 p-4 rounded-dynamic outline-none focus:border-primary text-primary" value={formData.role} onChange={handleChange} />
             </div>
           </div>
 
           {/* NOUVEAU : NOM SOCIÉTÉ (Visible surtout pour les partenaires) */}
           <div className="space-y-2">
-             <label htmlFor="company" className="text-[10px] font-bold text-foreground/50 uppercase ml-1 flex items-center gap-2"><Building2 size={14}/> Nom de la Société (Optionnel)</label>
+             <label htmlFor="company" className="text-xs font-bold text-foreground/50 uppercase ml-1 flex items-center gap-2"><Building2 size={14}/> Nom de la Société (Optionnel)</label>
              <input id="company" type="text" name="company" placeholder="ex: Studio Alpha" className="w-full bg-background border border-zinc-800 p-4 rounded-dynamic outline-none focus:border-primary text-foreground" value={formData.company || ""} onChange={handleChange} />
           </div>
 
           {/* UPLOAD IMAGE */}
           <div className="space-y-2">
-             <label htmlFor="photoFile" className="text-[10px] font-bold text-foreground/50 uppercase ml-1">Photo Portrait (Format Image)</label>
+             <label htmlFor="photoFile" className="text-xs font-bold text-foreground/50 uppercase ml-1">Photo Portrait (Format Image)</label>
              {currentPhotoPublicUrl ? (
                 <div className="relative w-full h-64 rounded-dynamic overflow-hidden border border-zinc-700 group">
                    {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -219,7 +247,7 @@ const TeamModal: React.FC<TeamModalProps> = ({ isOpen, member, onClose, onSucces
 
           {/* BIO */}
           <div className="space-y-2">
-            <label htmlFor="bio" className="text-[10px] font-bold text-foreground/50 uppercase ml-1 flex items-center gap-2"><AlignLeft size={14}/> Biographie / Description</label>
+            <label htmlFor="bio" className="text-xs font-bold text-foreground/50 uppercase ml-1 flex items-center gap-2"><AlignLeft size={14}/> Biographie / Description</label>
             <textarea id="bio" name="bio" rows={4} className="w-full bg-background border border-zinc-800 p-5 rounded-dynamic outline-none focus:border-white text-foreground/80 resize-none" value={formData.bio || ""} onChange={handleChange} />
           </div>
 
@@ -232,19 +260,19 @@ const TeamModal: React.FC<TeamModalProps> = ({ isOpen, member, onClose, onSucces
           {/* CONTACTS & RÉSEAUX */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-zinc-800 pt-6">
               <div className="space-y-1">
-                 <label htmlFor="email" className="text-[9px] font-bold text-foreground/40 uppercase ml-1 flex items-center gap-1"><Mail size={10}/> Email Pro</label>
+                 <label htmlFor="email" className="text-xs font-bold text-foreground/40 uppercase ml-1 flex items-center gap-1"><Mail size={12}/> Email Pro</label>
                  <input id="email" type="email" name="email" className="w-full bg-background border border-zinc-800 p-3 rounded-dynamic text-xs focus:border-primary outline-none" value={formData.email || ""} onChange={handleChange} />
               </div>
               <div className="space-y-1">
-                 <label htmlFor="website" className="text-[9px] font-bold text-foreground/40 uppercase ml-1 flex items-center gap-1"><Globe size={10}/> Site Web</label>
+                 <label htmlFor="website" className="text-xs font-bold text-foreground/40 uppercase ml-1 flex items-center gap-1"><Globe size={12}/> Site Web</label>
                  <input id="website" type="url" name="website" className="w-full bg-background border border-zinc-800 p-3 rounded-dynamic text-xs focus:border-primary outline-none" value={formData.website || ""} onChange={handleChange} />
               </div>
               <div className="space-y-1">
-                 <label htmlFor="instagram" className="text-[9px] font-bold text-foreground/40 uppercase ml-1 flex items-center gap-1"><Instagram size={10}/> Instagram</label>
+                 <label htmlFor="instagram" className="text-xs font-bold text-foreground/40 uppercase ml-1 flex items-center gap-1"><Instagram size={12}/> Instagram</label>
                  <input id="instagram" type="url" name="instagram" className="w-full bg-background border border-zinc-800 p-3 rounded-dynamic text-xs focus:border-primary outline-none" value={formData.instagram || ""} onChange={handleChange} />
               </div>
               <div className="space-y-1">
-                 <label htmlFor="linkedin" className="text-[9px] font-bold text-foreground/40 uppercase ml-1 flex items-center gap-1"><Linkedin size={10}/> LinkedIn</label>
+                 <label htmlFor="linkedin" className="text-xs font-bold text-foreground/40 uppercase ml-1 flex items-center gap-1"><Linkedin size={12}/> LinkedIn</label>
                  <input id="linkedin" type="url" name="linkedin" className="w-full bg-background border border-zinc-800 p-3 rounded-dynamic text-xs focus:border-primary outline-none" value={formData.linkedin || ""} onChange={handleChange} />
               </div>
           </div>

@@ -15,20 +15,32 @@ export const metadata: Metadata = {
 export default async function PostProdPage() {
   const supabase = createSupabaseServerClient();
 
-  // 1. Récupérer les projets qui ont la catégorie "Post-Prod"
-  const { data: projects, error: projectsError } = await supabase
+  // 1. Récupération hybride : on prend l'ancienne colonne ET la nouvelle relation Many-to-Many
+  let { data: allProjects, error: projectsError }: { data: any[] | null, error: any } = await supabase
     .from('portfolio_items')
-    // OPTIMISATION: Ne sélectionnez que les colonnes nécessaires pour cette page.
-    .select('id, title, youtube_url, postprod_main_description, postprod_before_path, postprod_after_path, description_postprod') // Correction pour utiliser _path
-    // CORRECTION : .contains() ne fonctionne que si la colonne 'category' est de type tableau (text[]).
-    // Rétablissement de .like() pour une compatibilité immédiate. La meilleure solution reste de migrer la colonne.
-    .like('category', '%Post-Prod%')
-    .not('postprod_main_description', 'is', null) // S'assurer qu'il y a une description
+    .select('id, title, youtube_url, postprod_main_description, postprod_before_path, postprod_after_path, description_postprod, category, portfolio_item_categories(categories(name))')
     .order('project_date', { ascending: false });
 
+  // SÉCURITÉ MAXIMALE : Si Supabase plante, on bascule sur la requête de secours (sans la table de liaison)
   if (projectsError) {
-    console.error("Erreur lors de la récupération des projets pour la page post-production:", projectsError);
+    console.warn("Erreur avec la nouvelle table de catégories, activation du mode secours :", projectsError.message);
+    const fallback = await supabase
+      .from('portfolio_items')
+      .select('id, title, youtube_url, postprod_main_description, postprod_before_path, postprod_after_path, description_postprod, category')
+      .order('project_date', { ascending: false });
+    allProjects = fallback.data;
   }
+
+  // 2. Filtrage intelligent côté serveur (Bulletproof)
+  const projects = allProjects?.filter(project => {
+    const oldCatStr = String(project.category || "").toLowerCase();
+    const newCatStr = JSON.stringify(project.portfolio_item_categories || []).toLowerCase();
+
+    const hasOldCat = oldCatStr.includes('post-prod') || oldCatStr.includes('postprod');
+    const hasNewCat = newCatStr.includes('post-prod') || newCatStr.includes('postprod');
+    const hasDescription = project.postprod_main_description && String(project.postprod_main_description).trim() !== "";
+    return (hasOldCat || hasNewCat) && hasDescription;
+  });
 
   return (
     <main className="min-h-screen bg-background text-foreground pt-32 pb-20">

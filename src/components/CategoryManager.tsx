@@ -98,7 +98,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, re
     <div className="max-w-7xl mx-auto mb-10 grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-4 duration-500">
       
       <div className="p-6 bg-card rounded-dynamic border border-zinc-800 shadow-2xl">
-        <h3 className="font-bold mb-6 flex items-center gap-2 text-primary uppercase text-[10px] tracking-[0.2em]">
+        <h3 className="font-bold mb-6 flex items-center gap-2 text-primary uppercase text-xs tracking-[0.2em]">
           <Tag size={16}/> Gestion des Métiers
         </h3>
 
@@ -121,7 +121,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, re
                     value={editValue}
                     onChange={(e) => setEditValue(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleUpdate(cat.id)}
-                    className="bg-card text-[10px] uppercase font-black px-2 py-1 rounded outline-none border border-primary w-24 text-foreground"
+                    className="bg-card text-xs uppercase font-black px-2 py-1 rounded outline-none border border-primary w-24 text-foreground"
                     disabled={loading?.type === 'update'}
                   />
                   {loading?.type === 'update' && loading.id === cat.id ? (
@@ -135,7 +135,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, re
                 </div>
               ) : (
                 <>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-foreground/70">
+                  <span className="text-xs font-black uppercase tracking-widest text-foreground/70">
                     {cat.name}
                   </span>
                   <div className="flex items-center gap-1 ml-2 border-l border-zinc-800 pl-2">
@@ -185,19 +185,19 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, re
       </div>
 
       <div className="p-6 bg-card rounded-dynamic border border-zinc-800 shadow-2xl opacity-60">
-        <h3 className="font-bold mb-4 flex items-center gap-2 text-blue-500 uppercase text-[10px] tracking-[0.2em]">
+        <h3 className="font-bold mb-4 flex items-center gap-2 text-blue-500 uppercase text-xs tracking-[0.2em]">
           <Layers size={16}/> Labels Systèmes
         </h3>
         <div className="flex gap-2 mb-6">
           {["Drone", "Post-Prod", "Short"].map(label => (
-            <div key={label} className="bg-blue-500/5 text-blue-400/50 border border-blue-500/10 px-3 py-2 rounded-xl text-[10px] font-black uppercase">
+            <div key={label} className="bg-blue-500/5 text-blue-400/50 border border-blue-500/10 px-3 py-2 rounded-xl text-xs font-black uppercase">
               {label}
             </div>
           ))}
         </div>
         <div className="flex items-start gap-3 p-4 bg-amber-500/5 border border-amber-500/10 rounded-dynamic text-amber-500/70">
             <AlertTriangle size={18} className="shrink-0" />
-            <p className="text-[10px] font-bold leading-relaxed uppercase tracking-tighter">
+            <p className="text-xs font-bold leading-relaxed uppercase tracking-tighter">
                 Sécurité active : La suppression d&apos;une catégorie est bloquée tant que des vidéos y sont rattachées pour éviter les erreurs d&apos;affichage sur le portfolio.
             </p>
         </div>

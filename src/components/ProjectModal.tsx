@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import { supabase } from "@/lib/supabaseClient";
 import type { Project, Category, PostProdDetail } from "@/types";
 import { useProjectForm } from "@/hooks/useProjectForm";
+import { BUCKETS } from "@/lib/constants";
 
 
 
@@ -63,7 +64,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ label, currentPath, curre
 
   return (
     <div className="space-y-2">
-      <label htmlFor={uniqueId} className={`text-[10px] font-bold uppercase ml-1 ${colorClass}`}>{label}</label>
+      <label htmlFor={uniqueId} className={`text-xs font-bold uppercase ml-1 ${colorClass}`}>{label}</label>
       {previewUrl ? ( 
         <div className="relative w-full h-32 rounded-dynamic overflow-hidden border border-zinc-700 group">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -77,7 +78,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ label, currentPath, curre
           <input id={uniqueId} type="file" accept="image/*" onChange={handleImageSelect} disabled={disabled} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
           <div className="absolute inset-0 flex flex-col items-center justify-center text-foreground/50 pointer-events-none">
             <UploadCloud size={28} className="mb-2 group-hover:text-primary transition-colors" />
-            <span className="text-[9px] font-bold uppercase tracking-widest">Glisser une image</span>
+            <span className="text-xs font-bold uppercase tracking-widest">Glisser une image</span>
           </div>
         </div>
       )}
@@ -113,7 +114,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
 
           {/* SECTION INFOS GÉNÉRALES */}
           <div className="space-y-4">
-            <p className="text-[10px] font-black text-foreground/50 uppercase tracking-widest ml-2">Informations Générales</p>
+            <p className="text-xs font-black text-foreground/50 uppercase tracking-widest ml-2">Informations Générales</p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="md:col-span-2">
             <input aria-label="Titre du projet"
@@ -123,7 +124,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
                 />
               </div>
               <div>
-            <label htmlFor="project_date" className="text-[9px] font-bold text-foreground/40 uppercase ml-1 flex items-center gap-1 mb-1"><Calendar size={10} /> Date de sortie</label>
+            <label htmlFor="project_date" className="text-xs font-bold text-foreground/40 uppercase ml-1 flex items-center gap-1 mb-1"><Calendar size={14} /> Date de sortie</label>
                 <input
               id="project_date" type="date" name="project_date" required
                   className="w-full bg-background border border-zinc-800 p-3 rounded-dynamic text-sm focus:border-zinc-500 text-foreground"
@@ -140,12 +141,12 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
 
           {/* CATÉGORIES */}
           <div className="space-y-3">
-            <p className="text-[10px] font-black text-foreground/50 uppercase tracking-widest ml-2">Tags Métiers</p>
+            <p className="text-xs font-black text-foreground/50 uppercase tracking-widest ml-2">Tags Métiers</p>
             <div className="flex flex-wrap gap-2 p-4 bg-background/50 border border-zinc-800 rounded-dynamic">
               {categories.map(cat => (
                 <button
                   key={cat.id} type="button" onClick={() => toggleCat(cat.name)}
-                  className={`px-4 py-1.5 rounded-full text-[10px] font-black border transition-all ${selectedCats.includes(cat.name) ? 'bg-primary border-primary text-black' : 'bg-card border-zinc-700 text-foreground/70 hover:border-zinc-500 hover:text-foreground'
+                  className={`px-4 py-1.5 rounded-full text-xs font-black border transition-all ${selectedCats.includes(cat.name) ? 'bg-primary border-primary text-black' : 'bg-card border-zinc-700 text-foreground/70 hover:border-zinc-500 hover:text-foreground'
                     }`}
                 >
                   {cat.name.toUpperCase()}
@@ -156,12 +157,12 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
 
           {/* SECTION CONTENU DÉTAILLÉ */}
           <div className="space-y-6">
-            <p className="text-[10px] font-black text-foreground/50 uppercase tracking-widest ml-2">Contenu Détaillé</p>
+            <p className="text-xs font-black text-foreground/50 uppercase tracking-widest ml-2">Contenu Détaillé</p>
 
             {/* DESCRIPTION GÉNÉRALE */}
             <div className="space-y-2">
           <label htmlFor="description" className="flex items-center gap-2 text-foreground/70 ml-2">
-                <AlignLeft size={14} /> <span className="text-[10px] font-bold uppercase tracking-widest">Contexte Général</span>
+                <AlignLeft size={14} /> <span className="text-xs font-bold uppercase tracking-widest">Contexte Général</span>
           </label>
               <textarea
             id="description" name="description"
@@ -175,7 +176,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
             {/* ZONE DRONE */}
             <div className="space-y-2">
           <label htmlFor="description_drone" className="flex items-center gap-2 text-blue-400 ml-2">
-                <Wind size={14} /> <span className="text-[10px] font-bold uppercase tracking-widest">Spécificités Drone</span>
+                <Wind size={14} /> <span className="text-xs font-bold uppercase tracking-widest">Spécificités Drone</span>
           </label>
               <textarea
             id="description_drone" name="description_drone"
@@ -189,7 +190,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
             {/* ZONE POST-PROD */}
             <div className="space-y-4 bg-purple-950/20 border border-purple-900/40 p-4 rounded-dynamic">
           <label htmlFor="postprod_main_description" className="flex items-center gap-2 text-purple-400 ml-2">
-                <Layers size={14} /> <span className="text-[10px] font-bold uppercase tracking-widest">Détails Post-Production</span>
+                <Layers size={14} /> <span className="text-xs font-bold uppercase tracking-widest">Détails Post-Production</span>
           </label>
               <textarea
             id="postprod_main_description" name="postprod_main_description"
@@ -207,7 +208,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
                   onFileSelect={setPostprodBeforeFile}
                   onClearPath={() => setFormData(prev => ({ ...prev, postprod_before_path: null }))}
               inputId="postprod_before_path"
-                  storageBucket="postprod-images"
+                  storageBucket={BUCKETS.POSTPROD_IMAGES}
                   colorClass="text-purple-400"
                 />
                 <ImageUploader
@@ -217,12 +218,12 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
                   onFileSelect={setPostprodAfterFile}
                   onClearPath={() => setFormData(prev => ({ ...prev, postprod_after_path: null }))}
               inputId="postprod_after_path"
-                  storageBucket="postprod-images"
+                  storageBucket={BUCKETS.POSTPROD_IMAGES}
                   colorClass="text-purple-400"
                 />
               </div>
 
-              <p className="text-[10px] font-bold text-purple-400/70 uppercase tracking-widest ml-2 pt-2 border-t border-purple-900/40">Étapes individuelles (optionnel)</p>
+              <p className="text-xs font-bold text-purple-400/70 uppercase tracking-widest ml-2 pt-2 border-t border-purple-900/40">Étapes individuelles (optionnel)</p>
 
               {/* Logo Client */}
               <ImageUploader
@@ -232,7 +233,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
                 onFileSelect={setClientLogoFile}
                 onClearPath={() => setFormData(prev => ({ ...prev, client_logo_path: null }))}
             inputId="client_logo_path"
-                storageBucket="logos"
+                storageBucket={BUCKETS.LOGOS}
                 colorClass="text-foreground/70"
               />
               {isPostProdDetailsDisabled && (
@@ -264,7 +265,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
                       onFileSelect={(file) => handleDetailFileChange(index, 'before', file)}
                       onClearPath={() => handlePostprodChange(index, 'before_path', null)}
                   inputId={`detail-before-${index}`}
-                      storageBucket="postprod-images"
+                      storageBucket={BUCKETS.POSTPROD_IMAGES}
                       disabled={isPostProdDetailsDisabled}
                       colorClass="text-purple-400"
                     />
@@ -275,7 +276,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
                       onFileSelect={(file) => handleDetailFileChange(index, 'after', file)}
                       onClearPath={() => handlePostprodChange(index, 'after_path', null)}
                   inputId={`detail-after-${index}`}
-                      storageBucket="postprod-images"
+                      storageBucket={BUCKETS.POSTPROD_IMAGES}
                       disabled={isPostProdDetailsDisabled}
                       colorClass="text-purple-400"
                     />
@@ -298,14 +299,14 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
 
           {/* INFO CLIENT & DATE */}
           <div className="space-y-4 border-t border-zinc-800 pt-6">
-            <p className="text-[10px] font-black text-foreground/50 uppercase tracking-widest ml-2">Informations Client</p>
+            <p className="text-xs font-black text-foreground/50 uppercase tracking-widest ml-2">Informations Client</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
-            <label htmlFor="client_name" className="text-[9px] font-bold text-foreground/40 uppercase ml-1 flex items-center gap-1"><User size={10} /> Client</label>
+            <label htmlFor="client_name" className="text-xs font-bold text-foreground/40 uppercase ml-1 flex items-center gap-1"><User size={14} /> Client</label>
             <input id="client_name" type="text" name="client_name" className="w-full bg-background border border-zinc-800 p-3 rounded-dynamic text-sm focus:border-zinc-500" value={formData.client_name || ""} onChange={handleChange} placeholder="Nom du client" />
               </div>
               <div className="space-y-1">
-            <label htmlFor="client_website" className="text-[9px] font-bold text-foreground/40 uppercase ml-1 flex items-center gap-1"><Globe size={10} /> Site Web</label>
+            <label htmlFor="client_website" className="text-xs font-bold text-foreground/40 uppercase ml-1 flex items-center gap-1"><Globe size={14} /> Site Web</label>
             <input id="client_website" type="text" name="client_website" className="w-full bg-background border border-zinc-800 p-3 rounded-dynamic text-sm focus:border-zinc-500" value={formData.client_website || ""} onChange={handleChange} placeholder="https://..." />
               </div>
             </div>
@@ -329,7 +330,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
 
           {/* BOUTONS D'ACTION */}
           <div className="flex justify-end items-center gap-4 border-t border-zinc-800 pt-6">
-            <button type="button" onClick={onClose} disabled={isSubmitting} className="text-foreground/70 hover:text-foreground font-bold uppercase text-[10px] tracking-widest px-6 py-3 rounded-dynamic transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+            <button type="button" onClick={onClose} disabled={isSubmitting} className="text-foreground/70 hover:text-foreground font-bold uppercase text-xs tracking-widest px-6 py-3 rounded-dynamic transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
               Annuler
             </button>
             <button type="submit" disabled={isSubmitting} className="bg-primary hover:bg-white hover:text-black text-black font-black py-4 px-8 rounded-dynamic uppercase text-xs tracking-[0.2em] transition-all flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(34,197,94,0.2)] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed">

@@ -5,17 +5,6 @@ import type { Metadata } from 'next';
 import FeaturesSection from '@/components/FeaturesSection';
 import { getYouTubeID } from "@/lib/utils"; // Import de la fonction pour obtenir l'ID YouTube
 import { Wind, ArrowRight } from "lucide-react"; // Import des icônes
-import dynamic from "next/dynamic";
-
-// Chargement différé du lecteur YouTube (Uniquement côté client)
-const YouTubePlayer = dynamic(() => import('@/components/YouTubePlayer'), {
-  ssr: false,
-  loading: () => (
-    <div className="w-full h-full flex items-center justify-center bg-zinc-900/50">
-      <span className="animate-pulse text-foreground/50 text-sm font-bold uppercase tracking-widest">Chargement du lecteur...</span>
-    </div>
-  ),
-});
 
 // Metadata for SEO
 export const metadata: Metadata = {
@@ -40,18 +29,31 @@ export const metadata: Metadata = {
 export default async function ExpertiseDronePage() {
   const supabase = createSupabaseServerClient();
 
-  // 2. Récupérer les projets qui ont la catégorie "Drone"
-  const { data: projects, error: projectsError } = await supabase
+  // 1. Récupération hybride : on prend l'ancienne colonne ET la nouvelle relation Many-to-Many
+  let { data: allProjects, error: projectsError }: { data: any[] | null, error: any } = await supabase
     .from('portfolio_items')
-    // OPTIMISATION: Ne sélectionnez que les colonnes nécessaires pour cette page.
-    .select('id, title, youtube_url, description_drone') // Ces colonnes définissent le type réel des projets récupérés
-    // REQUÊTE OPTIMISÉE SUR TABLEAU
-    .contains('category', ['Drone'])
+    .select('id, title, youtube_url, description_drone, category, portfolio_item_categories(categories(name))')
     .order('project_date', { ascending: false });
 
+  // SÉCURITÉ MAXIMALE : Si Supabase plante (erreur de cache API ou RLS sur la nouvelle table), on bascule sur l'ancienne méthode
   if (projectsError) {
-    console.error("Erreur lors de la récupération des projets pour la page expertise:", projectsError);
+    console.warn("Erreur avec la nouvelle table de catégories, activation du mode secours :", projectsError.message);
+    const fallback = await supabase
+      .from('portfolio_items')
+      .select('id, title, youtube_url, description_drone, category')
+      .order('project_date', { ascending: false });
+    allProjects = fallback.data;
   }
+
+  // 2. Filtrage intelligent côté serveur (Bulletproof)
+  const projects = allProjects?.filter(project => {
+    const oldCatStr = String(project.category || "").toLowerCase();
+    const newCatStr = JSON.stringify(project.portfolio_item_categories || []).toLowerCase();
+
+    const hasOldCat = oldCatStr.includes('drone');
+    const hasNewCat = newCatStr.includes('drone');
+    return hasOldCat || hasNewCat;
+  });
 
 
   return (
@@ -96,7 +98,20 @@ export default async function ExpertiseDronePage() {
 
                     {/* Colonne de droite : Vidéo */}
                     <div className="aspect-video rounded-dynamic overflow-hidden border border-zinc-700 shadow-lg bg-black">
-                      <YouTubePlayer videoId={getYouTubeID(project.youtube_url) || ''} title={project.title} />
+                      {getYouTubeID(project.youtube_url) ? (
+                        <iframe
+                          src={`https://www.youtube.com/embed/${getYouTubeID(project.youtube_url)}?autoplay=0&controls=1&modestbranding=1&rel=0`}
+                          title={project.title}
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          loading="lazy"
+                          className="border-0 w-full h-full"
+                        ></iframe>
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-zinc-900/50">
+                          <span className="text-foreground/50 text-sm font-bold uppercase tracking-widest">Vidéo indisponible</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="mt-8 border-t border-zinc-700 pt-6">

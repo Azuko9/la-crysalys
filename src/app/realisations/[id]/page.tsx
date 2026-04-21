@@ -1,213 +1,184 @@
-import { notFound } from "next/navigation";
 import { createSupabaseServerClient } from "@/app/server";
-import type { Metadata } from 'next';
-import type { PostProdDetail } from "@/types";
-import Script from "next/script";
+import { notFound } from "next/navigation";
 import { getYouTubeID } from "@/lib/utils";
+import type { Metadata } from 'next';
 import { ImageCompareSlider } from "@/components/ImageCompareSlider";
+import { Calendar, User, Globe, Wind, Layers, AlignLeft, ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { ArrowLeft, User, Globe, Calendar, Tag, Wind } from "lucide-react";
-import dynamic from "next/dynamic";
 
-// Chargement différé du lecteur YouTube (Uniquement côté client)
-const YouTubePlayer = dynamic(() => import('@/components/YouTubePlayer'), {
-  ssr: false,
-  loading: () => (
-    <div className="w-full h-full flex items-center justify-center bg-zinc-900/50">
-      <span className="animate-pulse text-foreground/50 text-sm font-bold uppercase tracking-widest">Chargement du lecteur...</span>
-    </div>
-  ),
-});
+// Cette fonction génère les métadonnées dynamiques pour chaque projet
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  const supabase = createSupabaseServerClient();
+  const { data: project } = await supabase.from('portfolio_items').select('title, description').eq('id', params.id).single();
 
+  if (!project) {
+    return { title: 'Projet introuvable' };
+  }
 
-type Props = {
-  params: { id: string }
+  return {
+    title: project.title,
+    description: project.description || `Découvrez le projet ${project.title} réalisé par La Crysalys.`,
+  };
 }
 
-// --- 1. OPEN GRAPH & SEO (Réseaux Sociaux) ---
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export default async function ProjectPage({ params }: { params: { id: string } }) {
   const supabase = createSupabaseServerClient();
-
   const { data: project } = await supabase
     .from('portfolio_items')
-    .select('id, title, description, youtube_url')
+    .select('*, portfolio_item_categories(categories(name))')
     .eq('id', params.id)
     .single();
 
   if (!project) {
-    return { title: 'Projet introuvable | La Crysalys' };
-  }
-
-  const videoId = getYouTubeID(project.youtube_url || '');
-  const thumbnailUrl = videoId ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg` : '/og-image.jpg';
-
-  return {
-    title: `${project.title} | La Crysalys`,
-    description: project.description || `Découvrez la réalisation audiovisuelle : ${project.title}`,
-    openGraph: {
-      title: `${project.title} | La Crysalys`,
-      description: project.description || '',
-      url: `https://la-crysalys.vercel.app/realisations/${project.id}`,
-      type: 'video.movie',
-      images: [{ url: thumbnailUrl, width: 1280, height: 720 }],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: `${project.title} | La Crysalys`,
-      description: project.description || '',
-      images: [thumbnailUrl],
-    },
-    alternates: {
-      canonical: `/realisations/${project.id}`,
-    },
-  }
-}
-
-// --- 2. COMPOSANT SERVEUR (Performances Maximales) ---
-export default async function RealisationDetailPage({ params }: { params: { id: string } }) {
-
-
-  const supabase = createSupabaseServerClient();
-
-  const { data: projectData, error } = await supabase.from('portfolio_items').select('*').eq('id', params.id).single();
-
-  if (error || !projectData) {
     notFound();
   }
 
-  // Nettoyage des données JSON
-  let postprodDetails: PostProdDetail[] = [];
-  if (projectData.description_postprod) {
-    if (typeof projectData.description_postprod === 'string') {
-      try { postprodDetails = JSON.parse(projectData.description_postprod); } catch {}
-    } else if (Array.isArray(projectData.description_postprod)) {
-      postprodDetails = projectData.description_postprod;
-    }
+  const videoId = getYouTubeID(project.youtube_url);
+
+  // --- Gestion Hybride des Catégories ---
+  const rawCategories = (project as any).portfolio_item_categories;
+  const mappedCategories = Array.isArray(rawCategories) 
+    ? rawCategories.map((c: any) => c.categories?.name).filter(Boolean) 
+    : [];
+
+  const rawOldCategory = project.category as any;
+  let oldCategories: string[] = [];
+  if (Array.isArray(rawOldCategory)) {
+    oldCategories = rawOldCategory;
+  } else if (typeof rawOldCategory === 'string' && rawOldCategory.length > 0) {
+    oldCategories = rawOldCategory.replace(/^\{|\}$/g, '').split(',').map((s: string) => s.replace(/^"|"$/g, '').trim());
   }
+  const categoriesList = oldCategories.length > 0 ? oldCategories : mappedCategories;
 
-  const videoId = getYouTubeID(projectData.youtube_url || '');
+  // --- Génération des URLs d'images pour le comparateur ---
+  const beforeImageUrl = project.postprod_before_path 
+    ? supabase.storage.from('postprod-images').getPublicUrl(project.postprod_before_path).data.publicUrl 
+    : null;
+  const afterImageUrl = project.postprod_after_path 
+    ? supabase.storage.from('postprod-images').getPublicUrl(project.postprod_after_path).data.publicUrl 
+    : null;
 
-  // --- 3. JSON-LD (Rich Snippets Vidéo pour Google) ---
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "VideoObject",
-    "name": projectData.title,
-    "description": projectData.description || `Découvrez la réalisation audiovisuelle : ${projectData.title} par La Crysalys.`,
-    "thumbnailUrl": [videoId ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg` : "https://la-crysalys.vercel.app/og-image.jpg"],
-    "uploadDate": projectData.project_date || projectData.created_at || new Date().toISOString(),
-    "embedUrl": videoId ? `https://www.youtube.com/embed/${videoId}` : "",
-    "publisher": {
-      "@type": "Organization",
-      "name": "La Crysalys",
-      "logo": { "@type": "ImageObject", "url": "https://la-crysalys.vercel.app/Logo/logoAfficheBlanc.png" }
-    }
+  // Schéma VideoObject pour Google
+  const videoJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'VideoObject',
+    'name': project.title,
+    'description': project.description || project.postprod_main_description || "Un projet réalisé par La Crysalys.",
+    'thumbnailUrl': videoId ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg` : '',
+    'uploadDate': project.project_date,
+    'embedUrl': videoId ? `https://www.youtube.com/embed/${videoId}` : '',
+    'publisher': { '@type': 'Organization', 'name': 'La Crysalys', 'logo': { '@type': 'ImageObject', 'url': 'https://la-crysalys.vercel.app/Logo/logo_v_blanc.png' } }
   };
 
-  const getImageUrl = (path: string | null) => path ? supabase.storage.from('postprod-images').getPublicUrl(path).data.publicUrl : '';
-  const getLogoUrl = (path: string | null) => path ? supabase.storage.from('logos').getPublicUrl(path).data.publicUrl : '';
-
   return (
-    <main className="min-h-screen bg-background text-foreground pt-32 pb-20 px-4 md:px-8">
-      {/* Injection SEO invisible pour Google */}
-      <Script id="video-jsonld" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+    <main className="pt-32 pb-20 px-4 max-w-5xl mx-auto min-h-screen">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(videoJsonLd) }} />
+      
+      <Link href="/realisations" className="inline-flex items-center gap-2 text-foreground/50 hover:text-primary transition-colors mb-8 text-xs font-bold uppercase tracking-widest">
+        <ArrowLeft size={16} /> Retour aux réalisations
+      </Link>
 
-      <div className="max-w-5xl mx-auto">
-        <Link href="/realisations" className="inline-flex items-center gap-2 text-foreground/50 hover:text-primary transition-colors text-xs font-bold uppercase tracking-widest mb-8">
-          <ArrowLeft size={16} /> Retour au portfolio
-        </Link>
-
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8 mb-8">
-          <h1 className="text-4xl md:text-6xl font-black italic uppercase tracking-tighter text-primary">
-            {projectData.title}
-          </h1>
-          
-          {projectData.client_logo_path && (
-            <div className="shrink-0 relative w-32 h-32 bg-card border border-zinc-800 rounded-dynamic p-4 flex items-center justify-center shadow-xl">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img 
-                src={getLogoUrl(projectData.client_logo_path)} 
-                alt={`Logo ${projectData.client_name || 'Client'}`}
-                className="w-full h-full object-contain"
-              />
+      <header className="mb-12">
+        <h1 className="text-4xl md:text-6xl font-black italic uppercase tracking-tighter text-primary mb-6">
+          {project.title}
+        </h1>
+        
+        <div className="flex flex-wrap items-center gap-6 text-foreground/70 text-sm">
+          {project.project_date && (
+            <div className="flex items-center gap-2">
+              <Calendar size={16} />
+              <span>{new Date(project.project_date).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
             </div>
           )}
+          {project.client_name && (
+            <div className="flex items-center gap-2">
+              <User size={16} />
+              <span>{project.client_name}</span>
+            </div>
+          )}
+          {project.client_website && (
+            <a href={project.client_website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-primary transition-colors">
+              <Globe size={16} />
+              <span>Site Web</span>
+            </a>
+          )}
         </div>
-        
-        {/* Meta Infos: Client, Date, Catégories */}
-        {(projectData.client_name || projectData.client_website || projectData.project_date || projectData.category) && (
-          <div className="flex flex-wrap items-center gap-6 mb-12 text-xs font-bold uppercase tracking-widest text-foreground/60 border-b border-zinc-800 pb-8">
-            {projectData.client_name && (
-              <span className="flex items-center gap-2"><User size={14}/> {projectData.client_name}</span>
-            )}
-            {projectData.client_website && (
-              <a href={projectData.client_website} target="_blank" rel="noreferrer" className="flex items-center gap-2 hover:text-primary transition-colors"><Globe size={14}/> Site Web</a>
-            )}
-            {projectData.project_date && (
-              <span className="flex items-center gap-2"><Calendar size={14}/> {new Date(projectData.project_date).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}</span>
-            )}
-            {projectData.category && (
-              <div className="flex items-center gap-2">
-                <Tag size={14}/> 
-                <div className="flex flex-wrap gap-2">
-              {(Array.isArray(projectData.category) ? projectData.category : []).map((cat: string) => (
-                    <span key={cat} className="bg-primary/10 text-primary px-2 py-0.5 rounded border border-primary/20">{cat}</span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
 
-        {/* Description Générale */}
-        {projectData.description && (
-          <p className="text-foreground/80 text-lg mb-12 leading-relaxed whitespace-pre-wrap">
-            {projectData.description}
-          </p>
-        )}
-
-        {/* Spécificités Drone */}
-        {projectData.description_drone && (
-          <div className="bg-blue-950/20 border border-blue-900/40 p-6 md:p-8 rounded-dynamic mb-12 shadow-xl">
-            <h3 className="text-xl font-black uppercase italic tracking-tighter text-blue-400 mb-4 flex items-center gap-3">
-              <Wind size={24} /> Spécificités Drone
-            </h3>
-            <p className="text-blue-200/80 leading-relaxed whitespace-pre-wrap">
-              {projectData.description_drone}
-            </p>
-          </div>
-        )}
-
-        {videoId && (
-          <div className="aspect-video w-full rounded-dynamic overflow-hidden border border-zinc-800 shadow-2xl bg-black mb-16">
-            <YouTubePlayer videoId={videoId} title={projectData.title} />
-          </div>
-        )}
-
-        {/* Post Production Section (Si applicable) */}
-        {(projectData.postprod_before_path || projectData.postprod_after_path || postprodDetails.length > 0) && (
-          <div className="mt-16 space-y-12 border-t border-zinc-800 pt-16">
-            <h2 className="text-3xl font-black uppercase italic tracking-tighter text-purple-400 mb-8">Détails de Post-Production</h2>
-            {projectData.postprod_main_description && <p className="text-foreground/70 mb-8 leading-relaxed">{projectData.postprod_main_description}</p>}
-
-            {projectData.postprod_before_path && projectData.postprod_after_path && (
-              <div className="mb-12">
-                <div className="max-w-xl mx-auto rounded-dynamic overflow-hidden shadow-xl">
-                  <ImageCompareSlider beforeImage={getImageUrl(projectData.postprod_before_path)} afterImage={getImageUrl(projectData.postprod_after_path)} />
-                </div>
-              </div>
-            )}
-
-            {postprodDetails.map((detail, index) => (
-              <div key={index} className="mb-12">
-                <h3 className="text-lg font-bold mb-4 text-purple-300">{detail.detail}</h3>
-                {detail.before_path && detail.after_path && (
-                  <div className="max-w-xl mx-auto rounded-dynamic overflow-hidden shadow-xl">
-                    <ImageCompareSlider beforeImage={getImageUrl(detail.before_path)} afterImage={getImageUrl(detail.after_path)} />
-                  </div>
-                )}
-              </div>
+        {categoriesList.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-6">
+            {categoriesList.map((cat: string, i: number) => (
+              <span key={i} className="text-xs bg-primary/10 border border-primary/30 text-primary px-3 py-1 rounded-full uppercase font-bold tracking-wide">
+                {cat}
+              </span>
             ))}
           </div>
+        )}
+      </header>
+
+      <div className="aspect-video rounded-dynamic overflow-hidden border border-zinc-800 shadow-2xl bg-black mb-16">
+        {videoId ? (
+          <iframe
+            src={`https://www.youtube.com/embed/${videoId}?autoplay=0&controls=1&modestbranding=1&rel=0`}
+            title={project.title}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            loading="lazy"
+            className="w-full h-full border-0"
+          ></iframe>
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-zinc-900/50">
+            <span className="text-foreground/50 text-sm font-bold uppercase tracking-widest">Vidéo indisponible</span>
+          </div>
+        )}
+      </div>
+
+      <div className="space-y-12">
+        {project.description && (
+          <section className="bg-card p-8 rounded-dynamic border border-zinc-800 shadow-lg">
+            <h2 className="text-xl font-black flex items-center gap-2 text-foreground mb-4 uppercase tracking-widest">
+              <AlignLeft size={20} className="text-primary"/> Contexte Général
+            </h2>
+            <div className="prose prose-invert max-w-none text-foreground/80 leading-relaxed whitespace-pre-wrap">
+              {project.description}
+            </div>
+          </section>
+        )}
+
+        {project.description_drone && (
+          <section className="bg-blue-950/10 p-8 rounded-dynamic border border-blue-900/30 shadow-lg">
+            <h2 className="text-xl font-black flex items-center gap-2 text-blue-400 mb-4 uppercase tracking-widest">
+              <Wind size={20} /> Prises de Vues Drone
+            </h2>
+            <div className="prose prose-invert max-w-none text-blue-100/70 leading-relaxed whitespace-pre-wrap">
+              {project.description_drone}
+            </div>
+          </section>
+        )}
+
+        {(project.postprod_main_description || (beforeImageUrl && afterImageUrl)) && (
+          <section className="bg-purple-950/10 p-8 rounded-dynamic border border-purple-900/30 shadow-lg">
+            <h2 className="text-xl font-black flex items-center gap-2 text-purple-400 mb-4 uppercase tracking-widest">
+              <Layers size={20} /> Post-Production & VFX
+            </h2>
+            
+            {project.postprod_main_description && (
+              <div className="prose prose-invert max-w-none text-purple-100/70 leading-relaxed whitespace-pre-wrap mb-8">
+                {project.postprod_main_description}
+              </div>
+            )}
+
+            {beforeImageUrl && afterImageUrl && (
+              <div className="mt-8 border-t border-purple-900/30 pt-8">
+                <h3 className="text-sm font-bold text-purple-400/50 uppercase tracking-widest mb-4 text-center">Comparatif Avant / Après</h3>
+                <div className="max-w-4xl mx-auto rounded-dynamic overflow-hidden border border-purple-900/50 shadow-2xl">
+                  <ImageCompareSlider
+                    beforeImage={beforeImageUrl}
+                    afterImage={afterImageUrl}
+                  />
+                </div>
+              </div>
+            )}
+          </section>
         )}
       </div>
     </main>
