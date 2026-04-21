@@ -9,6 +9,7 @@ import {
 import toast from "react-hot-toast";
 import ThemeManager from "@/components/ThemeManager";
 import { deleteMessageAction, logoutAction } from "@/lib/actions";
+import { supabase } from "@/lib/supabaseClient";
 import type { ContactMessage } from "@/types";
 
 interface AdminDashboardClientProps {
@@ -69,7 +70,7 @@ export default function AdminDashboardClient({ initialMessages, userEmail }: Adm
             <Link href="/admin/nouveau-mot-de-passe" className="p-4 text-foreground/40 hover:text-primary transition-colors bg-card/50 rounded-dynamic border border-zinc-800" title="Modifier mon mot de passe">
               <Key size={20} />
             </Link>
-            <form action={logoutAction}>
+            <form action={logoutAction} onSubmit={() => supabase.auth.signOut()}>
               <button type="submit" className="p-4 text-foreground/40 hover:text-red-500 transition-colors bg-card/50 rounded-dynamic border border-zinc-800" title="Quitter l'espace admin">
                 <LogOut size={20} />
               </button>
