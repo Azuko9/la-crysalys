@@ -49,7 +49,7 @@ export default function Header() {
               src="/Logo/logoAfficheBlanc.png"
               alt="Logo Crysalys"
               fill
-              className="object-contain" // Garde les proportions sans couper l'image
+              className="object-contain drop-shadow-[2px_3px_0px_rgba(0,0,0,1)]" // Garde les proportions et ajoute une ombre noire très forte
               sizes="(max-width: 768px) 128px, 192px"
               priority
             />
@@ -80,7 +80,7 @@ export default function Header() {
           <div className="md:hidden flex items-center gap-4">
             <button 
               onClick={() => setIsOpen(!isOpen)}
-              className="text-foreground p-2 hover:bg-zinc-800 rounded-lg transition"
+              className="text-foreground p-2 hover:bg-card rounded-lg transition"
               aria-label={isOpen ? "Fermer le menu" : "Ouvrir le menu"}
               aria-expanded={isOpen}
             >

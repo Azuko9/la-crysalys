@@ -2,10 +2,12 @@
 
 import { revalidatePath } from 'next/cache';
 import { cookies, headers } from 'next/headers';
+import { redirect } from 'next/navigation';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
-import type { Project, TeamMember, Feature, Category } from '@/types';
+import type { Project, TeamMember, Feature, Category, PostProdDetail } from '@/types';
 import { z } from 'zod';
+import { PostProdDetailSchema, ProjectSchema, ContactFormSchema } from './schemas';
 
 // Vérification des variables d'environnement pour le client admin Supabase
 const supabaseUrl: string = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
@@ -119,6 +121,35 @@ const deleteImagesFromStorage = async (images: { bucket: string; path: string }[
     }
 };
 
+// Fonction utilitaire globale pour extraire tous les chemins d'images d'un projet
+const extractProjectImagePaths = (proj: Partial<Project>) => {
+  const paths: string[] = [];
+  const addPath = (p: string | null | undefined) => {
+    if (p && !paths.includes(p)) paths.push(p);
+  };
+
+  addPath(proj.client_logo_path);
+  addPath(proj.postprod_before_path);
+  addPath(proj.postprod_after_path);
+  if (proj.description_postprod && Array.isArray(proj.description_postprod)) {
+    proj.description_postprod.forEach((d: PostProdDetail) => {
+      addPath(d.before_path);
+      addPath(d.after_path);
+    });
+  }
+  return paths;
+};
+
+// --- ACTION ROLLBACK (Nettoyage en cas d'erreur de formulaire) ---
+export async function rollbackUploadsAction(images: { bucket: string; path: string }[]) {
+  const authResult = await authenticateAdmin();
+  if (!authResult.success) {
+    return authResult;
+  }
+  await deleteImagesFromStorage(images);
+  return { success: true };
+}
+
 // --- ACTIONS PROJETS ---
 export async function saveProjectAction(
   payload: Omit<Project, 'id' | 'created_at'>,
@@ -129,28 +160,6 @@ export async function saveProjectAction(
   if (!authResult.success) {
     return authResult;
   }
-  // SÉCURITÉ : Vérifier la session utilisateur avant toute opération
-  const PostProdDetailSchema = z.object({
-    detail: z.string().min(1, "Le détail de la post-production est requis."),
-    before_path: z.string().nullable().optional(),
-    after_path: z.string().nullable().optional(),
-  });
-
-  const ProjectSchema = z.object({
-    title: z.string().min(1, "Le titre est requis."),
-    description: z.string().nullable(),
-    youtube_url: z.string().min(1, "L'URL YouTube est requise.").url("L'URL YouTube est invalide."),
-    project_date: z.string().refine((val) => !isNaN(Date.parse(val)), "Date de projet invalide."),
-    category: z.string(), // category is not nullable in the type definition
-    client_name: z.string().nullable(), // Ajouté
-    client_website: z.string().nullable(), // Ajouté
-    description_drone: z.string().nullable(),
-    postprod_main_description: z.string().nullable(),
-    client_logo_path: z.string().nullable(),
-    postprod_before_path: z.string().nullable(),
-    postprod_after_path: z.string().nullable(),
-    description_postprod: z.array(PostProdDetailSchema).nullable(),
-  });
 
   const validatedPayload = ProjectSchema.safeParse(payload);
 
@@ -159,25 +168,6 @@ export async function saveProjectAction(
   }
 
   const dataToSave = { ...validatedPayload.data };
-
-  // Fonction utilitaire pour extraire tous les chemins d'images d'un projet
-  const getPathsFromProject = (proj: any) => {
-    const paths: string[] = [];
-    const addPath = (p: string | null | undefined) => {
-      if (p && !paths.includes(p)) paths.push(p);
-    };
-
-    addPath(proj.client_logo_path);
-    addPath(proj.postprod_before_path);
-    addPath(proj.postprod_after_path);
-    if (proj.description_postprod && Array.isArray(proj.description_postprod)) {
-      proj.description_postprod.forEach((d: any) => {
-        addPath(d.before_path);
-        addPath(d.after_path);
-      });
-    }
-    return paths;
-  };
 
   try {
     let result;
@@ -190,11 +180,12 @@ export async function saveProjectAction(
       result = await supabaseAdmin.from('portfolio_items').update(dataToSave).eq('id', projectId).select().single();
       
       if (oldProject && !result.error) {
-         const oldPaths = getPathsFromProject(oldProject);
-         const newPaths = getPathsFromProject(dataToSave);
+         const oldPaths = extractProjectImagePaths(oldProject);
+         const newPaths = extractProjectImagePaths(dataToSave);
          for (const path of oldPaths) {
            if (!newPaths.includes(path)) {
-             const bucket = path.includes('logos') ? 'logos' : 'postprod-images';
+             // Sécurité: Utiliser startsWith sur le dossier racine pour éviter les faux positifs dans le nom du fichier
+             const bucket = path.startsWith('projects/logos/') ? 'logos' : 'postprod-images';
              serverComputedImagesToDelete.push({ bucket, path });
            }
          }
@@ -243,22 +234,9 @@ export async function deleteProjectAction(projectId: string) {
     if (dbError) throw new Error("Une erreur est survenue lors de la suppression du projet.");
 
     if (oldProject) {
-      const pathsToDelete: string[] = [];
-      const addPath = (p: string | null | undefined) => {
-        if (p && !pathsToDelete.includes(p)) pathsToDelete.push(p);
-      };
-      
-      addPath(oldProject.client_logo_path);
-      addPath(oldProject.postprod_before_path);
-      addPath(oldProject.postprod_after_path);
-      if (oldProject.description_postprod && Array.isArray(oldProject.description_postprod)) {
-        oldProject.description_postprod.forEach((d: any) => {
-          addPath(d.before_path);
-          addPath(d.after_path);
-        });
-      }
+      const pathsToDelete = extractProjectImagePaths(oldProject);
       const imagesToDelete = pathsToDelete.map(path => {
-        const bucket = path.includes('logos') ? 'logos' : 'postprod-images';
+        const bucket = path.startsWith('projects/logos/') ? 'logos' : 'postprod-images';
         return { bucket, path };
       });
       if (imagesToDelete.length > 0) await deleteImagesFromStorage(imagesToDelete);
@@ -458,23 +436,23 @@ export async function deleteFeatureAction(featureId: string) {
 }
 
 // --- ACTIONS ÉQUIPE ---
+const TeamMemberSchema = z.object({
+  name: z.string().trim().min(1, "Le nom du membre est requis."),
+  role: z.string().trim().min(1, "Le rôle du membre est requis."),
+  bio: z.string().nullable(),
+  photo_path: z.string().nullable(),
+  instagram: z.string().nullable(),
+  linkedin: z.string().url("URL LinkedIn invalide.").nullable(),
+  member_type: z.enum(['team', 'partner']).nullable(),
+  company: z.string().nullable(),
+  email: z.string().email("Email invalide.").nullable(),
+  website: z.string().url("URL de site web invalide.").nullable(),
+});
+
 export async function saveTeamMemberAction(
     payload: Omit<TeamMember, 'id' | 'created_at'>, 
     memberId: string | null
 ) {
-    const TeamMemberSchema = z.object({
-      name: z.string().trim().min(1, "Le nom du membre est requis."),
-      role: z.string().trim().min(1, "Le rôle du membre est requis."),
-      bio: z.string().nullable(),
-      photo_path: z.string().nullable(),
-      instagram: z.string().nullable(),
-      linkedin: z.string().url("URL LinkedIn invalide.").nullable(),
-      member_type: z.enum(['team', 'partner']).nullable(),
-      company: z.string().nullable(),
-      email: z.string().email("Email invalide.").nullable(),
-      website: z.string().url("URL de site web invalide.").nullable(),
-    });
-
     // SÉCURITÉ : Vérifier la session utilisateur et les droits admin
     const authResult = await authenticateAdmin();
     if (!authResult.success) {
@@ -544,14 +522,6 @@ export async function deleteTeamMemberAction(memberId: string) {
     }
 }
 
-// --- ACTION FORMULAIRE DE CONTACT ---
-const ContactFormSchema = z.object({
-  nom: z.string().min(2, "Le nom est trop court.").max(50, "Le nom est trop long."),
-  email: z.string().email("L'email est invalide."),
-  objet: z.enum(['devis', 'info', 'autre']),
-  message: z.string().min(10, "Le message est trop court.").max(2000, "Le message est trop long."),
-});
-
 // Cache mémoire basique pour le rate limit
 // Note: Ce cache est réinitialisé à chaque redémarrage (cold start) du serveur serverless, 
 // mais c'est largement suffisant pour stopper du spam automatisé instantané.
@@ -605,33 +575,15 @@ export async function sendContactMessageAction(formData: { nom: string; email: s
     } catch (e) {} // On ignore silencieusement si le champ created_at n'existe pas encore
 
     try {
-        const cookieStore = cookies();
-        const publicSupabase = createServerClient(supabaseUrl!, supabaseAnonKey!, { // Assertion non-nulle
-          cookies: {
-            get(name: string) {
-              return cookieStore.get(name)?.value;
-            },
-            set(name: string, value: string, options: CookieOptions) {
-              try {
-                cookieStore.set({ name, value, ...options });
-              } catch {
-                // The `set` method was called from a Server Component. This can be ignored if you have middleware refreshing user sessions.
-              }
-            },
-            remove(name: string, options: CookieOptions) {
-              try {
-                cookieStore.set({ name, value: '', ...options });
-              } catch {
-                // The `delete` method was called from a Server Component. This can be ignored if you have middleware refreshing user sessions.
-              }
-            },
-          },
-        });
-    const { error } = await publicSupabase.from('messages').insert([{ ...validatedFields.data }]);
+        // Utilisation de supabaseAdmin pour outrepasser les règles de sécurité RLS de Supabase.
+        // Les utilisateurs non connectés n'ont par défaut pas le droit d'écrire dans la base.
+        const { error } = await supabaseAdmin.from('messages').insert([{ ...validatedFields.data }]);
+        
         if (error) {
           console.error("Erreur Supabase lors de l'envoi du message de contact:", error.message);
           throw new Error("Une erreur est survenue lors de l'envoi du message.");
         }
+
         return { success: true };
     } catch (error: unknown) {
         console.error("Erreur inattendue lors de l'envoi du message de contact:", error instanceof Error ? error.message : String(error));
@@ -639,19 +591,36 @@ export async function sendContactMessageAction(formData: { nom: string; email: s
     }
 }
 
-// --- ACTIONS PARAMÈTRES DU SITE (THEME) ---
-export async function saveSiteSettingsAction(updates: { key: string; value: string }[]) {
+// --- ACTION SUPPRESSION DE MESSAGE ---
+export async function deleteMessageAction(messageId: string) {
   try {
     const authResult = await authenticateAdmin();
     if (!authResult.success) {
       return authResult;
     }
 
-    // SÉCURITÉ : Validation stricte côté serveur pour empêcher la soumission de code CSS malveillant
-    const SettingSchema = z.object({
-      key: z.string().min(1),
-      value: z.string().regex(/^[a-zA-Z0-9#(),.% \-]+$/, "Format de valeur invalide pour prévenir les injections.")
-    });
+    const { error } = await supabaseAdmin.from('messages').delete().eq('id', messageId);
+    if (error) throw new Error("Erreur lors de la suppression du message.");
+
+    revalidatePath('/admin');
+    return { success: true };
+  } catch (error: unknown) {
+    return { success: false, error: error instanceof Error ? error.message : "Une erreur est survenue." };
+  }
+}
+
+// --- ACTIONS PARAMÈTRES DU SITE (THEME) ---
+const SettingSchema = z.object({
+  key: z.string().min(1),
+  value: z.string().regex(/^[a-zA-Z0-9#(),.% \-]+$/, "Format de valeur invalide pour prévenir les injections.")
+});
+
+export async function saveSiteSettingsAction(updates: { key: string; value: string }[]) {
+  try {
+    const authResult = await authenticateAdmin();
+    if (!authResult.success) {
+      return authResult;
+    }
 
     for (const update of updates) {
        const parsed = SettingSchema.safeParse(update);
@@ -669,4 +638,67 @@ export async function saveSiteSettingsAction(updates: { key: string; value: stri
     console.error("Erreur inattendue lors de saveSiteSettingsAction:", error instanceof Error ? error.message : String(error));
     return { success: false, error: "Une erreur inattendue est survenue lors de la sauvegarde des paramètres." };
   }
+}
+
+// --- ACTION MOT DE PASSE (ADMIN) ---
+const PasswordSchema = z.string().min(10, "Le mot de passe doit contenir au moins 10 caractères.");
+
+export async function updateAdminPasswordAction(newPassword: string) {
+  try {
+    const validation = PasswordSchema.safeParse(newPassword);
+    if (!validation.success) {
+      return { success: false, error: validation.error.issues[0].message };
+    }
+
+    // 1. On s'assure que la personne est connectée et est un administrateur
+    const authResult = await authenticateAdmin();
+    if (!authResult.success) {
+      return authResult;
+    }
+
+    const cookieStore = cookies();
+    const supabase = createServerClient(supabaseUrl!, supabaseAnonKey!, {
+      cookies: {
+        get(name: string) { return cookieStore.get(name)?.value; },
+        set(name: string, value: string, options: CookieOptions) {
+          try { cookieStore.set({ name, value, ...options }); } catch {}
+        },
+        remove(name: string, options: CookieOptions) {
+          try { cookieStore.set({ name, value: '', ...options }); } catch {}
+        },
+      },
+    });
+
+    // 2. updateUser modifie uniquement le mot de passe de l'utilisateur de la session active
+    const { error } = await supabase.auth.updateUser({ password: validation.data });
+    if (error) throw new Error(error.message);
+
+    return { success: true };
+  } catch (error: unknown) {
+    console.error("Erreur lors de la mise à jour du mot de passe:", error);
+    return { success: false, error: "Impossible de mettre à jour le mot de passe." };
+  }
+}
+
+// --- ACTION DÉCONNEXION ---
+export async function logoutAction() {
+  const cookieStore = cookies();
+  const supabase = createServerClient(supabaseUrl!, supabaseAnonKey!, {
+    cookies: {
+      get(name: string) {
+        return cookieStore.get(name)?.value;
+      },
+      set(name: string, value: string, options: CookieOptions) {
+        try { cookieStore.set({ name, value, ...options }); } catch {}
+      },
+      remove(name: string, options: CookieOptions) {
+        try { cookieStore.set({ name, value: '', ...options }); } catch {}
+      },
+    },
+  });
+
+  // On déconnecte l'utilisateur
+  await supabase.auth.signOut();
+  // On redirige vers la page de connexion
+  return redirect('/login');
 }

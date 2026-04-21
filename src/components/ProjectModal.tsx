@@ -5,8 +5,10 @@ import {
   AlignLeft, Calendar, Globe, Layers, Loader2, Trash2, UploadCloud, User, Wind, XCircle, Save
 } from "lucide-react";
 import { z } from 'zod'; // Import de Zod pour la validation côté client
+import toast from 'react-hot-toast';
 
-import { saveProjectAction } from "@/lib/actions";
+import { saveProjectAction, rollbackUploadsAction } from "@/lib/actions";
+import { ProjectSchema } from "@/lib/schemas";
 import { supabase } from "@/lib/supabaseClient";
 import type { Project, Category, PostProdDetail } from "@/types";
 import { uploadFileAndGetPath } from "@/lib/clientUploadHelpers"; // Import de la fonction d'upload
@@ -21,31 +23,6 @@ interface ProjectModalProps {
   onSuccess: () => void;
 }
 
-// Type pour les données du formulaire, basé sur Project mais avec des valeurs par défaut
-// Schéma Zod pour la validation côté client (doit correspondre à celui de actions.ts)
-const PostProdDetailSchema = z.object({
-  detail: z.string().min(1, "Le détail de la post-production est requis."),
-  before_path: z.string().nullable().optional(),
-  after_path: z.string().nullable().optional(),
-});
-
-const ProjectSchema = z.object({
-  title: z.string().min(1, "Le titre est requis."),
-  description: z.string().nullable(),
-  youtube_url: z.string().url("URL YouTube invalide.").nullable().optional(),
-  project_date: z.string().refine((val) => !isNaN(Date.parse(val)), "Date de projet invalide."),
-  category: z.string(),
-  client_name: z.string().nullable(),
-  client_website: z.string().nullable(),
-  description_drone: z.string().nullable(),
-  postprod_main_description: z.string().nullable(),
-  client_logo_path: z.string().nullable(),
-  postprod_before_path: z.string().nullable(),
-  postprod_after_path: z.string().nullable(),
-  description_postprod: z.array(PostProdDetailSchema).nullable(),
-});
-
-// Type pour les données du formulaire, basé sur Project mais avec des valeurs par défaut
 type ProjectFormDataType = Omit<Project, 'id' | 'created_at'>;
 
 const emptyFormData: ProjectFormDataType = {
@@ -67,60 +44,62 @@ const emptyFormData: ProjectFormDataType = {
 // --- SOUS-COMPOSANT POUR L'UPLOAD D'IMAGE ---
 interface ImageUploaderProps {
   label: string;
-  currentPath: string | null; // Accepte un chemin
-  onPathChange: (path: string | null) => void; // Retourne un chemin
+  currentPath: string | null;     // Chemin de l'image existante sur Supabase
+  currentFile: File | null;       // Nouveau fichier sélectionné localement
+  onFileSelect: (file: File | null) => void;
+  onClearPath: () => void;        // Action pour effacer le chemin existant (Supabase)
   storageBucket: string;
-  folderPath?: string; // Nouveau: chemin du dossier dans le bucket
   colorClass: string;
   disabled?: boolean;
 }
 
-const ImageUploader: React.FC<ImageUploaderProps> = ({ label, currentPath, onPathChange, storageBucket, folderPath = '', colorClass, disabled = false }) => {
-  const [uploading, setUploading] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || e.target.files.length === 0) return;
-    const file = e.target.files[0];
-    
-    setUploading(true);
-    setUploadError(null);
-
-    // Utiliser la fonction d'upload côté client
-    const uploadedPath = await uploadFileAndGetPath(file, storageBucket, folderPath);
-    if (!uploadedPath) {
-      setUploadError("Échec de l'upload de l'image.");
+const ImageUploader: React.FC<ImageUploaderProps> = ({ label, currentPath, currentFile, onFileSelect, onClearPath, storageBucket, colorClass, disabled = false }) => {
+  
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      // Sécurité : Blocage des fichiers trop lourds (> 5 Mo)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error(`Le fichier ${file.name} est trop lourd (Maximum 5 Mo).`);
+        return;
+      }
+      onFileSelect(file);
     }
-    onPathChange(uploadedPath); // Met à jour le chemin dans le formulaire parent
-    setUploading(false);
   };
 
-  const handleRemoveImage = () => { // Supprime l'image du formulaire
-    onPathChange(null);
+  const handleRemoveImage = () => {
+    onFileSelect(null);
+    if (currentPath) {
+      onClearPath();
+    }
   };
+
+  // L'URL d'aperçu est soit le nouveau fichier (URL locale très rapide), soit l'image Supabase existante
+  const previewUrl = currentFile 
+    ? URL.createObjectURL(currentFile) 
+    : currentPath 
+      ? supabase.storage.from(storageBucket).getPublicUrl(currentPath).data.publicUrl 
+      : null;
 
   return (
     <div className="space-y-2">
       <label className={`text-[10px] font-bold uppercase ml-1 ${colorClass}`}>{label}</label>
-      {currentPath ? ( // Utiliser currentPath pour déterminer si une image est présente
+      {previewUrl ? ( 
         <div className="relative w-full h-32 rounded-dynamic overflow-hidden border border-zinc-700 group">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={supabase.storage.from(storageBucket).getPublicUrl(currentPath).data.publicUrl} alt="Aperçu" className="w-full h-full object-cover" />
+          <img src={previewUrl} alt="Aperçu" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-            <button type="button" onClick={handleRemoveImage} className="bg-red-600 hover:bg-red-500 text-foreground px-3 py-1.5 rounded-full font-bold text-xs uppercase flex items-center gap-1"><Trash2 size={14} /> Changer</button>
+            <button type="button" onClick={handleRemoveImage} disabled={disabled} className="bg-red-600 hover:bg-red-500 text-foreground px-3 py-1.5 rounded-full font-bold text-xs uppercase flex items-center gap-1 disabled:opacity-50"><Trash2 size={14} /> Changer</button>
           </div>
         </div>
       ) : (
         <div className={`relative w-full h-32 border-2 border-dashed border-zinc-700 hover:border-primary rounded-dynamic transition-colors bg-zinc-900/30 group`}>
-          <input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploading || disabled} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+          <input type="file" accept="image/*" onChange={handleImageSelect} disabled={disabled} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
           <div className="absolute inset-0 flex flex-col items-center justify-center text-foreground/50 pointer-events-none">
-            {uploading ? <Loader2 size={28} className="animate-spin text-primary mb-2" /> : <UploadCloud size={28} className="mb-2 group-hover:text-primary transition-colors" />}
-            <span className="text-[9px] font-bold uppercase tracking-widest">{uploading ? 'Envoi...' : 'Glisser une image'}</span>
+            <UploadCloud size={28} className="mb-2 group-hover:text-primary transition-colors" />
+            <span className="text-[9px] font-bold uppercase tracking-widest">Glisser une image</span>
           </div>
         </div>
-      )}
-      {uploadError && (
-        <p className="text-red-500 text-xs mt-1">{uploadError}</p>
       )}
     </div>
   );
@@ -224,6 +203,14 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
     }));
   };
 
+  const handleDetailFileChange = (index: number, type: 'before' | 'after', file: File | null) => {
+    setPostprodDetailFiles(prev => {
+      const existing = prev.filter(f => !(f.index === index && f.type === type));
+      if (file) return [...existing, { index, type, file }];
+      return existing;
+    });
+  };
+
   const handlePostprodChange = useCallback((index: number, field: keyof PostProdDetail, value: string | null) => {
     setFormData(prev => {
       const newDetails = [...(prev.description_postprod || [])];
@@ -236,6 +223,10 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Guard Clause Synchrone : Prévient les attaques par "Double Clic"
+    if (isSubmitting) return;
+    
     setIsSubmitting(true);
     setFormErrors([]);
     setServerError(null);
@@ -253,53 +244,66 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
       return;
     }
 
+    const newlyUploadedImages: { bucket: string; path: string }[] = [];
 
     try {
-      // --- 1. Upload des images principales et collecte des chemins ---
+      // --- 1. PRÉPARATION DU GESTIONNAIRE DE TÂCHES D'UPLOAD ---
+      const uploadJobs: { file: File; bucket: string; folder: string; setter: (p: string) => void }[] = [];
+
       if (clientLogoFile) {
-        const path = await uploadFileAndGetPath(clientLogoFile, 'logos', 'projects/logos/');
-        if (!path) throw new Error("Échec de l'upload du logo client.");
-        dataToSave.client_logo_path = path;
+        uploadJobs.push({ file: clientLogoFile, bucket: 'logos', folder: 'projects/logos/', setter: p => dataToSave.client_logo_path = p });
       }
 
       if (postprodBeforeFile) {
-        const path = await uploadFileAndGetPath(postprodBeforeFile, 'postprod-images', 'projects/postprod/');
-        if (!path) throw new Error("Échec de l'upload de l'image 'avant'.");
-        dataToSave.postprod_before_path = path;
+        uploadJobs.push({ file: postprodBeforeFile, bucket: 'postprod-images', folder: 'projects/postprod/', setter: p => dataToSave.postprod_before_path = p });
       }
 
       if (postprodAfterFile) {
-        const path = await uploadFileAndGetPath(postprodAfterFile, 'postprod-images', 'projects/postprod/');
-        if (!path) throw new Error("Échec de l'upload de l'image 'après'.");
-        dataToSave.postprod_after_path = path;
+        uploadJobs.push({ file: postprodAfterFile, bucket: 'postprod-images', folder: 'projects/postprod/', setter: p => dataToSave.postprod_after_path = p });
       }
 
-      // --- 2. Upload des images des détails de post-production ---
       if (dataToSave.description_postprod) {
-        for (let i = 0; i < dataToSave.description_postprod.length; i++) {
-          const detail = dataToSave.description_postprod[i];
+        dataToSave.description_postprod.forEach((detail, i) => {
           const beforeFile = postprodDetailFiles.find(item => item.index === i && item.type === 'before')?.file;
           const afterFile = postprodDetailFiles.find(item => item.index === i && item.type === 'after')?.file;
 
           if (beforeFile) {
-            const path = await uploadFileAndGetPath(beforeFile, 'postprod-images', 'projects/postprod_details/');
-            if (!path) throw new Error(`Échec de l'upload de l'image 'avant' pour le détail ${i + 1}.`);
-            detail.before_path = path;
+            uploadJobs.push({ file: beforeFile, bucket: 'postprod-images', folder: 'projects/postprod_details/', setter: p => detail.before_path = p });
           }
           if (afterFile) {
-            const path = await uploadFileAndGetPath(afterFile, 'postprod-images', 'projects/postprod_details/');
-            if (!path) throw new Error(`Échec de l'upload de l'image 'après' pour le détail ${i + 1}.`);
-            detail.after_path = path;
+            uploadJobs.push({ file: afterFile, bucket: 'postprod-images', folder: 'projects/postprod_details/', setter: p => detail.after_path = p });
           }
-        }
+        });
       }
+
+      // --- 2. EXÉCUTION PARALLÈLE ET SÉCURISÉE ---
+      // On attend que TOUS les envois soient terminés (succès ou null) sans throw d'erreur pour éviter la Race Condition
+      const uploadResults = await Promise.all(uploadJobs.map(async job => {
+        const path = await uploadFileAndGetPath(job.file, job.bucket, job.folder);
+        return { ...job, path };
+      }));
+
+      // --- 3. SÉCURITÉ : ENREGISTREMENT SYSTÉMATIQUE DES SUCCÈS POUR LE ROLLBACK ---
+      uploadResults.forEach(res => {
+        if (res.path) newlyUploadedImages.push({ bucket: res.bucket, path: res.path });
+      });
+
+      // --- 4. VÉRIFICATION D'INTÉGRITÉ ---
+      if (uploadResults.some(res => !res.path)) {
+        throw new Error("Échec de l'upload d'une ou plusieurs images. L'opération a été annulée.");
+      }
+
+      // --- 5. APPLICATION DES CHEMINS ---
+      uploadResults.forEach(res => {
+        if (res.path) res.setter(res.path);
+      });
 
       // --- 4. Appeler la Server Action ---
       const result = await saveProjectAction(dataToSave, project ? project.id : null);
 
       setIsSubmitting(false);
       if (result.success) {
-        alert("Projet sauvegardé avec succès !");
+        toast.success("Projet sauvegardé avec succès !");
         // Réinitialiser les fichiers après un succès
         setClientLogoFile(null);
         setPostprodBeforeFile(null);
@@ -307,10 +311,14 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
         setPostprodDetailFiles([]);
         onSuccess(); // Ferme la modal et rafraîchit la liste
       } else {
+        // ROLLBACK : On supprime les images fraîchement envoyées car l'enregistrement BDD a échoué
+        if (newlyUploadedImages.length > 0) {
+          await rollbackUploadsAction(newlyUploadedImages);
+        }
         setServerError('error' in result ? String(result.error) : "Une erreur inconnue est survenue côté serveur.");
         // Gérer les erreurs de validation Zod du serveur si elles sont retournées
         if ('details' in result && result.details) {
-          const flattened = result.details as { fieldErrors?: Record<string, string[]> };
+          const flattened = result.details as { fieldErrors: Record<string, string[]> };
           const issuesFromServer: z.ZodIssue[] = [];
           if (flattened.fieldErrors) {
             Object.entries(flattened.fieldErrors).forEach(([field, msgs]) => {
@@ -319,11 +327,17 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
           }
           setFormErrors(issuesFromServer);
         }
+        toast.error("Erreur lors de la sauvegarde. Veuillez vérifier le formulaire.");
       }
     } catch (error: unknown) {
       console.error("Erreur lors de la soumission du formulaire:", error);
+      // ROLLBACK en cas de crash réseau (Catch)
+      if (newlyUploadedImages.length > 0) {
+        await rollbackUploadsAction(newlyUploadedImages);
+      }
       const errorMessage = error instanceof Error ? error.message : "Une erreur inattendue est survenue.";
       setServerError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -340,7 +354,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
           <h3 className="text-3xl font-black italic uppercase tracking-tighter text-primary">
             {project ? 'Modifier' : 'Ajouter'} <span className="text-foreground">Projet</span>
           </h3>
-          <button onClick={onClose} className="text-foreground/40 hover:text-foreground transition-colors">
+          <button onClick={onClose} disabled={isSubmitting} className="text-foreground/40 hover:text-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
             <XCircle size={32} />
           </button>
         </div>
@@ -381,7 +395,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
               {categories.map(cat => (
                 <button
                   key={cat.id} type="button" onClick={() => toggleCat(cat.name)}
-                  className={`px-4 py-1.5 rounded-full text-[10px] font-black border transition-all ${selectedCats.includes(cat.name) ? 'bg-primary border-primary text-black' : 'bg-zinc-800 border-zinc-700 text-foreground/70 hover:border-zinc-500 hover:text-foreground'
+                  className={`px-4 py-1.5 rounded-full text-[10px] font-black border transition-all ${selectedCats.includes(cat.name) ? 'bg-primary border-primary text-black' : 'bg-card border-zinc-700 text-foreground/70 hover:border-zinc-500 hover:text-foreground'
                     }`}
                 >
                   {cat.name.toUpperCase()}
@@ -439,18 +453,20 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
                 <ImageUploader
                   label="Image Principale AVANT Post-Prod"
                   currentPath={formData.postprod_before_path}
-                  onPathChange={(path) => setFormData(prev => ({ ...prev, postprod_before_path: path }))}
+                  currentFile={postprodBeforeFile}
+                  onFileSelect={setPostprodBeforeFile}
+                  onClearPath={() => setFormData(prev => ({ ...prev, postprod_before_path: null }))}
                   storageBucket="postprod-images"
                   colorClass="text-purple-400"
-                  folderPath="projects/postprod/"
                 />
                 <ImageUploader
                   label="Image Principale APRÈS Post-Prod"
                   currentPath={formData.postprod_after_path}
-                  onPathChange={(path) => setFormData(prev => ({ ...prev, postprod_after_path: path }))}
+                  currentFile={postprodAfterFile}
+                  onFileSelect={setPostprodAfterFile}
+                  onClearPath={() => setFormData(prev => ({ ...prev, postprod_after_path: null }))}
                   storageBucket="postprod-images"
                   colorClass="text-purple-400"
-                  folderPath="projects/postprod/"
                 />
               </div>
 
@@ -460,10 +476,11 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
               <ImageUploader
                 label="Logo Client"
                 currentPath={formData.client_logo_path}
-                onPathChange={(path) => setFormData(prev => ({ ...prev, client_logo_path: path }))}
+                currentFile={clientLogoFile}
+                onFileSelect={setClientLogoFile}
+                onClearPath={() => setFormData(prev => ({ ...prev, client_logo_path: null }))}
                 storageBucket="logos"
                 colorClass="text-foreground/70"
-                folderPath="projects/logos/"
               />
               {isPostProdDetailsDisabled && (
                 <div className="p-3 bg-purple-950/70 border border-purple-800/50 rounded-lg text-center text-xs text-purple-300/80">
@@ -488,23 +505,30 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <ImageUploader
-                      label="Avant" currentPath={item.before_path || null}
-                      onPathChange={(path) => handlePostprodChange(index, 'before_path', path)}
+                      label="Avant" 
+                      currentPath={item.before_path || null}
+                      currentFile={postprodDetailFiles.find(f => f.index === index && f.type === 'before')?.file || null}
+                      onFileSelect={(file) => handleDetailFileChange(index, 'before', file)}
+                      onClearPath={() => handlePostprodChange(index, 'before_path', null)}
                       storageBucket="postprod-images"
-                      folderPath="projects/postprod_details/"
                       disabled={isPostProdDetailsDisabled}
                       colorClass="text-purple-400"
                     />
                     <ImageUploader
-                      label="Après" currentPath={item.after_path || null}
-                      onPathChange={(path) => handlePostprodChange(index, 'after_path', path)}
+                      label="Après" 
+                      currentPath={item.after_path || null}
+                      currentFile={postprodDetailFiles.find(f => f.index === index && f.type === 'after')?.file || null}
+                      onFileSelect={(file) => handleDetailFileChange(index, 'after', file)}
+                      onClearPath={() => handlePostprodChange(index, 'after_path', null)}
                       storageBucket="postprod-images"
-                      folderPath="projects/postprod_details/"
                       disabled={isPostProdDetailsDisabled}
                       colorClass="text-purple-400"
                     />
                   </div>
-                  <button type="button" onClick={() => { setFormData(prev => ({ ...prev, description_postprod: (prev.description_postprod || []).filter((_, i) => i !== index) })); }} className="absolute -top-2 -right-2 p-1.5 bg-red-800/70 hover:bg-red-700 rounded-full text-red-300 transition-all opacity-0 group-hover:opacity-100 disabled:opacity-0" title="Supprimer ce détail" disabled={isPostProdDetailsDisabled}>
+                  <button type="button" onClick={() => { 
+                    setFormData(prev => ({ ...prev, description_postprod: (prev.description_postprod || []).filter((_, i) => i !== index) })); 
+                    setPostprodDetailFiles(prev => prev.filter(f => f.index !== index).map(f => f.index > index ? { ...f, index: f.index - 1 } : f));
+                  }} className="absolute -top-2 -right-2 p-1.5 bg-red-800/70 hover:bg-red-700 rounded-full text-red-300 transition-all opacity-0 group-hover:opacity-100 disabled:opacity-0" title="Supprimer ce détail" disabled={isPostProdDetailsDisabled}>
                     <Trash2 size={14} />
                   </button>
                 </div>
@@ -553,7 +577,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, project, categories
 
           {/* BOUTONS D'ACTION */}
           <div className="flex justify-end items-center gap-4 border-t border-zinc-800 pt-6">
-            <button type="button" onClick={onClose} className="text-foreground/70 hover:text-foreground font-bold uppercase text-[10px] tracking-widest px-6 py-3 rounded-dynamic transition-colors">
+            <button type="button" onClick={onClose} disabled={isSubmitting} className="text-foreground/70 hover:text-foreground font-bold uppercase text-[10px] tracking-widest px-6 py-3 rounded-dynamic transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
               Annuler
             </button>
             <button type="submit" disabled={isSubmitting} className="bg-primary hover:bg-white hover:text-black text-black font-black py-4 px-8 rounded-dynamic uppercase text-xs tracking-[0.2em] transition-all flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(34,197,94,0.2)] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed">

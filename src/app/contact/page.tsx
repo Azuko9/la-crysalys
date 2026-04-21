@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { sendContactMessageAction } from "@/lib/actions";
+import { ContactFormSchema } from "@/lib/schemas";
 import Script from "next/script";
 import { Mail, Phone, MapPin, Send, CheckCircle, AlertCircle } from "lucide-react";
+import toast from "react-hot-toast";
 import type { ContactMessage } from "@/types";
 
 type ContactFormData = Omit<ContactMessage, "id" | "created_at"> & {
@@ -27,36 +29,19 @@ export default function Contact() {
 
   // RÈGLES DE VALIDATION
   const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-    
-    // 1. Validation Nom (Lettres, espaces, tirets uniquement, 2 à 50 caractères)
-    const nameRegex = /^[a-zA-ZÀ-ÿ\s'-]{2,50}$/;
-    if (!formData.nom.trim()) {
-      newErrors.nom = "Le nom est obligatoire.";
-    } else if (!nameRegex.test(formData.nom)) {
-      newErrors.nom = "Le nom contient des caractères invalides (2 lettres min).";
+    const result = ContactFormSchema.safeParse(formData);
+    if (!result.success) {
+      const formattedErrors: Record<string, string> = {};
+      for (const [key, value] of Object.entries(result.error.flatten().fieldErrors)) {
+        if (value && value.length > 0) {
+          formattedErrors[key] = value[0];
+        }
+      }
+      setErrors(formattedErrors);
+      return false;
     }
-
-    // 2. Validation Email (Format strict)
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!formData.email.trim()) {
-      newErrors.email = "L'email est obligatoire.";
-    } else if (!emailRegex.test(formData.email)) {
-      newErrors.email = "Format d'email invalide.";
-    }
-
-    // 3. Validation Message (Longueur min et max)
-    if (!formData.message.trim()) {
-      newErrors.message = "Le message ne peut pas être vide.";
-    } else if (formData.message.length < 10) {
-      newErrors.message = "Le message est trop court (10 caractères min).";
-    } else if (formData.message.length > 2000) {
-      newErrors.message = "Le message est trop long (2000 caractères max).";
-    }
-
-    setErrors(newErrors);
-    // Si l'objet newErrors est vide, c'est que tout est bon !
-    return Object.keys(newErrors).length === 0;
+    setErrors({});
+    return true;
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -84,6 +69,7 @@ export default function Contact() {
       setStatus("success");
       setFormData({ nom: "", email: "", objet: "devis", message: "", botField: "" });
       setErrors({}); // Réinitialiser les erreurs après succès
+      toast.success("Message envoyé ! Nous vous répondrons très vite.");
     } else {
       setStatus("error");
       if ('errors' in result && result.errors) {
@@ -102,8 +88,11 @@ export default function Contact() {
       } else if ('error' in result && result.error) {
         // Erreur générale du serveur
         setServerError(result.error);
+        toast.error(result.error);
       } else {
-        setServerError("Une erreur inattendue est survenue.");
+        const defaultError = "Une erreur inattendue est survenue.";
+        setServerError(defaultError);
+        toast.error(defaultError);
       }
     }
   };

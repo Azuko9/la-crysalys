@@ -2,6 +2,11 @@ import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/app/server";
 import { createClient } from "@supabase/supabase-js";
 
+// Force le rendu dynamique pour toute la section administration.
+// Cela désactive complètement le cache "Full Route Cache" de Next.js pour ces pages,
+// garantissant que l'admin voit toujours les données en temps réel de la BDD.
+export const dynamic = 'force-dynamic';
+
 export default async function AdminLayout({
   children,
 }: {
@@ -9,10 +14,11 @@ export default async function AdminLayout({
 }) {
   // 1. On récupère la session via le client serveur standard
   const supabase = createSupabaseServerClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  // getUser() est plus sécurisé sur le serveur car il valide systématiquement le token auprès de Supabase
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
 
   // Si l'utilisateur n'est pas connecté, retour au login
-  if (!session) {
+  if (authError || !user) {
     redirect("/login");
   }
 
@@ -31,7 +37,7 @@ export default async function AdminLayout({
   const { data: profile } = await supabaseAdmin
     .from("profiles")
     .select("role")
-    .eq("id", session.user.id)
+    .eq("id", user.id)
     .single();
 
   // S'il n'y a pas de profil ou que le rôle n'est pas admin, on l'éjecte

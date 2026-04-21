@@ -3,9 +3,10 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { XCircle, Instagram, Linkedin, AlignLeft, Users, Handshake, UploadCloud, Loader2, Trash2, Save, Building2, Globe, Mail } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
-import { saveTeamMemberAction } from "@/lib/actions";
+import { saveTeamMemberAction, rollbackUploadsAction } from "@/lib/actions";
 import type { TeamMember } from "@/types";
 import { uploadFileAndGetPath } from "@/lib/clientUploadHelpers"; // Import de la fonction d'upload
+import toast from "react-hot-toast";
 
 interface TeamModalProps {
   isOpen: boolean;
@@ -87,11 +88,16 @@ const TeamModal: React.FC<TeamModalProps> = ({ isOpen, member, onClose, onSucces
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Guard Clause Synchrone : Prévient les attaques par "Double Clic"
+    if (loading || isUploading) return;
+    
     setLoading(true);
     setError(null);
     setIsUploading(false); // S'assurer que l'état d'upload est faux avant de commencer la sauvegarde
 
     let finalPhotoPath = formData.photo_path;
+    let isNewUpload = false;
 
     // 1. Upload de la nouvelle image si un fichier est sélectionné
     if (photoFile) {
@@ -104,19 +110,34 @@ const TeamModal: React.FC<TeamModalProps> = ({ isOpen, member, onClose, onSucces
         return;
       }
       finalPhotoPath = path;
+      isNewUpload = true;
     }
 
     // 2. Préparer le payload avec le chemin final de la photo
     const payload = { ...formData, photo_path: finalPhotoPath }; // Utilise le chemin final
 
-    // 3. Appeler la Server Action
-    const result = await saveTeamMemberAction(payload, member ? member.id : null);
+    try {
+      // 3. Appeler la Server Action
+      const result = await saveTeamMemberAction(payload, member ? member.id : null);
 
-    setLoading(false);
-    if (result.success) {
-      onSuccess();
-    } else {
-      setError('error' in result ? String(result.error) : "Une erreur est survenue lors de la sauvegarde.");
+      setLoading(false);
+      if (result.success) {
+        onSuccess();
+      } else {
+        // ROLLBACK : On supprime la photo du bucket si la BDD la refuse
+        if (isNewUpload && finalPhotoPath) {
+          await rollbackUploadsAction([{ bucket: 'team-photos', path: finalPhotoPath }]);
+        }
+        setError('error' in result ? String(result.error) : "Une erreur est survenue lors de la sauvegarde.");
+      }
+    } catch (err: unknown) {
+      console.error("Erreur réseau lors de la sauvegarde du membre:", err);
+      // ROLLBACK : En cas de crash réseau (WiFi perdu au moment du clic)
+      if (isNewUpload && finalPhotoPath) {
+         await rollbackUploadsAction([{ bucket: 'team-photos', path: finalPhotoPath }]);
+      }
+      setError("Une erreur réseau inattendue est survenue.");
+      setLoading(false);
     }
   };
 
@@ -144,7 +165,7 @@ const TeamModal: React.FC<TeamModalProps> = ({ isOpen, member, onClose, onSucces
         <form onSubmit={handleSubmit} className="space-y-6">
           
           {/* SÉLECTEUR TYPE */}
-          <div className="flex bg-zinc-900 p-1 rounded-dynamic border border-zinc-800">
+          <div className="flex bg-cardp-1 rounded-dynamic border border-zinc-800">
             <button type="button" onClick={() => setFormData({...formData, member_type: 'team'})} className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-dynamic flex items-center justify-center gap-2 transition-all ${!isPartner ? 'bg-primary text-black shadow-lg' : 'text-foreground/50 hover:text-foreground'}`}><Users size={14}/> Équipe</button>
             <button type="button" onClick={() => setFormData({...formData, member_type: 'partner'})} className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-dynamic flex items-center justify-center gap-2 transition-all ${isPartner ? 'bg-primary text-black shadow-lg' : 'text-foreground/50 hover:text-foreground'}`}><Handshake size={14}/> Partenaire</button>
           </div>
@@ -180,7 +201,14 @@ const TeamModal: React.FC<TeamModalProps> = ({ isOpen, member, onClose, onSucces
                 </div>
              ) : (
                 <div className="relative w-full h-40 border-2 border-dashed border-zinc-700 hover:border-primary rounded-dynamic transition-colors bg-zinc-900/30">
-                   <input type="file" accept="image/*" onChange={(e) => setPhotoFile(e.target.files ? e.target.files[0] : null)} disabled={isUploading} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                   <input type="file" accept="image/*" onChange={(e) => {
+                     const file = e.target.files ? e.target.files[0] : null;
+                     if (file && file.size > 5 * 1024 * 1024) {
+                       toast.error("La photo est trop lourde (Maximum 5 Mo).");
+                       return;
+                     }
+                     setPhotoFile(file);
+                   }} disabled={isUploading} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
                    <div className="absolute inset-0 flex flex-col items-center justify-center text-foreground/50 pointer-events-none">
                       {isUploading ? <Loader2 size={32} className="animate-spin text-primary mb-2"/> : <UploadCloud size={32} className="mb-2 group-hover:text-primary transition-colors"/>}
                       <span className="text-xs font-bold uppercase tracking-widest">{isUploading ? 'Envoi...' : 'Glisser une image ici'}</span>

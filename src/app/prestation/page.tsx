@@ -58,8 +58,8 @@ export default function Prestation() {
               <li className="flex items-start"><Check className="text-primary mr-2 shrink-0" size={18} /> Format court &lt; 1 minute (HD)</li>
             </ul>
             
-            <div className="bg-gray-800 p-4 rounded text-sm text-foreground/80">
-              <span className="font-bold text-green-400">Options :</span> Motion Design (300€/j) | Voix off (50€)
+            <div className="bg-primary p-4 rounded text-sm text-foreground/80">
+              <span className="font-bold">Options :</span> Motion Design (300€/j) | Voix off (50€)
             </div>
           </div>
 
@@ -82,8 +82,8 @@ export default function Prestation() {
               <li className="flex items-start"><Check className="text-yellow-500 mr-2 shrink-0" size={18} /> Format 1 à 2 minutes (HD)</li>
             </ul>
 
-            <div className="bg-gray-800 p-4 rounded text-sm text-foreground/80">
-               <span className="font-bold text-yellow-500">Inclus :</span> Motion Design avancé
+            <div className="bg-primary p-4 rounded text-sm text-foreground/80">
+               <span className="font-bold">Inclus :</span> Motion Design avancé
             </div>
           </div>
 

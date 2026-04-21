@@ -2,6 +2,7 @@
 
 import { deleteProjectAction } from "@/lib/actions";
 import { Pencil, Trash2 } from "lucide-react";
+import toast from "react-hot-toast";
 import type { Project } from "@/types";
 
 interface AdminProjectControlsProps {
@@ -21,9 +22,10 @@ export const AdminProjectControls: React.FC<AdminProjectControlsProps> = ({ proj
       const result = await deleteProjectAction(project.id);
 
       if (result.success) {
+        toast.success("Projet supprimé !");
         onDeleteSuccess();
       } else {
-        alert(`Erreur lors de la suppression : ${'error' in result ? result.error : 'Une erreur inconnue est survenue.'}`);
+        toast.error(`Erreur lors de la suppression : ${'error' in result ? result.error : 'Une erreur inconnue est survenue.'}`);
       }
     }
   };

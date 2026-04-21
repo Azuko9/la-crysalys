@@ -165,7 +165,7 @@ function FeatureModal({ isOpen, feature, pageContext, onClose, onSuccess }: { is
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-      <div className="bg-zinc-900 border border-zinc-800 w-full max-w-md p-6 rounded-dynamic shadow-2xl">
+      <div className="bg-cardborder border-zinc-800 w-full max-w-md p-6 rounded-dynamic shadow-2xl">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-black uppercase italic text-foreground">{feature ? "Modifier" : "Ajouter"} Feature</h2>
           <button onClick={onClose}><X size={24} className="text-foreground/50 hover:text-foreground"/></button>

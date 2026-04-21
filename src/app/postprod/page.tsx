@@ -1,4 +1,4 @@
-import type { Project } from '@/types';
+import type { Project, PostProdDetail } from '@/types';
 import { createSupabaseServerClient } from '@/app/server';
 import Link from 'next/link';
 import type { Metadata } from 'next';
@@ -88,37 +88,17 @@ export default async function PostProdPage() {
                     </div>
                   </div>
 
-                  {/* Section basse : Comparaisons d'images */}
-                  {(project.postprod_before_path || project.postprod_after_path || (Array.isArray(project.description_postprod) && project.description_postprod.length > 0)) && (
+                  {/* Section basse : Comparaisons d'images (Aperçu Principal uniquement) */}
+                  {project.postprod_before_path && project.postprod_after_path && (
                     <div className="space-y-8 border-t border-zinc-700 pt-8 mt-8">
-                    {project.postprod_before_path && project.postprod_after_path && (
-                      // Convertir les chemins en URLs publiques pour l'affichage
-                      // Assumer 'portfolio_images' est le bucket pour les images de projets
-                      // createSupabaseServerClient() est déjà disponible dans ce composant serveur.
                       <div className="mb-8">
-                        <p className="text-sm text-foreground/70 font-bold uppercase tracking-widest mb-4">Aperçu Global Avant/Après</p>
-                        <ImageCompareSlider
-                          beforeImage={supabase.storage.from('postprod-images').getPublicUrl(project.postprod_before_path).data.publicUrl}
-                          afterImage={supabase.storage.from('postprod-images').getPublicUrl(project.postprod_after_path).data.publicUrl}
-                        />
+                        <div className="max-w-[250px] sm:max-w-[300px] mx-auto">
+                          <ImageCompareSlider
+                            beforeImage={supabase.storage.from('postprod-images').getPublicUrl(project.postprod_before_path).data.publicUrl}
+                            afterImage={supabase.storage.from('postprod-images').getPublicUrl(project.postprod_after_path).data.publicUrl}
+                          />
+                        </div>
                       </div>
-                    )}
-
-                    {Array.isArray(project.description_postprod) && project.description_postprod.length > 0 && (
-                      <div className="space-y-8">
-                        {project.description_postprod.map((item, index) => (
-                          <div key={index}>
-                            <p className="text-foreground font-bold mb-4 text-base"> #{index + 1}: <span className="text-purple-300 font-medium">{item.detail}</span></p>
-                            {item.before_path && item.after_path && (
-                              <ImageCompareSlider
-                                beforeImage={supabase.storage.from('postprod-images').getPublicUrl(item.before_path).data.publicUrl}
-                                afterImage={supabase.storage.from('postprod-images').getPublicUrl(item.after_path).data.publicUrl}
-                              />
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
                     </div>
                   )}
                   

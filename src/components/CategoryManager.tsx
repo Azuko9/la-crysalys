@@ -120,7 +120,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, re
                     value={editValue}
                     onChange={(e) => setEditValue(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleUpdate(cat.id)}
-                    className="bg-zinc-800 text-[10px] uppercase font-black px-2 py-1 rounded outline-none border border-primary w-24 text-foreground"
+                    className="bg-card text-[10px] uppercase font-black px-2 py-1 rounded outline-none border border-primary w-24 text-foreground"
                     disabled={loading?.type === 'update'}
                   />
                   {loading?.type === 'update' && loading.id === cat.id ? (

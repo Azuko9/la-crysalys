@@ -140,7 +140,6 @@ export default async function RealisationDetailPage({ params }: { params: { id: 
 
             {projectData.postprod_before_path && projectData.postprod_after_path && (
               <div className="mb-12">
-                <h3 className="text-xl font-bold mb-6">Aperçu Global</h3>
                 <div className="max-w-xl mx-auto rounded-dynamic overflow-hidden shadow-xl">
                   <ImageCompareSlider beforeImage={getImageUrl(projectData.postprod_before_path)} afterImage={getImageUrl(projectData.postprod_after_path)} />
                 </div>
@@ -149,7 +148,7 @@ export default async function RealisationDetailPage({ params }: { params: { id: 
 
             {postprodDetails.map((detail, index) => (
               <div key={index} className="mb-12">
-                <h3 className="text-lg font-bold mb-4 text-purple-300">Étape {index + 1} : {detail.detail}</h3>
+                <h3 className="text-lg font-bold mb-4 text-purple-300">{detail.detail}</h3>
                 {detail.before_path && detail.after_path && (
                   <div className="max-w-xl mx-auto rounded-dynamic overflow-hidden shadow-xl">
                     <ImageCompareSlider beforeImage={getImageUrl(detail.before_path)} afterImage={getImageUrl(detail.after_path)} />

@@ -93,7 +93,7 @@ export default function TeamClientView({ initialMembers, user }: TeamClientViewP
         {user && (
           <div className="mb-16">
             <button onClick={() => handleCreate('team')} className="w-full py-10 border-2 border-dashed border-zinc-800 hover:border-primary rounded-dynamic text-foreground/50 hover:text-primary transition-all font-bold uppercase tracking-widest flex items-center justify-center gap-4 text-xs group">
-              <div className="p-2 bg-zinc-900 rounded-full group-hover:bg-primary group-hover:text-black transition-colors"><PlusCircle size={20}/></div>
+              <div className="p-2 bg-cardrounded-full group-hover:bg-primary group-hover:text-black transition-colors"><PlusCircle size={20}/></div>
               Ajouter un membre à l&apos;équipe
             </button>
           </div>
@@ -132,7 +132,7 @@ export default function TeamClientView({ initialMembers, user }: TeamClientViewP
         {user && (
           <div className="mb-16">
             <button onClick={() => handleCreate('partner')} className="w-full py-10 border-2 border-dashed border-zinc-800 hover:border-primary rounded-dynamic text-foreground/50 hover:text-primary transition-all font-bold uppercase tracking-widest flex items-center justify-center gap-4 text-xs group">
-              <div className="p-2 bg-zinc-900 rounded-full group-hover:bg-primary group-hover:text-black transition-colors"><PlusCircle size={20}/></div>
+              <div className="p-2 bg-cardrounded-full group-hover:bg-primary group-hover:text-black transition-colors"><PlusCircle size={20}/></div>
               Ajouter un partenaire
             </button>
           </div>
@@ -207,15 +207,15 @@ function TeamMemberRow({ member, user, onEdit, index, isPartner }: { member: Tea
            <p className="text-foreground/70 text-sm leading-relaxed font-medium whitespace-pre-wrap">{member.bio || "Description non disponible."}</p>
         </div>
         <div className="flex flex-wrap gap-4 mt-2 border-t border-zinc-800 pt-6">
-            {member.email && <a href={`mailto:${member.email}`} className="h-10 px-4 bg-zinc-900 border border-zinc-800 rounded-dynamic flex items-center justify-center text-foreground/50 hover:text-primary hover:border-primary hover:bg-primary/10 transition-all gap-2 text-[10px] font-bold uppercase tracking-widest"><Mail size={14}/> Email</a>}
-            {member.website && <a href={member.website} target="_blank" rel="noreferrer" className="h-10 px-4 bg-zinc-900 border border-zinc-800 rounded-dynamic flex items-center justify-center text-foreground/50 hover:text-primary hover:border-primary hover:bg-primary/10 transition-all gap-2 text-[10px] font-bold uppercase tracking-widest"><Globe size={14}/> Site</a>}
-            {member.instagram && <a href={member.instagram} target="_blank" rel="noreferrer" className="w-10 h-10 bg-zinc-900 border border-zinc-800 rounded-dynamic flex items-center justify-center text-foreground/50 hover:text-primary hover:border-primary hover:bg-primary/10 transition-all"><Instagram size={16}/></a>}
-            {member.linkedin && <a href={member.linkedin} target="_blank" rel="noreferrer" className="w-10 h-10 bg-zinc-900 border border-zinc-800 rounded-dynamic flex items-center justify-center text-foreground/50 hover:text-primary hover:border-primary hover:bg-primary/10 transition-all"><Linkedin size={16}/></a>}
+            {member.email && <a href={`mailto:${member.email}`} className="h-10 px-4 bg-cardborder border-zinc-800 rounded-dynamic flex items-center justify-center text-foreground/50 hover:text-primary hover:border-primary hover:bg-primary/10 transition-all gap-2 text-[10px] font-bold uppercase tracking-widest"><Mail size={14}/> Email</a>}
+            {member.website && <a href={member.website} target="_blank" rel="noreferrer" className="h-10 px-4 bg-cardborder border-zinc-800 rounded-dynamic flex items-center justify-center text-foreground/50 hover:text-primary hover:border-primary hover:bg-primary/10 transition-all gap-2 text-[10px] font-bold uppercase tracking-widest"><Globe size={14}/> Site</a>}
+            {member.instagram && <a href={member.instagram} target="_blank" rel="noreferrer" className="w-10 h-10 bg-cardborder border-zinc-800 rounded-dynamic flex items-center justify-center text-foreground/50 hover:text-primary hover:border-primary hover:bg-primary/10 transition-all"><Instagram size={16}/></a>}
+            {member.linkedin && <a href={member.linkedin} target="_blank" rel="noreferrer" className="w-10 h-10 bg-cardborder border-zinc-800 rounded-dynamic flex items-center justify-center text-foreground/50 hover:text-primary hover:border-primary hover:bg-primary/10 transition-all"><Linkedin size={16}/></a>}
         </div>
       </div>
 
       <div className="w-full lg:w-6/12 order-1 lg:order-2 relative flex justify-center lg:justify-end">
-         <div className="relative w-full max-w-md aspect-[3/4] rounded-dynamic overflow-hidden border border-zinc-800 transition-all shadow-2xl bg-zinc-900 group-hover:border-primary/50">
+         <div className="relative w-full max-w-md aspect-[3/4] rounded-dynamic overflow-hidden border border-zinc-800 transition-all shadow-2xl bg-cardgroup-hover:border-primary/50">
             <Image 
                 src={member.photo_path ? supabase.storage.from('team-photos').getPublicUrl(member.photo_path).data.publicUrl : "https://via.placeholder.com/400x600?text=No+Photo"} 
                 alt={member.name} fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"

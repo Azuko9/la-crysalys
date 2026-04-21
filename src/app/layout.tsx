@@ -6,6 +6,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import type { Metadata } from "next";
+import { Toaster } from "react-hot-toast";
 
 // Note: `revalidate = 0` force le rendu dynamique à chaque requête, désactivant le cache de page.
 // Si vous souhaitez un rendu statique (pour de meilleures performances), supprimez cette ligne
@@ -97,6 +98,21 @@ export default async function RootLayout({
       </head>
       <body className="bg-background text-foreground antialiased">
         <Header/>
+        {/* Configuration globale des toasts (notifications) adaptées au thème sombre */}
+        <Toaster 
+          position="top-center"
+          toastOptions={{
+            style: {
+              background: 'var(--card-bg)',
+              color: 'var(--text-color)',
+              border: '1px solid #27272a',
+              borderRadius: 'var(--radius)',
+            },
+            success: {
+              iconTheme: { primary: 'var(--primary-color)', secondary: '#000' },
+            },
+          }} 
+        />
         {children}
         <SpeedInsights />
         <Footer/>

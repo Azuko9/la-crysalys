@@ -21,14 +21,16 @@ export async function uploadFileAndGetPath(file: File, bucketName: string, folde
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  const fileExt = file.name.split('.').pop();
+  // Sécurité: Si le fichier n'a pas d'extension valide, on force un format générique
+  const extensionMatch = file.name.match(/\.([a-zA-Z0-9]+)$/);
+  const fileExt = extensionMatch ? extensionMatch[1] : 'jpeg';
   const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
   const filePath = `${folderPath}${fileName}`; // Chemin complet dans le bucket
 
   const { data, error } = await supabaseBrowser.storage
     .from(bucketName)
     .upload(filePath, file, {
-      cacheControl: '3600',
+      cacheControl: '31536000', // Optimisation extrême : Cache d'un an car le nom de fichier est 100% unique !
       upsert: false, // Ne pas écraser si le fichier existe déjà (le nom unique gère ça)
     });
 

@@ -140,10 +140,10 @@ export default function ThemeManager() {
         <div className="space-y-6">
           <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary flex items-center gap-2"><Droplets size={14}/> Colorimétrie</h3>
           <div className="space-y-2">
-             <ColorField label="Background (Fond)" value={settings.bg_color} id="bg_color" />
-             <ColorField label="Cards (Cartes)" value={settings.card_bg} id="card_bg" />
-             <ColorField label="Primary (Accent)" value={settings.primary_color} id="primary_color" />
-             <ColorField label="Textes (Général)" value={settings.text_color} id="text_color" />
+             <ColorField label="Couleur de fond" value={settings.bg_color} id="bg_color" />
+             <ColorField label="Couleur des fenêtres" value={settings.card_bg} id="card_bg" />
+             <ColorField label="Couleur des icônes et d'actions" value={settings.primary_color} id="primary_color" />
+             <ColorField label="Couleur du texte" value={settings.text_color} id="text_color" />
           </div>
         </div>
 
@@ -151,18 +151,18 @@ export default function ThemeManager() {
           <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-500 flex items-center gap-2"><Box size={14}/> Structure</h3>
           <div className="bg-black/20 p-4 rounded-dynamic border border-transparent hover:border-zinc-700 transition-all">
             <div className="flex justify-between text-[10px] text-foreground/70 font-bold uppercase mb-4">
-              <span>Border Radius</span>
-              <span className="text-foreground bg-zinc-800 px-2 py-0.5 rounded">{settings.border_radius}</span>
+              <span>niveau des arrondis</span>
+              <span className="text-foreground bg-card px-2 py-0.5 rounded">{settings.border_radius}</span>
             </div>
             <input type="range" min="0" max="30" step="1" value={parseInt(settings.border_radius)}
               onChange={(e) => setSettings({...settings, border_radius: `${e.target.value}px`})}
-              className="w-full accent-primary bg-zinc-800 h-1 cursor-pointer appearance-none rounded-full" />
+              className="w-full accent-primary bg-card h-1 cursor-pointer appearance-none rounded-full" />
           </div>
         </div>
       </div>
 
       {/* ACTION PRINCIPALE */}
-      <div className="bg-zinc-800/30 p-6 rounded-dynamic border border-zinc-800 mb-12 text-center">
+      <div className="bg-card/30 p-6 rounded-dynamic border border-zinc-800 mb-12 text-center">
          <p className="text-[10px] text-foreground/50 uppercase tracking-widest mb-4">Cette action modifie l&apos;apparence par défaut pour tous les visiteurs</p>
          <button onClick={() => saveToDatabase(settings)} className="w-full bg-primary hover:bg-white text-black font-black py-4 rounded-dynamic uppercase text-xs tracking-[0.3em] transition-all flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(34,197,94,0.2)] hover:shadow-[0_0_30px_rgba(255,255,255,0.3)]">
             <CheckCircle size={18}/> Appliquer au Site (Global)
@@ -194,15 +194,15 @@ export default function ThemeManager() {
                       <div className="w-1/4 flex items-center justify-center font-serif text-[10px]" style={{ backgroundColor: p.bg_color, color: p.text_color || '#ffffff' }} title="Texte">Aa</div>
                     </>
                   ) : (
-                    <div className="w-full bg-zinc-900 flex items-center justify-center text-[8px] text-foreground/30 uppercase italic">Vide</div>
+                    <div className="w-full bg-cardflex items-center justify-center text-[8px] text-foreground/30 uppercase italic">Vide</div>
                   )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 mt-2">
-                  <button onClick={() => handleLoadProfile(num)} className="bg-zinc-800 hover:bg-white hover:text-black py-2 text-[8px] font-black uppercase rounded transition flex items-center justify-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed" disabled={!p}>
+                  <button onClick={() => handleLoadProfile(num)} className="bg-card hover:bg-white hover:text-black py-2 text-[8px] font-black uppercase rounded transition flex items-center justify-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed" disabled={!p}>
                     <Download size={10}/> Charger
                   </button>
-                  <button onClick={() => handleSaveProfile(num)} className="bg-zinc-800 hover:bg-primary hover:text-black py-2 text-[8px] font-black uppercase rounded transition flex items-center justify-center gap-1" title="Écraser ce preset avec les réglages actuels">
+                  <button onClick={() => handleSaveProfile(num)} className="bg-card hover:bg-primary hover:text-black py-2 text-[8px] font-black uppercase rounded transition flex items-center justify-center gap-1" title="Écraser ce preset avec les réglages actuels">
                     <Save size={10}/> Sauver
                   </button>
                 </div>
