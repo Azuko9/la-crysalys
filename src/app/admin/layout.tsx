@@ -26,6 +26,18 @@ export default async function AdminLayout({
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 
+  if (!supabaseUrl || !supabaseServiceKey) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background text-foreground p-8 text-center">
+        <div className="bg-red-900/20 border border-red-500 p-8 rounded-xl max-w-lg">
+          <h1 className="text-2xl font-bold text-red-500 mb-4">Erreur de Configuration</h1>
+          <p className="mb-4">Les clés Supabase (URL ou SERVICE_ROLE) sont introuvables sur Vercel.</p>
+          <p className="text-sm opacity-80">Veuillez vérifier vos <strong>Environment Variables</strong> dans les paramètres Vercel et surtout, <strong>relancez un déploiement (Redeploy)</strong> pour qu'elles soient appliquées.</p>
+        </div>
+      </div>
+    );
+  }
+
   const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
     auth: {
       autoRefreshToken: false,
